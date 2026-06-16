@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './signuppage.css';
 import logo from '../assets/Logo/Logo.png';
+import { getFriendlyAuthError, registerUser, signInWithGoogle } from '../Services/authService';
 
 function SignupPage({ onSignIn, onSignupComplete }) {
   const canvasRef = useRef(null);
@@ -13,6 +14,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // WebGL Shader Background
   useEffect(() => {
@@ -163,25 +165,53 @@ void main() {
   const { score, label, colorClass } = getPasswordStrength();
 
   // Submit Handler
-  const handleMainCTA = (event) => {
+  const handleMainCTA = async (event) => {
     event.preventDefault();
 
+    setErrorMessage('');
     setIsSubmitting(true);
-    setTimeout(() => {
+
+    try {
+      const user = await registerUser(fullName, email, password);
       setIsSubmitting(false);
       setIsSubmitted(true);
       setTimeout(() => {
         if (onSignupComplete) {
-          onSignupComplete(email);
+          onSignupComplete(user.email || email);
         }
       }, 1000);
-    }, 1500);
+    } catch (error) {
+      setIsSubmitting(false);
+      setIsSubmitted(false);
+      setErrorMessage(getFriendlyAuthError(error));
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    setErrorMessage('');
+    setIsSubmitting(true);
+
+    try {
+      const userCredential = await signInWithGoogle();
+      const { user } = userCredential;
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+      setTimeout(() => {
+        if (onSignupComplete) {
+          onSignupComplete(user.email, user.emailVerified);
+        }
+      }, 1000);
+    } catch (error) {
+      setIsSubmitting(false);
+      setIsSubmitted(false);
+      setErrorMessage(getFriendlyAuthError(error));
+    }
   };
 
   return (
     <div className="min-h-screen w-full flex items-stretch overflow-hidden bg-background font-body-md">
       {/* Left Branding & Illustration Section (60%) */}
-      <section className="hidden lg:flex w-[60%] relative gradient-bg overflow-hidden flex-col justify-between p-xxl">
+      <section className="hidden lg:flex w-[50%] relative gradient-bg overflow-hidden flex-col justify-between p-xxl">
         {/* WebGL Shader Background */}
         <canvas
           ref={canvasRef}
@@ -418,6 +448,12 @@ void main() {
           </div>
 
           <div className="mt-xl space-y-md">
+            {errorMessage && (
+              <div className="rounded-2xl bg-error/10 px-md py-sm text-error font-label-md text-label-md">
+                {errorMessage}
+              </div>
+            )}
+
             <button
               disabled={isSubmitting}
               type="submit"
@@ -435,6 +471,7 @@ void main() {
             </button>
 
             <button
+              onClick={handleGoogleSignup}
               type="button"
               disabled={isSubmitting || isSubmitted}
               className="w-full h-14 bg-white border border-outline-variant rounded-3xl font-label-md text-label-md text-on-surface flex items-center justify-center gap-3 hover:bg-surface-container-low transition-all btn-social disabled:opacity-50"

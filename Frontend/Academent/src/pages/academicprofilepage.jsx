@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './academicprofilepage.css';
 import logo from '../assets/Logo/Logo.png';
+import { getFriendlyAuthError, updateUserProfileData } from '../Services/authService';
 
 function AcademicProfilePage({ onBack, onComplete }) {
   const canvasRef = useRef(null);
@@ -18,6 +19,8 @@ function AcademicProfilePage({ onBack, onComplete }) {
   // UI States
   const [showToast, setShowToast] = useState(false);
   const [cardTransform, setCardTransform] = useState('rotateY(0deg) rotateX(0deg)');
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // WebGL Shader Background (Left Sidebar)
   useEffect(() => {
@@ -177,16 +180,35 @@ void main() {
   };
 
   // Form submission handler
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    setShowToast(true);
+    setIsSaving(true);
+    setErrorMessage('');
 
-    setTimeout(() => {
+    try {
+      await updateUserProfileData({
+        academicProfile: {
+          university: university.trim(),
+          degree: degree.trim(),
+          academicYear,
+          major: major.trim(),
+          country,
+          language,
+          subjects: selectedSubjects,
+        },
+        onboardingStep: 'learning-goals',
+      });
+
+      setShowToast(true);
       setShowToast(false);
       if (onComplete) {
         onComplete();
       }
-    }, 3000);
+    } catch (error) {
+      setErrorMessage(getFriendlyAuthError(error));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -295,6 +317,12 @@ void main() {
           </div>
 
           <form onSubmit={handleFormSubmit} className="space-y-xl">
+            {errorMessage && (
+              <div className="rounded-2xl bg-error/10 px-md py-sm text-error font-label-md text-label-md">
+                {errorMessage}
+              </div>
+            )}
+
             {/* Setup Form Glassmorphism Card */}
             <div className="perspective-container">
               <div
@@ -442,9 +470,10 @@ void main() {
 
               <button
                 type="submit"
+                disabled={isSaving}
                 className="primary-button px-xxl py-3 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg"
               >
-                Continue <span className="material-symbols-outlined">arrow_forward</span>
+                {isSaving ? 'Saving...' : 'Continue'} <span className="material-symbols-outlined">arrow_forward</span>
               </button>
             </footer>
           </form>

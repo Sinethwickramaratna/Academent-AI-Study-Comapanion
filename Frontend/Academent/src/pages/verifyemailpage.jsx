@@ -1,18 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './verifyemailpage.css';
 import logo from '../assets/Logo/Logo.png';
+import {
+  getFriendlyAuthError,
+  refreshEmailVerificationStatus,
+  resendEmailVerification,
+} from '../Services/authService';
 
 function VerifyEmailPage({ email, onBackToLogin, onVerifyComplete }) {
   const canvasRef = useRef(null);
-  const inputRefs = useRef([]);
-
-  // State
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const [resendCountdown, setResendCountdown] = useState(59);
+  const [resendCountdown, setResendCountdown] = useState(30);
+  const [message, setMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // WebGL Shader Background (Left Sidebar)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -46,42 +49,30 @@ void main() {
 }`;
     const fs = `precision highp float;
 uniform float u_time;
-uniform vec2 u_resolution;
 varying vec2 v_texCoord;
 
 void main() {
     vec2 uv = v_texCoord;
-    
-    // Create organic movement
     float noise = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
     noise *= cos(uv.y * 8.0 - u_time * 0.7) * 0.5 + 0.5;
-    
-    // Base colors matching the signup theme
-    vec3 color1 = vec3(0.302, 0.169, 0.549); // #4D2B8C - Primary Purple
-    vec3 color2 = vec3(0.522, 0.251, 0.616); // #85409D - Secondary Purple
-    vec3 accent = vec3(0.933, 0.655, 0.153); // #EEA727 - Accent Amber
-    
-    // Dynamic gradient mix
+    vec3 color1 = vec3(0.302, 0.169, 0.549);
+    vec3 color2 = vec3(0.522, 0.251, 0.616);
+    vec3 accent = vec3(0.933, 0.655, 0.153);
     vec3 finalColor = mix(color1, color2, uv.y + noise * 0.3);
     finalColor = mix(finalColor, accent, noise * 0.15);
-    
-    // Subtle vignette
-    float vignette = 1.0 - smoothstep(0.5, 1.5, length(uv - 0.5));
-    finalColor *= vignette;
-    
     gl_FragColor = vec4(finalColor, 1.0);
 }`;
 
-    function cs(type, src) {
-      const s = gl.createShader(type);
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
+    function createShader(type, src) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, src);
+      gl.compileShader(shader);
+      return shader;
     }
 
     const prog = gl.createProgram();
-    gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
-    gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+    gl.attachShader(prog, createShader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(prog, createShader(gl.FRAGMENT_SHADER, fs));
     gl.linkProgram(prog);
     gl.useProgram(prog);
 
@@ -94,29 +85,11 @@ void main() {
     gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
 
     const uTime = gl.getUniformLocation(prog, 'u_time');
-    const uRes = gl.getUniformLocation(prog, 'u_resolution');
-    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
-
-    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
-
-    const handleMouseMove = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width && rect.height) {
-        const nx = (event.clientX - rect.left) / rect.width;
-        const ny = 1.0 - (event.clientY - rect.top) / rect.height;
-        mouse.x = nx * canvas.width;
-        mouse.y = ny * canvas.height;
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
 
     function render(t) {
       if (typeof ResizeObserver === 'undefined') syncSize();
       gl.viewport(0, 0, canvas.width, canvas.height);
       if (uTime) gl.uniform1f(uTime, t * 0.001);
-      if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
-      if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       animationFrameId = requestAnimationFrame(render);
     }
@@ -125,88 +98,70 @@ void main() {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
+      if (resizeObserver) resizeObserver.disconnect();
     };
   }, []);
 
-  // Countdown timer for resend OTP code
   useEffect(() => {
-    if (resendCountdown === 0) return;
+    if (resendCountdown === 0) return undefined;
+
     const timer = setInterval(() => {
-      setResendCountdown((prev) => prev - 1);
+      setResendCountdown((current) => Math.max(current - 1, 0));
     }, 1000);
+
     return () => clearInterval(timer);
   }, [resendCountdown]);
 
-  // Handle OTP Inputs
-  const handleInputChange = (index, value) => {
-    // Only accept numeric digits
-    if (value !== '' && !/^\d$/.test(value)) return;
+  const handleCheckVerification = async () => {
+    setIsChecking(true);
+    setMessage('');
+    setErrorMessage('');
 
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
+    try {
+      const verified = await refreshEmailVerificationStatus();
+      setIsVerified(verified);
 
-    // Auto-focus next input block
-    if (value !== '' && index < 5) {
-      inputRefs.current[index + 1].focus();
-    }
-  };
-
-  const handleKeyDown = (index, event) => {
-    if (event.key === 'Backspace') {
-      if (!otp[index] && index > 0) {
-        const newOtp = [...otp];
-        newOtp[index - 1] = '';
-        setOtp(newOtp);
-        inputRefs.current[index - 1].focus();
+      if (verified) {
+        setMessage('Email verified. Setting up your profile...');
+        setTimeout(() => {
+          if (onVerifyComplete) onVerifyComplete();
+        }, 800);
       } else {
-        const newOtp = [...otp];
-        newOtp[index] = '';
-        setOtp(newOtp);
+        setMessage('Email is not verified yet. Click the link in your inbox, then try again.');
       }
+    } catch (error) {
+      setErrorMessage(getFriendlyAuthError(error));
+    } finally {
+      setIsChecking(false);
     }
   };
 
-  const handleVerifySubmit = (event) => {
-    event.preventDefault();
-    const enteredCode = otp.join('');
-    if (enteredCode.length < 6) return;
+  const handleResendClick = async () => {
+    if (resendCountdown > 0 || isResending) return;
 
-    setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
-      setIsVerified(true);
-      setTimeout(() => {
-        if (onVerifyComplete) {
-          onVerifyComplete();
-        }
-      }, 1000);
-    }, 1500);
-  };
+    setIsResending(true);
+    setMessage('');
+    setErrorMessage('');
 
-  const handleResendClick = () => {
-    if (resendCountdown > 0) return;
-    // Mock resend logic
-    setOtp(['', '', '', '', '', '']);
-    setResendCountdown(59);
-    inputRefs.current[0].focus();
+    try {
+      await resendEmailVerification();
+      setMessage('Verification email sent again.');
+      setResendCountdown(30);
+    } catch (error) {
+      setErrorMessage(getFriendlyAuthError(error));
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
     <div className="min-h-screen w-full flex bg-surface text-on-surface font-body-md overflow-hidden relative">
-      {/* Brand Sidebar (40%) */}
-      <aside className="w-[40%] h-full fixed left-0 top-0 gradient-bg-sidebar text-white flex flex-col border-r border-outline-variant py-xl px-lg z-40 overflow-hidden">
-        {/* WebGL Shader Background */}
+      <aside className="hidden lg:flex w-[40%] h-full fixed left-0 top-0 gradient-bg-sidebar text-white flex-col border-r border-outline-variant py-xl px-lg z-40 overflow-hidden">
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full -z-10 opacity-30 pointer-events-none"
         />
 
-        {/* Abstract Background Grid Pattern */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -218,7 +173,6 @@ void main() {
           </svg>
         </div>
 
-        {/* Brand Header */}
         <div className="flex items-center gap-md mb-xxl relative z-10">
           <img
             alt="Academent AI Logo"
@@ -235,36 +189,29 @@ void main() {
           </div>
         </div>
 
-        {/* Navigation Links */}
         <nav className="flex-1 flex flex-col gap-sm relative z-10">
-          <div className="flex items-center gap-md p-md rounded-xl text-white font-bold bg-white/10 border-r-4 border-tertiary-fixed-dim transition-all duration-200">
+          <div className="flex items-center gap-md p-md rounded-xl text-white font-bold bg-white/10 border-r-4 border-tertiary-fixed-dim">
             <span
               className="material-symbols-outlined"
               style={{ fontVariationSettings: '"FILL" 1' }}
             >
-              vibration
+              mail
             </span>
-            <span className="font-label-md text-label-md">Welcome</span>
+            <span className="font-label-md text-label-md">Verify Email</span>
           </div>
 
-          <div className="flex items-center gap-md p-md rounded-xl text-white/70 hover:bg-white/5 hover:text-white transition-colors cursor-pointer">
+          <div className="flex items-center gap-md p-md rounded-xl text-white/70">
             <span className="material-symbols-outlined">psychology</span>
             <span className="font-label-md text-label-md">Personalization</span>
           </div>
 
-          <div className="flex items-center gap-md p-md rounded-xl text-white/70 hover:bg-white/5 hover:text-white transition-colors cursor-pointer">
+          <div className="flex items-center gap-md p-md rounded-xl text-white/70">
             <span className="material-symbols-outlined">target</span>
             <span className="font-label-md text-label-md">Goals</span>
           </div>
-
-          <div className="flex items-center gap-md p-md rounded-xl text-white/70 hover:bg-white/5 hover:text-white transition-colors cursor-pointer">
-            <span className="material-symbols-outlined">verified</span>
-            <span className="font-label-md text-label-md">Complete</span>
-          </div>
         </nav>
 
-        {/* Brand Illustration Area */}
-        <div className="mt-auto relative rounded-2xl overflow-hidden aspect-square w-full relative z-10 border border-white/10 shadow-xl mb-4">
+        <div className="mt-auto relative rounded-2xl overflow-hidden aspect-square w-full z-10 border border-white/10 shadow-xl mb-4">
           <img
             alt="AI Assistant Illustration"
             className="w-full h-full object-cover rounded-2xl"
@@ -274,89 +221,76 @@ void main() {
         </div>
       </aside>
 
-      {/* Content Canvas (60%) */}
-      <section className="ml-[40%] w-[60%] h-full flex flex-col items-center justify-center p-xxl bg-white">
-        <form
-          onSubmit={handleVerifySubmit}
-          className="max-w-md w-full text-center space-y-xl animate-fade-in-up"
-        >
-          {/* Header Icon */}
+      <section className="w-full lg:ml-[40%] lg:w-[60%] min-h-screen flex flex-col items-center justify-center p-gutter md:p-xxl bg-white">
+        <div className="max-w-md w-full text-center space-y-xl animate-fade-in-up">
           <div className="mx-auto w-16 h-16 bg-surface-container-low rounded-full flex items-center justify-center mb-md shadow-inner">
             <span
               className="material-symbols-outlined text-primary text-4xl"
               style={{ fontVariationSettings: '"wght" 300' }}
             >
-              mail
+              mark_email_read
             </span>
           </div>
 
           <div className="space-y-sm">
-            <h2 className="font-display-lg text-display-lg text-primary">Verify Your Email</h2>
+            <h2 className="font-display-lg text-display-lg text-primary">Check Your Email</h2>
             <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed font-medium">
-              We've sent a 6-digit code to{' '}
+              We sent Firebase's verification link to{' '}
               <span className="font-bold text-on-surface">
-                {email || 'john.doe@university.edu'}
+                {email || 'your email address'}
               </span>
-              . <br />
-              Please enter it below to activate your account.
+              . Open that link, then come back here to continue.
             </p>
           </div>
 
-          {/* OTP Input Blocks */}
-          <div className="flex justify-between gap-xs sm:gap-sm py-lg">
-            {otp.map((val, index) => (
-              <input
-                key={index}
-                ref={(el) => (inputRefs.current[index] = el)}
-                value={val}
-                onChange={(e) => handleInputChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                className="otp-input w-12 h-16 sm:w-14 sm:h-20 text-center text-3xl font-bold bg-[#F9FAFB] border border-outline-variant rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
-                maxLength={1}
-                type="text"
-                pattern="\d*"
-                inputMode="numeric"
-              />
-            ))}
-          </div>
-
-          <div className="space-y-lg">
-            <button
-              disabled={isVerifying || otp.join('').length < 6}
-              type="submit"
-              className={`w-full py-lg rounded-xl gradient-button text-white font-label-md text-label-md text-lg shadow-xl shadow-primary/10 flex items-center justify-center font-bold ${
-                isVerified ? 'bg-[#e49f1d]' : ''
+          {(message || errorMessage) && (
+            <div
+              className={`rounded-2xl px-md py-sm font-label-md text-label-md ${
+                errorMessage ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'
               }`}
             >
-              {isVerifying ? (
+              {errorMessage || message}
+            </div>
+          )}
+
+          <div className="space-y-md">
+            <button
+              disabled={isChecking || isVerified}
+              type="button"
+              onClick={handleCheckVerification}
+              className="w-full py-lg rounded-xl gradient-button text-white font-label-md text-label-md text-lg shadow-xl shadow-primary/10 flex items-center justify-center font-bold"
+            >
+              {isChecking ? (
                 <span className="material-symbols-outlined animate-spin text-[24px]">sync</span>
               ) : isVerified ? (
-                'Email Confirmed!'
+                'Email Verified'
               ) : (
-                'Verify & Continue'
+                "I've Verified My Email"
               )}
             </button>
 
-            <div className="pt-md">
-              <p className="font-body-md text-body-md text-on-surface-variant font-semibold">
-                Didn't receive the code?{' '}
-                <button
-                  type="button"
-                  onClick={handleResendClick}
-                  disabled={resendCountdown > 0}
-                  className={`font-bold ml-xs transition-all ${
-                    resendCountdown > 0
-                      ? 'text-on-surface-variant/50 cursor-not-allowed'
-                      : 'text-secondary hover:underline'
-                  }`}
-                >
-                  {resendCountdown > 0 ? `Resend Code in ${resendCountdown}s` : 'Resend Code'}
-                </button>
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={handleResendClick}
+              disabled={resendCountdown > 0 || isResending}
+              className="w-full py-md rounded-xl bg-surface-container-low text-on-surface font-label-md text-label-md font-bold disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isResending
+                ? 'Sending...'
+                : resendCountdown > 0
+                  ? `Resend Email in ${resendCountdown}s`
+                  : 'Resend Verification Email'}
+            </button>
+
+            <button
+              type="button"
+              onClick={onBackToLogin}
+              className="text-primary font-label-md text-label-md font-bold hover:underline"
+            >
+              Back to Sign In
+            </button>
           </div>
 
-          {/* Assistance footer */}
           <div className="pt-xxl border-t border-outline-variant/30 mt-xxl">
             <div className="flex items-center justify-center gap-md text-on-surface-variant opacity-75">
               <span className="material-symbols-outlined text-outline">help_outline</span>
@@ -365,7 +299,7 @@ void main() {
               </span>
             </div>
           </div>
-        </form>
+        </div>
       </section>
     </div>
   );

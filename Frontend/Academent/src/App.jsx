@@ -3,6 +3,8 @@ import LoginPage from './pages/loginpage.jsx'
 import SignupPage from './pages/signuppage.jsx'
 import VerifyEmailPage from './pages/verifyemailpage.jsx'
 import AcademicProfilePage from './pages/academicprofilepage.jsx'
+import LearningGoalsPage from './pages/learninggoalspage.jsx'
+import FinalOnboardingPage from './pages/finalonboardingpage.jsx'
 
 function App() {
   const [screen, setScreen] = useState('login')
@@ -20,16 +22,32 @@ function App() {
   }
 
   if (screen === 'login') {
-    return <LoginPage onCreateAccount={() => transitionToScreen('signup')} />
+    return (
+      <LoginPage
+        onCreateAccount={() => transitionToScreen('signup')}
+        onLoginSuccess={(userEmail, isVerified) => {
+          setEmail(userEmail)
+          if (isVerified) {
+            transitionToScreen('academic-profile')
+          } else {
+            transitionToScreen('verify-email')
+          }
+        }}
+      />
+    )
   }
 
   if (screen === 'signup') {
     return (
       <SignupPage
         onSignIn={() => transitionToScreen('login')}
-        onSignupComplete={(userEmail) => {
+        onSignupComplete={(userEmail, isVerified) => {
           setEmail(userEmail)
-          transitionToScreen('verify-email')
+          if (isVerified) {
+            transitionToScreen('academic-profile')
+          } else {
+            transitionToScreen('verify-email')
+          }
         }}
       />
     )
@@ -49,6 +67,28 @@ function App() {
     return (
       <AcademicProfilePage
         onBack={() => transitionToScreen('verify-email')}
+        onComplete={() => {
+          transitionToScreen('learning-goals')
+        }}
+      />
+    )
+  }
+
+  if (screen === 'learning-goals') {
+    return (
+      <LearningGoalsPage
+        onBack={() => transitionToScreen('academic-profile')}
+        onComplete={() => {
+          transitionToScreen('final-onboarding')
+        }}
+      />
+    )
+  }
+
+  if (screen === 'final-onboarding') {
+    return (
+      <FinalOnboardingPage
+        onBack={() => transitionToScreen('learning-goals')}
         onComplete={() => {
           transitionToScreen('login')
         }}
