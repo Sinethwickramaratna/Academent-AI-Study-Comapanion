@@ -1,0 +1,41 @@
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.gradient-button {
+  background: linear-gradient(135deg, #4D2B8C 0%, #85409D 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gradient-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(77, 43, 140, 0.15);
+}
+
+.gradient-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.otp-input:focus {
+  border-color: #4D2B8C;
+  box-shadow: 0 0 0 4px rgba(77, 43, 140, 0.1);
+  outline: none;
+}
+
+.pro-button {
+  background: linear-gradient(135deg, #EEA727 0%, #E49F1D 100%);
+  color: #281800;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pro-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(228, 159, 29, 0.25);
+}
+
+.gradient-bg-sidebar {
+  background: linear-gradient(135deg, #4D2B8C 0%, #85409D 100%);
+}
