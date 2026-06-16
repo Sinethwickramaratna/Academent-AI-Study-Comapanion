@@ -1,12 +1,31 @@
 import { useState } from 'react'
 import './loginpage.css'
 import logo from '../assets/Logo/Logo.png'
+import { getFriendlyAuthError, signInWithGoogle } from '../Services/authService'
 
-function LoginPage({ onCreateAccount }) {
+function LoginPage({ onCreateAccount, onLoginSuccess }) {
 	const [showPassword, setShowPassword] = useState(false)
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [errorMessage, setErrorMessage] = useState('')
 
 	const handleSubmit = (event) => {
 		event.preventDefault()
+	}
+
+	const handleGoogleLogin = async () => {
+		setErrorMessage('')
+		setIsSubmitting(true)
+		try {
+			const userCredential = await signInWithGoogle()
+			const { user } = userCredential
+			setIsSubmitting(false)
+			if (onLoginSuccess) {
+				onLoginSuccess(user.email, user.emailVerified)
+			}
+		} catch (error) {
+			setIsSubmitting(false)
+			setErrorMessage(getFriendlyAuthError(error))
+		}
 	}
 
 	return (
@@ -114,8 +133,14 @@ function LoginPage({ onCreateAccount }) {
 							<span>Remember me for 30 days</span>
 						</label>
 
+						{errorMessage && (
+							<div className="login-page__error">
+								{errorMessage}
+							</div>
+						)}
+
 						<div className="login-page__actions">
-							<button className="login-page__primary" type="submit">
+							<button className="login-page__primary" type="submit" disabled={isSubmitting}>
 								Sign In
 								<span aria-hidden="true">→</span>
 							</button>
@@ -124,7 +149,12 @@ function LoginPage({ onCreateAccount }) {
 								<span>Or continue with</span>
 							</div>
 
-							<button className="login-page__google" type="button">
+							<button
+								onClick={handleGoogleLogin}
+								disabled={isSubmitting}
+								className="login-page__google"
+								type="button"
+							>
 								<svg aria-hidden="true" height="20" viewBox="0 0 24 24" width="20">
 									<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
 									<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />

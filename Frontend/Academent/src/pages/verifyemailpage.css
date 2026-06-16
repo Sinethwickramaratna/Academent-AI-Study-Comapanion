@@ -19,12 +19,6 @@
   cursor: not-allowed;
 }
 
-.otp-input:focus {
-  border-color: #4D2B8C;
-  box-shadow: 0 0 0 4px rgba(77, 43, 140, 0.1);
-  outline: none;
-}
-
 .pro-button {
   background: linear-gradient(135deg, #EEA727 0%, #E49F1D 100%);
   color: #281800;
