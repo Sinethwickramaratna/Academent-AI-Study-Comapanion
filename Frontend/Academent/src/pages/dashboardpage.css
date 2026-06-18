@@ -1,0 +1,36 @@
+/* Custom layout settings for the study companion dashboard */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9ff;
+}
+
+.dashboard-sidebar {
+  transition: all 0.3s ease-in-out;
+  box-shadow: 2px 0 10px rgba(18, 28, 42, 0.02);
+}
+
+.stat-card {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -10px rgba(54, 13, 117, 0.15);
+}
+
+/* Tab contents fade in animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

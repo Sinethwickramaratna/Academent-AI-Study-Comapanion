@@ -1,26 +1,72 @@
 import { useState } from 'react'
 import './loginpage.css'
 import logo from '../assets/Logo/Logo.png'
-import { getFriendlyAuthError, signInWithGoogle } from '../Services/authService'
+import { getFriendlyAuthError, signInWithGoogle, loginUser } from '../Services/authService'
+import { useAuth } from '../context/AuthContext'
 
+/**
+ * LoginPage component that handles user authentication.
+ * 
+ * @param {function} onCreateAccount - Callback function to transition to the signup screen.
+ * @param {function} onLoginSuccess - Callback function invoked upon successful authentication.
+ */
 function LoginPage({ onCreateAccount, onLoginSuccess }) {
+	const { handleManualSignIn } = useAuth()
+	// State to toggle password text visibility (show/hide)
 	const [showPassword, setShowPassword] = useState(false)
+	// State to show loading/disabled state on buttons during form submission
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	// Error message to display to the user if auth fails
 	const [errorMessage, setErrorMessage] = useState('')
 
-	const handleSubmit = (event) => {
+	/**
+	 * Form submit handler for traditional email/password login.
+	 */
+	const handleSubmit = async (event) => {
 		event.preventDefault()
+		const email = event.target.email.value
+		const password = event.target.password.value
+
+		if (!email || !password) {
+			setErrorMessage('Please enter both your email and password.')
+			return
+		}
+
+		setErrorMessage('')
+		setIsSubmitting(true)
+
+		try {
+			const userCredential = await loginUser(email, password)
+			const { user } = userCredential
+			setIsSubmitting(false)
+			if (onLoginSuccess) {
+				onLoginSuccess(user)
+			}
+		} catch (error) {
+			setIsSubmitting(false)
+			setErrorMessage(getFriendlyAuthError(error))
+		}
 	}
 
+
+	/**
+	 * Click handler to authenticate using Google OAuth.
+	 */
 	const handleGoogleLogin = async () => {
 		setErrorMessage('')
 		setIsSubmitting(true)
 		try {
-			const userCredential = await signInWithGoogle()
-			const { user } = userCredential
+			const { user, isNewUser } = await signInWithGoogle()
 			setIsSubmitting(false)
-			if (onLoginSuccess) {
-				onLoginSuccess(user.email, user.emailVerified)
+			if (isNewUser) {
+				setErrorMessage('Account created successfully! Please sign in again with Google to access your dashboard.')
+			} else {
+				// Trigger manual context sign-in for existing users
+				await handleManualSignIn(user)
+				if (onLoginSuccess) {
+					// Invoke callback to advance user to profile setup/home screen
+					onLoginSuccess(user)
+				}
 			}
 		} catch (error) {
 			setIsSubmitting(false)
@@ -29,6 +75,7 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 	}
 
 	return (
+
 		<main className="login-page">
 			<section className="login-page__hero">
 				<div className="login-page__heroGlow login-page__heroGlow--top" aria-hidden="true" />

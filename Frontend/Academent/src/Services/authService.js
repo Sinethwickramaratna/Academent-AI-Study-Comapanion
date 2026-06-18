@@ -14,16 +14,31 @@ import {
 import {
   doc,
   setDoc,
+  getDoc,
   serverTimestamp,
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase/firebase";
 
+/**
+ * Registers a new user with email and password.
+ * 1. Creates the user credentials in Firebase Auth.
+ * 2. Updates the auth profile display name.
+ * 3. Creates a corresponding document in the Firestore "users" collection.
+ * 4. Sends a verification email.
+ * If step 2 or 3 fails, the registered auth account is cleaned up (deleted) to prevent orphaned accounts.
+ * 
+ * @param {string} fullName - User's full name.
+ * @param {string} email - User's email address.
+ * @param {string} password - User's selected password.
+ * @returns {Promise<object>} The created Firebase User object.
+ */
 export const registerUser = async (
   fullName,
   email,
   password
 ) => {
+  // Create user in Firebase Auth
   const userCredential =
     await createUserWithEmailAndPassword(
       auth,
@@ -34,6 +49,7 @@ export const registerUser = async (
   const { user } = userCredential;
 
   try {
+    // Set the user's display name in Firebase Auth profile
     await updateProfile(
       user,
       {
@@ -41,6 +57,7 @@ export const registerUser = async (
       }
     );
 
+    // Save initial user profile details into Firestore
     await setDoc(
       doc(
         db,
@@ -59,8 +76,10 @@ export const registerUser = async (
       }
     );
 
+    // Trigger sending verification email from Firebase
     await sendEmailVerification(user);
   } catch (error) {
+    // Rollback: delete the Firebase Auth user if Firestore setup fails
     await deleteUser(user).catch(() => {});
     throw error;
   }
@@ -68,36 +87,60 @@ export const registerUser = async (
   return user;
 };
 
+/**
+ * Signs in a user using Google OAuth via a popup window.
+ * If the user is logging in for the first time, it initializes their Firestore profile.
+ * 
+ * @returns {Promise<object>} The UserCredential returned from Firebase.
+ */
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
-  const userCredential = await signInWithPopup(auth, provider);
-  const { user } = userCredential;
-  const additionalUserInfo = getAdditionalUserInfo(userCredential);
+  
+  // Flag that Google authentication is active to ignore transient signup states in context
+  sessionStorage.setItem("is_google_signup", "true");
 
-  if (additionalUserInfo?.isNewUser) {
-    try {
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
-          uid: user.uid,
-          fullName: (user.displayName || "").trim(),
-          email: user.email,
-          emailVerified: user.emailVerified,
-          role: "student",
-          onboardingCompleted: false,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        }
-      );
-    } catch (error) {
-      await deleteUser(user).catch(() => {});
-      throw error;
+  try {
+    // Open the Google login popup
+    const userCredential = await signInWithPopup(auth, provider);
+    const { user } = userCredential;
+    const additionalUserInfo = getAdditionalUserInfo(userCredential);
+    const isNewUser = Boolean(additionalUserInfo?.isNewUser);
+
+    // If this is a newly created user account, initialize their profile document in Firestore
+    if (isNewUser) {
+      try {
+        await setDoc(
+          doc(db, "users", user.uid),
+          {
+            uid: user.uid,
+            fullName: (user.displayName || "").trim(),
+            email: user.email,
+            emailVerified: user.emailVerified,
+            role: "student",
+            onboardingCompleted: false,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          }
+        );
+        // Immediately sign out to prevent auto-login redirection on signup
+        await signOut(auth);
+      } catch (error) {
+        // Rollback: delete the Firebase Auth user if Firestore setup fails
+        await deleteUser(user).catch(() => {});
+        throw error;
+      }
     }
-  }
 
-  return userCredential;
+    return { user, isNewUser };
+  } finally {
+    // Always clear the flag so standard auth state listener functions normally
+    sessionStorage.removeItem("is_google_signup");
+  }
 };
 
+/**
+ * Resends the verification link to the currently logged-in user's email address.
+ */
 export const resendEmailVerification = async () => {
   if (!auth.currentUser) {
     throw new Error("No signed-in user found.");
@@ -106,14 +149,22 @@ export const resendEmailVerification = async () => {
   await sendEmailVerification(auth.currentUser);
 };
 
+/**
+ * Reloads the current user's profile state from Firebase Auth to check for updated verification status.
+ * If verified, it updates the `emailVerified` flag to true inside the Firestore document.
+ * 
+ * @returns {Promise<boolean>} Resolves to true if the email is verified, false otherwise.
+ */
 export const refreshEmailVerificationStatus = async () => {
   if (!auth.currentUser) {
     throw new Error("No signed-in user found.");
   }
 
+  // Force-reload user object to fetch latest emailVerified flag
   await auth.currentUser.reload();
   const { currentUser } = auth;
 
+  // If user has successfully verified, update their Firestore record
   if (currentUser?.emailVerified) {
     await setDoc(
       doc(db, "users", currentUser.uid),
@@ -121,13 +172,18 @@ export const refreshEmailVerificationStatus = async () => {
         emailVerified: true,
         updatedAt: serverTimestamp(),
       },
-      { merge: true }
+      { merge: true } // Merge instead of overwriting the whole document
     );
   }
 
   return Boolean(currentUser?.emailVerified);
 };
 
+/**
+ * Updates or merges arbitrary user profile fields in Firestore.
+ * 
+ * @param {object} data - Key-value pairs of fields to update.
+ */
 export const updateUserProfileData = async (data) => {
   if (!auth.currentUser) {
     throw new Error("No signed-in user found.");
@@ -143,6 +199,13 @@ export const updateUserProfileData = async (data) => {
   );
 };
 
+/**
+ * Authenticates a user with email and password.
+ * 
+ * @param {string} email - User's email.
+ * @param {string} password - User's password.
+ * @returns {Promise<object>} The signed-in user's UserCredential object.
+ */
 export const loginUser = async (
   email,
   password
@@ -154,10 +217,18 @@ export const loginUser = async (
   );
 };
 
+/**
+ * Signs out the currently authenticated user from the application.
+ */
 export const logoutUser = async () => {
   await signOut(auth);
 };
 
+/**
+ * Triggers a password reset instruction email to the specified address.
+ * 
+ * @param {string} email - The email to send instructions to.
+ */
 export const resetPassword = async (
   email
 ) => {
@@ -167,6 +238,12 @@ export const resetPassword = async (
   );
 };
 
+/**
+ * Translates standard Firebase Auth error codes into human-readable user interface strings.
+ * 
+ * @param {object} error - The error object returned from Firebase client SDK.
+ * @returns {string} User-friendly error message.
+ */
 export const getFriendlyAuthError = (error) => {
   switch (error?.code) {
     case "auth/email-already-in-use":
@@ -185,3 +262,19 @@ export const getFriendlyAuthError = (error) => {
       return error?.message || "Something went wrong. Please try again.";
   }
 };
+
+/**
+ * Fetches the user profile document from the Firestore "users" collection.
+ * 
+ * @param {string} uid - User's unique identification code.
+ * @returns {Promise<object|null>} The user document data if exists, null otherwise.
+ */
+export const getUserProfileData = async (uid) => {
+  const userDocRef = doc(db, "users", uid);
+  const userDocSnap = await getDoc(userDocRef);
+  if (userDocSnap.exists()) {
+    return userDocSnap.data();
+  }
+  return null;
+};
+
