@@ -1,28 +1,36 @@
 import { useState, useEffect, useRef } from 'react';
 import './academicprofilepage.css';
 import logo from '../assets/Logo/Logo.png';
-import { getFriendlyAuthError, updateUserProfileData } from '../Services/authService';
+import { getFriendlyAuthError } from '../Services/authService';
+import image from "../assets/Images/screen_1.png"
 
-function AcademicProfilePage({ onBack, onComplete }) {
+/**
+ * AcademicProfilePage collects student profiling details (University, Degree, Major, Subjects, etc.)
+ * during the onboarding phase. Features a WebGL background and custom 3D card tilt effects.
+ * 
+ * @param {function} onBack - Callback when back navigation is requested.
+ * @param {function} onComplete - Callback when profiling is completed and saved.
+ */
+function AcademicProfilePage({ onBack, onComplete, initialData }) {
   const canvasRef = useRef(null);
   const cardRef = useRef(null);
 
-  // Form states
-  const [university, setUniversity] = useState('');
-  const [degree, setDegree] = useState('');
-  const [academicYear, setAcademicYear] = useState('Freshman (Year 1)');
-  const [major, setMajor] = useState('');
-  const [country, setCountry] = useState('United States');
-  const [language, setLanguage] = useState('English (US)');
-  const [selectedSubjects, setSelectedSubjects] = useState(['Computer Science']);
+  // Form input field states
+  const [university, setUniversity] = useState(initialData?.university || '');
+  const [degree, setDegree] = useState(initialData?.degree || '');
+  const [academicYear, setAcademicYear] = useState(initialData?.academicYear || 'Freshman (Year 1)');
+  const [major, setMajor] = useState(initialData?.major || '');
+  const [country, setCountry] = useState(initialData?.country || 'United States');
+  const [language, setLanguage] = useState(initialData?.language || 'English (US)');
+  const [selectedSubjects, setSelectedSubjects] = useState(initialData?.subjects || ['Computer Science']);
 
-  // UI States
+  // UI interaction states
   const [showToast, setShowToast] = useState(false);
   const [cardTransform, setCardTransform] = useState('rotateY(0deg) rotateX(0deg)');
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // WebGL Shader Background (Left Sidebar)
+  // WebGL Shader Background setup for the sidebar
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -32,6 +40,7 @@ function AcademicProfilePage({ onBack, onComplete }) {
 
     let animationFrameId;
 
+    // Synchronizes WebGL canvas resolution with its layout size
     function syncSize() {
       const w = canvas.clientWidth || 600;
       const h = canvas.clientHeight || 1080;
@@ -48,6 +57,7 @@ function AcademicProfilePage({ onBack, onComplete }) {
     }
     syncSize();
 
+    // Quad shader configuration
     const vs = `attribute vec2 a_position;
 varying vec2 v_texCoord;
 void main() {
@@ -62,7 +72,7 @@ varying vec2 v_texCoord;
 void main() {
     vec2 uv = v_texCoord;
     
-    // Create organic movement
+    // Create organic movement using time uniforms
     float noise = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
     noise *= cos(uv.y * 8.0 - u_time * 0.7) * 0.5 + 0.5;
     
@@ -75,7 +85,7 @@ void main() {
     vec3 finalColor = mix(color1, color2, uv.y + noise * 0.3);
     finalColor = mix(finalColor, accent, noise * 0.15);
     
-    // Subtle vignette
+    // Subtle vignette overlay
     float vignette = 1.0 - smoothstep(0.5, 1.5, length(uv - 0.5));
     finalColor *= vignette;
     
@@ -142,7 +152,10 @@ void main() {
     };
   }, []);
 
-  // Card 3D Depth Mousemove tilt effect
+  /**
+   * Generates a 3D tilt transformation rotation on the form card
+   * depending on the current relative mouse pointer position.
+   */
   const handleCardMouseMove = (e) => {
     const card = cardRef.current;
     if (!card) return;
@@ -152,11 +165,14 @@ void main() {
     setCardTransform(`rotateY(${x}deg) rotateX(${y}deg)`);
   };
 
+  /**
+   * Resets card transforms when the mouse leaves card bounds.
+   */
   const handleCardMouseLeave = () => {
     setCardTransform('rotateY(0deg) rotateX(0deg)');
   };
 
-  // Subjects data
+  // Subjects metadata list for profile selection tags
   const subjects = [
     { name: 'Mathematics', icon: 'functions' },
     { name: 'Physics', icon: 'biotech' },
@@ -171,6 +187,9 @@ void main() {
     { name: 'Statistics', icon: 'bar_chart' },
   ];
 
+  /**
+   * Selects or deselects academic subject tags.
+   */
   const toggleSubject = (subjectName) => {
     if (selectedSubjects.includes(subjectName)) {
       setSelectedSubjects(selectedSubjects.filter((s) => s !== subjectName));
@@ -179,37 +198,27 @@ void main() {
     }
   };
 
-  // Form submission handler
-  const handleFormSubmit = async (e) => {
+  /**
+   * Submits custom profile data to Firestore and advances onboarding flow.
+   */
+  const handleFormSubmit = (e) => {
     e.preventDefault();
-    setIsSaving(true);
-    setErrorMessage('');
+    
+    const data = {
+      university: university.trim(),
+      degree: degree.trim(),
+      academicYear,
+      major: major.trim(),
+      country,
+      language,
+      subjects: selectedSubjects,
+    };
 
-    try {
-      await updateUserProfileData({
-        academicProfile: {
-          university: university.trim(),
-          degree: degree.trim(),
-          academicYear,
-          major: major.trim(),
-          country,
-          language,
-          subjects: selectedSubjects,
-        },
-        onboardingStep: 'learning-goals',
-      });
-
-      setShowToast(true);
-      setShowToast(false);
-      if (onComplete) {
-        onComplete();
-      }
-    } catch (error) {
-      setErrorMessage(getFriendlyAuthError(error));
-    } finally {
-      setIsSaving(false);
+    if (onComplete) {
+      onComplete(data);
     }
   };
+
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-surface font-body-md text-on-surface antialiased overflow-x-hidden relative">
@@ -240,7 +249,7 @@ void main() {
           <img
             alt="Academent AI Illustration"
             className="w-full h-auto drop-shadow-2xl transform hover:scale-105 transition-transform duration-700"
-            src="https://lh3.googleusercontent.com/aida/AP1WRLvSl0MPtC06vfUDPhuQr0AwIWaQVDIZ6g_UXQmC49Q3SFb2EGFLV_Yu_uq3xdr0MYTI9a6pklGPv64NAitdMfxP4gVXdC-v057kg6NHIKTtjoItNpX4BtDLu6RSlviNYj8aEWQNSRhBXs_AM-NeD8owlPN4YCjJRDygW26bwWCDmIkqaxySJj7XhX4RbVAyHRNwWqxY5uQRfcUDOBlqgPikBD_oONEEVoSMH_83aemZXbOJ9Sxh48o5uhs"
+            src={image}
           />
           <div className="mt-xl text-white space-y-md">
             <h2 className="font-headline-lg text-headline-lg font-bold">Future of Learning</h2>
@@ -334,10 +343,12 @@ void main() {
               >
                 {/* University/School */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="university" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">school</span> University/School
                   </label>
                   <input
+                    id="university"
+                    name="university"
                     required
                     value={university}
                     onChange={(e) => setUniversity(e.target.value)}
@@ -349,10 +360,12 @@ void main() {
 
                 {/* Degree/Program */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="degree" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">workspace_premium</span> Degree/Program
                   </label>
                   <input
+                    id="degree"
+                    name="degree"
                     required
                     value={degree}
                     onChange={(e) => setDegree(e.target.value)}
@@ -364,10 +377,12 @@ void main() {
 
                 {/* Academic Year */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="academicYear" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">event</span> Academic Year
                   </label>
                   <select
+                    id="academicYear"
+                    name="academicYear"
                     value={academicYear}
                     onChange={(e) => setAcademicYear(e.target.value)}
                     className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none"
@@ -382,10 +397,12 @@ void main() {
 
                 {/* Major/Specialization */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="major" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">psychology</span> Major/Specialization
                   </label>
                   <input
+                    id="major"
+                    name="major"
                     required
                     value={major}
                     onChange={(e) => setMajor(e.target.value)}
@@ -397,10 +414,12 @@ void main() {
 
                 {/* Country */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="country" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">public</span> Country
                   </label>
                   <select
+                    id="country"
+                    name="country"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
                     className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none"
@@ -415,10 +434,12 @@ void main() {
 
                 {/* Preferred Language */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="language" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">translate</span> Preferred Language
                   </label>
                   <select
+                    id="language"
+                    name="language"
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
                     className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none"

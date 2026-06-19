@@ -2,30 +2,43 @@ import { useState, useEffect, useRef } from 'react';
 import './signuppage.css';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError, registerUser, signInWithGoogle } from '../Services/authService';
+import { useAuth } from '../context/AuthContext';
 
+/**
+ * SignupPage handles user registration via email/password or Google OAuth.
+ * Displays a custom animated WebGL shader sidebar and a password strength indicator.
+ * 
+ * @param {function} onSignIn - Callback to redirect to login.
+ * @param {function} onSignupComplete - Callback on successful sign up registration.
+ */
 function SignupPage({ onSignIn, onSignupComplete }) {
+  const { handleManualSignIn } = useAuth();
+  // Reference for the WebGL background canvas
   const canvasRef = useRef(null);
 
-  // Input states
+  // Input states for form fields
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // UI state management
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // WebGL Shader Background
+  // WebGL Shader Background animation effect
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Fetch WebGL drawing context
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (!gl) return;
 
     let animationFrameId;
 
+    // Rescale WebGL viewport and drawing buffer to align with layout CSS size
     function syncSize() {
       const w = canvas.clientWidth || 1280;
       const h = canvas.clientHeight || 720;
@@ -35,6 +48,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
       }
     }
 
+    // Monitor canvas container resizes
     let resizeObserver;
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(syncSize);
@@ -42,12 +56,15 @@ function SignupPage({ onSignIn, onSignupComplete }) {
     }
     syncSize();
 
+    // Quad rendering vertex shader
     const vs = `attribute vec2 a_position;
 varying vec2 v_texCoord;
 void main() {
   v_texCoord = a_position * 0.5 + 0.5;
   gl_Position = vec4(a_position, 0.0, 1.0);
 }`;
+
+    // Fragment shader creating a purple/amber fluid motion
     const fs = `precision highp float;
 uniform float u_time;
 uniform vec2 u_resolution;
@@ -56,7 +73,7 @@ varying vec2 v_texCoord;
 void main() {
     vec2 uv = v_texCoord;
     
-    // Create organic movement
+    // Create organic movement using sine/cosine noise calculations
     float noise = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
     noise *= cos(uv.y * 8.0 - u_time * 0.7) * 0.5 + 0.5;
     
@@ -69,13 +86,14 @@ void main() {
     vec3 finalColor = mix(color1, color2, uv.y + noise * 0.3);
     finalColor = mix(finalColor, accent, noise * 0.15);
     
-    // Subtle vignette
+    // Subtle vignette around borders
     float vignette = 1.0 - smoothstep(0.5, 1.5, length(uv - 0.5));
     finalColor *= vignette;
     
     gl_FragColor = vec4(finalColor, 1.0);
 }`;
 
+    // Helper to compile individual shader stages
     function cs(type, src) {
       const s = gl.createShader(type);
       gl.shaderSource(s, src);
@@ -83,12 +101,14 @@ void main() {
       return s;
     }
 
+    // Link vertex and fragment shader into a program
     const prog = gl.createProgram();
     gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
     gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
     gl.linkProgram(prog);
     gl.useProgram(prog);
 
+    // Setup coordinates for standard full-viewport triangle strip
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -97,12 +117,14 @@ void main() {
     gl.enableVertexAttribArray(pos);
     gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
 
+    // Get shader uniform locations
     const uTime = gl.getUniformLocation(prog, 'u_time');
     const uRes = gl.getUniformLocation(prog, 'u_resolution');
     const uMouse = gl.getUniformLocation(prog, 'u_mouse');
 
     let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
 
+    // Update mouse coordinate uniform relative to canvas boundaries
     const handleMouseMove = (event) => {
       const rect = canvas.getBoundingClientRect();
       if (rect.width && rect.height) {
@@ -115,6 +137,7 @@ void main() {
 
     window.addEventListener('mousemove', handleMouseMove);
 
+    // GL frame rendering function
     function render(t) {
       if (typeof ResizeObserver === 'undefined') syncSize();
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -127,6 +150,7 @@ void main() {
 
     animationFrameId = requestAnimationFrame(render);
 
+    // Clean up all events, animation frames, and resize observers
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('mousemove', handleMouseMove);
@@ -136,15 +160,20 @@ void main() {
     };
   }, []);
 
-  // Password strength calculation
+  /**
+   * Evaluates the complexity and length of the password.
+   * Returns a score, label description, and style color class.
+   * 
+   * @returns {object} { score, label, colorClass }
+   */
   const getPasswordStrength = () => {
     if (password.length === 0) {
       return { score: 0, label: 'Password strength', colorClass: 'bg-outline-variant' };
     }
     let score = 1;
-    if (password.length > 5) score = 2;
-    if (password.length > 8 && /[0-9]/.test(password)) score = 3;
-    if (password.length > 10 && /[A-Z]/.test(password) && /[^A-Za-z0-9]/.test(password)) score = 4;
+    if (password.length > 5) score = 2; // minimum length
+    if (password.length > 8 && /[0-9]/.test(password)) score = 3; // has digit
+    if (password.length > 10 && /[A-Z]/.test(password) && /[^A-Za-z0-9]/.test(password)) score = 4; // complex characters
 
     let label = 'Weak password';
     let colorClass = 'bg-error';
@@ -164,7 +193,9 @@ void main() {
 
   const { score, label, colorClass } = getPasswordStrength();
 
-  // Submit Handler
+  /**
+   * Main submit handler for creating a new user with Email and Password.
+   */
   const handleMainCTA = async (event) => {
     event.preventDefault();
 
@@ -172,12 +203,13 @@ void main() {
     setIsSubmitting(true);
 
     try {
+      // Call authentication service to register the user
       const user = await registerUser(fullName, email, password);
       setIsSubmitting(false);
       setIsSubmitted(true);
       setTimeout(() => {
         if (onSignupComplete) {
-          onSignupComplete(user.email || email);
+          onSignupComplete(user);
         }
       }, 1000);
     } catch (error) {
@@ -187,18 +219,28 @@ void main() {
     }
   };
 
+  /**
+   * Handler to sign up using Google popup authentication.
+   */
   const handleGoogleSignup = async () => {
     setErrorMessage('');
     setIsSubmitting(true);
 
     try {
-      const userCredential = await signInWithGoogle();
-      const { user } = userCredential;
+      const { user, isNewUser } = await signInWithGoogle();
       setIsSubmitting(false);
       setIsSubmitted(true);
-      setTimeout(() => {
-        if (onSignupComplete) {
-          onSignupComplete(user.email, user.emailVerified);
+      setTimeout(async () => {
+        if (isNewUser) {
+          if (onSignIn) {
+            onSignIn(); // Redirect user to the login page directly
+          }
+        } else {
+          // Trigger manual context sign-in for existing users
+          await handleManualSignIn(user);
+          if (onSignupComplete) {
+            onSignupComplete(user);
+          }
         }
       }, 1000);
     } catch (error) {
@@ -208,9 +250,10 @@ void main() {
     }
   };
 
+
   return (
     <div className="min-h-screen w-full flex items-stretch overflow-hidden bg-background font-body-md">
-      {/* Left Branding & Illustration Section (60%) */}
+      {/* Left Branding & Illustration Section (50%) */}
       <section className="hidden lg:flex w-[50%] relative gradient-bg overflow-hidden flex-col justify-between p-xxl">
         {/* WebGL Shader Background */}
         <canvas
@@ -243,7 +286,7 @@ void main() {
         </div>
 
         {/* Main Content */}
-        <div className="relative z-10 max-w-2xl mt-xl">
+        <div className="relative z-10 max-w-2xl mt-xl mb-[10px]">
           <h1 className="font-display-lg text-display-lg text-white mb-lg leading-tight">
             Start Learning<br />
             <span className="text-tertiary-fixed-dim">Smarter Today</span>
@@ -282,8 +325,8 @@ void main() {
           <div className="relative mt-xxl">
             <img
               alt="AI Learning Hub Illustration"
-              className="w-full h-auto drop-shadow-2xl"
-              src="https://lh3.googleusercontent.com/aida/AP1WRLvSl0MPtC06vfUDPhuQr0AwIWaQVDIZ6g_UXQmC49Q3SFb2EGFLV_Yu_uq3xdr0MYTI9a6pklGPv64NAitdMfxP4gVXdC-v057kg6NHIKTtjoItNpX4BtDLu6RSlviNYj8aEWQNSRhBXs_AM-NeD8owlPN4YCjJRDygW26bwWCDmIkqaxySJj7XhX4RbVAyHRNwWqxY5uQRfcUDOBlqgPikBD_oONEEVoSMH_83aemZXbOJ9Sxh48o5uhs"
+              className="w-4/5 h-auto drop-shadow-2xl"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkj33h6D2g47USm3BTh4VzuA111iK4ACG3usigVIwfGLHfi2xWsvi0AkXcOe7znjwiKzu_Xk8js_8wkQ8aM8i9-dUKfIu0hGXitlPPL6tTfQC4dSGY1aYEzCTx_KlDf8S_b-0EI3Qza29GnuHmJpgh88GCoG3C064oGNeHDeTACwvlw_XYeG9TGSYI1h9QgKoOao2JF8PXux-EFi9P59f2b2YIM_nQdfO4Hq1RxV_mqaRjAQp8geKAEEMORW5lMpGTHfbstJPSCxo"
             />
             {/* Floating Cards */}
             <div
@@ -358,12 +401,12 @@ void main() {
 
         {/* Bottom Text */}
         <p className="relative z-10 text-white/60 font-label-sm text-label-sm">
-          © 2024 Academent AI. Empowering students with enlightened intelligence.
+          © {new Date().getFullYear()} Academent AI. Empowering students with enlightened intelligence.
         </p>
       </section>
 
       {/* Right Sign-up Form Section (40%) */}
-      <section className="w-full lg:w-[40%] bg-surface flex flex-col items-center justify-center p-gutter md:p-xxl overflow-y-auto">
+      <section className="w-full lg:w-[50%] bg-surface flex flex-col items-center justify-center p-gutter md:p-xxl overflow-y-auto">
         <div className="lg:hidden flex items-center gap-3 mb-xl">
           <img alt="Academent AI Logo" className="h-8 w-8 object-contain" src={logo} />
           <span className="font-headline-md text-headline-md font-extrabold text-primary">
@@ -384,10 +427,13 @@ void main() {
           <div className="space-y-lg">
             {/* Account Details */}
             <div className="space-y-xs group">
-              <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
+              <label htmlFor="fullName" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
                 Full Name
               </label>
               <input
+                id="fullName"
+                name="fullName"
+                autoComplete="name"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -398,10 +444,13 @@ void main() {
             </div>
 
             <div className="space-y-xs group">
-              <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
+              <label htmlFor="email" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
                 Email Address
               </label>
               <input
+                id="email"
+                name="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -413,7 +462,7 @@ void main() {
 
             <div className="space-y-xs group">
               <div className="flex justify-between items-center">
-                <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
+                <label htmlFor="password" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
                   Password
                 </label>
                 <span
@@ -424,6 +473,9 @@ void main() {
                 </span>
               </div>
               <input
+                id="password"
+                name="password"
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

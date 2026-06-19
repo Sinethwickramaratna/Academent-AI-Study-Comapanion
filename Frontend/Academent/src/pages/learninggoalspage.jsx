@@ -1,23 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
 import './learninggoalspage.css';
 import logo from '../assets/Logo/Logo.png';
-import { getFriendlyAuthError, updateUserProfileData } from '../Services/authService';
+import { getFriendlyAuthError } from '../Services/authService';
 
-function LearningGoalsPage({ onBack, onComplete }) {
+
+/**
+ * LearningGoalsPage captures the user's preferred study style, goal set,
+ * and weekly commitment hours. Features WebGL and parallax decoration.
+ * 
+ * @param {function} onBack - Navigation back request callback.
+ * @param {function} onComplete - Proceeding navigation request callback on completion.
+ */
+function LearningGoalsPage({ onBack, onComplete, initialData }) {
   const canvasRef = useRef(null);
   const leftSectionRef = useRef(null);
 
-  // Form states
-  const [selectedGoals, setSelectedGoals] = useState(['explain']);
-  const [studyStyle, setStudyStyle] = useState('visual');
-  const [weeklyHours, setWeeklyHours] = useState('5-10');
+  // Form input field state hooks
+  const [selectedGoals, setSelectedGoals] = useState(initialData?.learningGoals || ['explain']);
+  const [studyStyle, setStudyStyle] = useState(initialData?.studyStyle || 'visual');
+  const [weeklyHours, setWeeklyHours] = useState(initialData?.weeklyHours || '5-10');
 
-  // UI States
+  // Parallax decoration offset state
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // WebGL Shader Background (Left Sidebar)
+  // WebGL Shader Background (Left Sidebar illustration)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -27,6 +35,7 @@ function LearningGoalsPage({ onBack, onComplete }) {
 
     let animationFrameId;
 
+    // Adjust internal canvas viewport drawing resolution
     function syncSize() {
       const w = canvas.clientWidth || 600;
       const h = canvas.clientHeight || 1080;
@@ -43,12 +52,15 @@ function LearningGoalsPage({ onBack, onComplete }) {
     }
     syncSize();
 
+    // Standard pass-through vertex attributes
     const vs = `attribute vec2 a_position;
 varying vec2 v_texCoord;
 void main() {
   v_texCoord = a_position * 0.5 + 0.5;
   gl_Position = vec4(a_position, 0.0, 1.0);
 }`;
+
+    // Fluid purple-accented WebGL procedural gradient
     const fs = `precision highp float;
 uniform float u_time;
 uniform vec2 u_resolution;
@@ -57,7 +69,7 @@ varying vec2 v_texCoord;
 void main() {
     vec2 uv = v_texCoord;
     
-    // Create organic movement
+    // Create organic movement noise calculations
     float noise = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
     noise *= cos(uv.y * 8.0 - u_time * 0.7) * 0.5 + 0.5;
     
@@ -137,7 +149,10 @@ void main() {
     };
   }, []);
 
-  // Parallax Image hover effect
+  /**
+   * Parallax image hover shift calculations.
+   * Modifies coordinate offset depending on cursor position.
+   */
   const handleLeftSectionMouseMove = (e) => {
     const rect = leftSectionRef.current.getBoundingClientRect();
     const centerX = rect.width / 2;
@@ -147,7 +162,7 @@ void main() {
     setParallaxOffset({ x: deltaX, y: deltaY });
   };
 
-  // Onboarding metadata lists
+  // Onboarding goals metadata lists
   const learningGoalsList = [
     { id: 'explain', icon: 'psychology', text: 'Explain difficult concepts' },
     { id: 'quizzes', icon: 'quiz', text: 'Generate quizzes from notes' },
@@ -160,6 +175,7 @@ void main() {
     { id: 'tutor', icon: 'smart_toy', text: 'AI Tutor support' },
   ];
 
+  // Available learning style options
   const studyStylesList = [
     { id: 'visual', label: 'Visual Learner' },
     { id: 'reading', label: 'Reading & Writing' },
@@ -167,6 +183,9 @@ void main() {
     { id: 'interactive', label: 'Interactive Learning' },
   ];
 
+  /**
+   * Toggles selection of specific goals from the goals grid array.
+   */
   const toggleGoal = (goalId) => {
     if (selectedGoals.includes(goalId)) {
       setSelectedGoals(selectedGoals.filter((id) => id !== goalId));
@@ -175,29 +194,20 @@ void main() {
     }
   };
 
-  const handleContinue = async (e) => {
+  /**
+   * Handles profile update submittal and routes transition.
+   */
+  const handleContinue = (e) => {
     e.preventDefault();
+    
+    const data = {
+      learningGoals: selectedGoals,
+      studyStyle,
+      weeklyHours,
+    };
 
-    setIsSaving(true);
-    setErrorMessage('');
-
-    try {
-      await updateUserProfileData({
-        learningPreferences: {
-          learningGoals: selectedGoals,
-          studyStyle,
-          weeklyHours,
-        },
-        onboardingStep: 'academic-goals',
-      });
-
-      if (onComplete) {
-        onComplete();
-      }
-    } catch (error) {
-      setErrorMessage(getFriendlyAuthError(error));
-    } finally {
-      setIsSaving(false);
+    if (onComplete) {
+      onComplete(data);
     }
   };
 
@@ -330,8 +340,10 @@ void main() {
                   {learningGoalsList.map((goal) => {
                     const isChecked = selectedGoals.includes(goal.id);
                     return (
-                      <label key={goal.id} className="cursor-pointer group">
+                      <label key={goal.id} htmlFor={goal.id} className="cursor-pointer group">
                         <input
+                          id={goal.id}
+                          name="learningGoals"
                           checked={isChecked}
                           onChange={() => toggleGoal(goal.id)}
                           className="hidden"
@@ -364,8 +376,9 @@ void main() {
                   {studyStylesList.map((style) => {
                     const isChecked = studyStyle === style.id;
                     return (
-                      <label key={style.id} className="cursor-pointer group">
+                      <label key={style.id} htmlFor={style.id} className="cursor-pointer group">
                         <input
+                          id={style.id}
                           checked={isChecked}
                           onChange={() => setStudyStyle(style.id)}
                           className="hidden"
@@ -393,7 +406,7 @@ void main() {
                 <div className="relative max-w-sm group">
                   <label
                     className="block font-label-sm text-label-sm text-on-surface-variant mb-xs ml-md font-semibold"
-                    for="study-time"
+                    htmlFor="study-time"
                   >
                     How many hours do you study weekly?
                   </label>

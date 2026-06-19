@@ -2,22 +2,31 @@ import { useState, useEffect, useRef } from 'react';
 import './finalonboardingpage.css';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError, updateUserProfileData } from '../Services/authService';
+import { useAuth } from '../context/AuthContext';
 
-function FinalOnboardingPage({ onBack, onComplete }) {
+/**
+ * FinalOnboardingPage captures final profiling items (Academic goals, Target GPA, Primary goal).
+ * Once completed, the student's onboarding completion status is saved.
+ * 
+ * @param {function} onBack - Navigation back request callback.
+ * @param {function} onComplete - Navigation request callback upon complete profile submission.
+ */
+function FinalOnboardingPage({ onBack, onComplete, academicProfileData, learningPreferencesData }) {
+  const { refreshProfile } = useAuth();
   const canvasRef = useRef(null);
   const leftSectionRef = useRef(null);
 
-  // Form states
+  // Form input field state hooks
   const [selectedGoals, setSelectedGoals] = useState(['grades', 'complete']);
   const [targetGpa, setTargetGpa] = useState('');
   const [primaryGoal, setPrimaryGoal] = useState('Pass Upcoming Exams');
 
-  // Parallax offset
+  // Parallax decoration offset state
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // WebGL Shader Background (Left Sidebar)
+  // WebGL Shader Background (Left Sidebar illustration)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -27,6 +36,7 @@ function FinalOnboardingPage({ onBack, onComplete }) {
 
     let animationFrameId;
 
+    // Synchronizes the drawing buffer dimension with layout size
     function syncSize() {
       const w = canvas.clientWidth || 600;
       const h = canvas.clientHeight || 1080;
@@ -43,12 +53,15 @@ function FinalOnboardingPage({ onBack, onComplete }) {
     }
     syncSize();
 
+    // Coordinate mapping vertex shader
     const vs = `attribute vec2 a_position;
 varying vec2 v_texCoord;
 void main() {
   v_texCoord = a_position * 0.5 + 0.5;
   gl_Position = vec4(a_position, 0.0, 1.0);
 }`;
+
+    // Procedural color noise fragment shader
     const fs = `precision highp float;
 uniform float u_time;
 uniform vec2 u_resolution;
@@ -57,7 +70,7 @@ varying vec2 v_texCoord;
 void main() {
     vec2 uv = v_texCoord;
     
-    // Create organic movement
+    // Create organic movement using time uniforms
     float noise = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
     noise *= cos(uv.y * 8.0 - u_time * 0.7) * 0.5 + 0.5;
     
@@ -137,7 +150,9 @@ void main() {
     };
   }, []);
 
-  // Parallax hover effect
+  /**
+   * Calculates parallax offsets based on mouse moves.
+   */
   const handleLeftSectionMouseMove = (e) => {
     const rect = leftSectionRef.current.getBoundingClientRect();
     const centerX = rect.width / 2;
@@ -147,7 +162,7 @@ void main() {
     setParallaxOffset({ x: deltaX, y: deltaY });
   };
 
-  // Onboarding goals metadata
+  // Academic goals metadata checklist options
   const goalsList = [
     { id: 'grades', icon: 'trending_up', label: 'Improve Grades' },
     { id: 'exams', icon: 'edit_note', label: 'Prepare for Exams' },
@@ -157,6 +172,9 @@ void main() {
     { id: 'habits', icon: 'history_edu', label: 'Study Habits' },
   ];
 
+  /**
+   * Selection toggler for academic goals.
+   */
   const toggleGoal = (goalId) => {
     if (selectedGoals.includes(goalId)) {
       setSelectedGoals(selectedGoals.filter((id) => id !== goalId));
@@ -165,6 +183,9 @@ void main() {
     }
   };
 
+  /**
+   * Main submit handler for saving profile data and completing onboarding.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -173,14 +194,18 @@ void main() {
 
     try {
       await updateUserProfileData({
+        academicProfile: academicProfileData,
+        learningPreferences: learningPreferencesData,
         academicGoals: {
           goals: selectedGoals,
           targetGpa: targetGpa.trim(),
           primaryGoal,
         },
-        onboardingCompleted: true,
+        onboardingCompleted: true, // Marks user onboarding completion flag to true
         onboardingStep: 'complete',
       });
+
+      await refreshProfile();
 
       if (onComplete) {
         onComplete();
@@ -191,6 +216,7 @@ void main() {
       setIsSaving(false);
     }
   };
+
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-surface text-on-surface font-body-md overflow-x-hidden relative">
@@ -309,8 +335,9 @@ void main() {
               {goalsList.map((goal) => {
                 const isChecked = selectedGoals.includes(goal.id);
                 return (
-                  <label key={goal.id} className="cursor-pointer group">
+                  <label key={goal.id} htmlFor={goal.id} className="cursor-pointer group">
                     <input
+                      id={goal.id}
                       checked={isChecked}
                       onChange={() => toggleGoal(goal.id)}
                       className="hidden goal-card-radio"
@@ -336,10 +363,12 @@ void main() {
             {/* Input Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-lg pt-md">
               <div className="space-y-xs group">
-                <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
+                <label htmlFor="targetGpa" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
                   Target GPA
                 </label>
                 <input
+                  id="targetGpa"
+                  name="targetGpa"
                   value={targetGpa}
                   onChange={(e) => setTargetGpa(e.target.value)}
                   className="w-full bg-surface-container-low border-none rounded-xl px-lg py-md focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md input-focus"
@@ -349,11 +378,13 @@ void main() {
               </div>
 
               <div className="space-y-xs group">
-                <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
+                <label htmlFor="primaryGoal" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
                   Primary Goal
                 </label>
                 <div className="relative">
                   <select
+                    id="primaryGoal"
+                    name="primaryGoal"
                     value={primaryGoal}
                     onChange={(e) => setPrimaryGoal(e.target.value)}
                     className="w-full bg-surface-container-low border-none rounded-xl px-lg py-md focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer font-body-md input-focus font-medium"
