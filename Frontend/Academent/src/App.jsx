@@ -8,6 +8,7 @@ import AcademicProfilePage from './pages/academicprofilepage.jsx'
 import LearningGoalsPage from './pages/learninggoalspage.jsx'
 import FinalOnboardingPage from './pages/finalonboardingpage.jsx'
 import DashboardPage from './pages/dashboardpage.jsx'
+import ResetPasswordPage from './pages/resetpasswordpage.jsx'
 // Import ProtectedRoute component to shield authenticated-only routes
 import ProtectedRoute from './routes/ProtectedRoutes.jsx'
 // Import PublicRoute component to shield public-only routes
@@ -16,6 +17,7 @@ import PublicRoute from './routes/PublicRoute.jsx'
 import { useAuth } from './context/AuthContext'
 // Import service logic to check Firestore onboarding status
 import { logoutUser } from './Services/authService'
+
 
 /**
  * Main application component setting up router paths and transitions.
@@ -37,9 +39,13 @@ function App() {
    */
   const transitionToScreen = (nextScreen) => {
     if (typeof document.startViewTransition === 'function') {
-      document.startViewTransition(() => {
+      const transition = document.startViewTransition(() => {
         navigate(nextScreen)
       })
+      // Catch skip/abort rejections to prevent console error logs
+      transition.ready.catch(() => {})
+      transition.updateCallbackDone.catch(() => {})
+      transition.finished.catch(() => {})
       return
     }
 
@@ -53,6 +59,9 @@ function App() {
    */
   const handleAuthSuccess = (user) => {
     setEmail(user.email)
+    if (user && !user.emailVerified) {
+      transitionToScreen('/verify-email')
+    }
   }
 
   return (
@@ -183,6 +192,12 @@ function App() {
             <DashboardPage />
           </ProtectedRoute>
         }
+      />
+
+      {/* Reset Password: User to reset their password */}
+      <Route
+        path="/reset-password"
+        element={<ResetPasswordPage />}
       />
     </Routes>
   )

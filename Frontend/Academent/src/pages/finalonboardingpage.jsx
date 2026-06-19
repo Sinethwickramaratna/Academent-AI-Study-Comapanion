@@ -335,8 +335,9 @@ void main() {
               {goalsList.map((goal) => {
                 const isChecked = selectedGoals.includes(goal.id);
                 return (
-                  <label key={goal.id} className="cursor-pointer group">
+                  <label key={goal.id} htmlFor={goal.id} className="cursor-pointer group">
                     <input
+                      id={goal.id}
                       checked={isChecked}
                       onChange={() => toggleGoal(goal.id)}
                       className="hidden goal-card-radio"
@@ -362,10 +363,12 @@ void main() {
             {/* Input Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-lg pt-md">
               <div className="space-y-xs group">
-                <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
+                <label htmlFor="targetGpa" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
                   Target GPA
                 </label>
                 <input
+                  id="targetGpa"
+                  name="targetGpa"
                   value={targetGpa}
                   onChange={(e) => setTargetGpa(e.target.value)}
                   className="w-full bg-surface-container-low border-none rounded-xl px-lg py-md focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md input-focus"
@@ -375,11 +378,13 @@ void main() {
               </div>
 
               <div className="space-y-xs group">
-                <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
+                <label htmlFor="primaryGoal" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
                   Primary Goal
                 </label>
                 <div className="relative">
                   <select
+                    id="primaryGoal"
+                    name="primaryGoal"
                     value={primaryGoal}
                     onChange={(e) => setPrimaryGoal(e.target.value)}
                     className="w-full bg-surface-container-low border-none rounded-xl px-lg py-md focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer font-body-md input-focus font-medium"

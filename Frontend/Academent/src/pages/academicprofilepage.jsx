@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import './academicprofilepage.css';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError } from '../Services/authService';
+import image from "../assets/Images/screen_1.png"
 
 /**
  * AcademicProfilePage collects student profiling details (University, Degree, Major, Subjects, etc.)
@@ -248,7 +249,7 @@ void main() {
           <img
             alt="Academent AI Illustration"
             className="w-full h-auto drop-shadow-2xl transform hover:scale-105 transition-transform duration-700"
-            src="https://lh3.googleusercontent.com/aida/AP1WRLvSl0MPtC06vfUDPhuQr0AwIWaQVDIZ6g_UXQmC49Q3SFb2EGFLV_Yu_uq3xdr0MYTI9a6pklGPv64NAitdMfxP4gVXdC-v057kg6NHIKTtjoItNpX4BtDLu6RSlviNYj8aEWQNSRhBXs_AM-NeD8owlPN4YCjJRDygW26bwWCDmIkqaxySJj7XhX4RbVAyHRNwWqxY5uQRfcUDOBlqgPikBD_oONEEVoSMH_83aemZXbOJ9Sxh48o5uhs"
+            src={image}
           />
           <div className="mt-xl text-white space-y-md">
             <h2 className="font-headline-lg text-headline-lg font-bold">Future of Learning</h2>
@@ -342,10 +343,12 @@ void main() {
               >
                 {/* University/School */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="university" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">school</span> University/School
                   </label>
                   <input
+                    id="university"
+                    name="university"
                     required
                     value={university}
                     onChange={(e) => setUniversity(e.target.value)}
@@ -357,10 +360,12 @@ void main() {
 
                 {/* Degree/Program */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="degree" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">workspace_premium</span> Degree/Program
                   </label>
                   <input
+                    id="degree"
+                    name="degree"
                     required
                     value={degree}
                     onChange={(e) => setDegree(e.target.value)}
@@ -372,10 +377,12 @@ void main() {
 
                 {/* Academic Year */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="academicYear" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">event</span> Academic Year
                   </label>
                   <select
+                    id="academicYear"
+                    name="academicYear"
                     value={academicYear}
                     onChange={(e) => setAcademicYear(e.target.value)}
                     className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none"
@@ -390,10 +397,12 @@ void main() {
 
                 {/* Major/Specialization */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="major" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">psychology</span> Major/Specialization
                   </label>
                   <input
+                    id="major"
+                    name="major"
                     required
                     value={major}
                     onChange={(e) => setMajor(e.target.value)}
@@ -405,10 +414,12 @@ void main() {
 
                 {/* Country */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="country" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">public</span> Country
                   </label>
                   <select
+                    id="country"
+                    name="country"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
                     className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none"
@@ -423,10 +434,12 @@ void main() {
 
                 {/* Preferred Language */}
                 <div className="space-y-xs group">
-                  <label className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
+                  <label htmlFor="language" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
                     <span className="material-symbols-outlined text-[18px]">translate</span> Preferred Language
                   </label>
                   <select
+                    id="language"
+                    name="language"
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
                     className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none"

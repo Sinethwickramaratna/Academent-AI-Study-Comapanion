@@ -3,6 +3,7 @@ import './learninggoalspage.css';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError } from '../Services/authService';
 
+
 /**
  * LearningGoalsPage captures the user's preferred study style, goal set,
  * and weekly commitment hours. Features WebGL and parallax decoration.
@@ -339,8 +340,10 @@ void main() {
                   {learningGoalsList.map((goal) => {
                     const isChecked = selectedGoals.includes(goal.id);
                     return (
-                      <label key={goal.id} className="cursor-pointer group">
+                      <label key={goal.id} htmlFor={goal.id} className="cursor-pointer group">
                         <input
+                          id={goal.id}
+                          name="learningGoals"
                           checked={isChecked}
                           onChange={() => toggleGoal(goal.id)}
                           className="hidden"
@@ -373,8 +376,9 @@ void main() {
                   {studyStylesList.map((style) => {
                     const isChecked = studyStyle === style.id;
                     return (
-                      <label key={style.id} className="cursor-pointer group">
+                      <label key={style.id} htmlFor={style.id} className="cursor-pointer group">
                         <input
+                          id={style.id}
                           checked={isChecked}
                           onChange={() => setStudyStyle(style.id)}
                           className="hidden"
@@ -402,7 +406,7 @@ void main() {
                 <div className="relative max-w-sm group">
                   <label
                     className="block font-label-sm text-label-sm text-on-surface-variant mb-xs ml-md font-semibold"
-                    for="study-time"
+                    htmlFor="study-time"
                   >
                     How many hours do you study weekly?
                   </label>

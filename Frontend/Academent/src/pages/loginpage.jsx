@@ -136,11 +136,12 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 					</div>
 
 					<form className="login-page__form" onSubmit={handleSubmit}>
-						<label className="login-page__field">
+						<label htmlFor="loginEmail" className="login-page__field">
 							<span>Email Address</span>
 							<div className="login-page__inputWrap">
 								<span className="login-page__icon" aria-hidden="true">@</span>
 								<input
+									id="loginEmail"
 									autoComplete="email"
 									name="email"
 									placeholder="name@university.edu"
@@ -152,7 +153,7 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 						<div className="login-page__field">
 							<div className="login-page__fieldRow">
 								<label htmlFor="password">Password</label>
-								<a href="#">Forgot Password?</a>
+								<a href="/reset-password">Forgot Password?</a>
 							</div>
 
 							<div className="login-page__inputWrap">
@@ -175,8 +176,8 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 							</div>
 						</div>
 
-						<label className="login-page__remember">
-							<input name="remember" type="checkbox" />
+						<label htmlFor="remember" className="login-page__remember">
+							<input id="remember" name="remember" type="checkbox" />
 							<span>Remember me for 30 days</span>
 						</label>
 

@@ -7,6 +7,7 @@ import {
   resendEmailVerification,
 } from '../Services/authService';
 import { auth } from '../firebase/firebase';
+import image from '../assets/Images/screen.png'
 
 /**
  * VerifyEmailPage component checks if the user has verified their email address.
@@ -234,7 +235,7 @@ void main() {
           </div>
         </div>
 
-        <nav className="flex-1 flex flex-col gap-sm relative z-10">
+        <nav className="flex-1 flex flex-col gap-sm relative z-10 mb-[20px]">
           <div className="flex items-center gap-md p-md rounded-xl text-white font-bold bg-white/10 border-r-4 border-tertiary-fixed-dim">
             <span
               className="material-symbols-outlined"
@@ -244,7 +245,7 @@ void main() {
             </span>
             <span className="font-label-md text-label-md">Verify Email</span>
           </div>
-
+          {/*
           <div className="flex items-center gap-md p-md rounded-xl text-white/70">
             <span className="material-symbols-outlined">psychology</span>
             <span className="font-label-md text-label-md">Personalization</span>
@@ -254,13 +255,14 @@ void main() {
             <span className="material-symbols-outlined">target</span>
             <span className="font-label-md text-label-md">Goals</span>
           </div>
+          */}
         </nav>
 
         <div className="mt-auto relative rounded-2xl overflow-hidden aspect-square w-full z-10 border border-white/10 shadow-xl mb-4">
           <img
             alt="AI Assistant Illustration"
             className="w-full h-full object-cover rounded-2xl"
-            src="https://lh3.googleusercontent.com/aida/AP1WRLvdEogNMmrCLINH41zVgEorhMCBK1kIxFntxQb736WEzOsDoX17tdJ6o2M8tIgXNUnJOe2QSZNjPBLdyBrBkOOsWjRgCanU25_BxajSozN9EHwP58Ij9Izl3IKzsfRDPelzUEcC7GxmQCyXP3qrOCVI2AGavB0_y_AoUhlJZpb7BXjsJhzRQWBTl9rh5Ho6ei94KryltshQYIZp3KxIqgOMBUhuGh45a7dcE-iG24o5UJHT0bDN5Fym7Hw"
+            src={image}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent"></div>
         </div>

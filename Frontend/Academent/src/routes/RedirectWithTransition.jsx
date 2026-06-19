@@ -10,9 +10,14 @@ const RedirectWithTransition = ({ to, replace = true }) => {
 
   useEffect(() => {
     if (typeof document.startViewTransition === "function") {
-      document.startViewTransition(() => {
+      const transition = document.startViewTransition(() => {
         navigate(to, { replace });
       });
+      
+      // Catch skip/abort rejections to prevent console error logs
+      transition.ready.catch(() => {});
+      transition.updateCallbackDone.catch(() => {});
+      transition.finished.catch(() => {});
     } else {
       navigate(to, { replace });
     }

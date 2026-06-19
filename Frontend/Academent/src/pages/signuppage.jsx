@@ -253,7 +253,7 @@ void main() {
 
   return (
     <div className="min-h-screen w-full flex items-stretch overflow-hidden bg-background font-body-md">
-      {/* Left Branding & Illustration Section (60%) */}
+      {/* Left Branding & Illustration Section (50%) */}
       <section className="hidden lg:flex w-[50%] relative gradient-bg overflow-hidden flex-col justify-between p-xxl">
         {/* WebGL Shader Background */}
         <canvas
@@ -286,7 +286,7 @@ void main() {
         </div>
 
         {/* Main Content */}
-        <div className="relative z-10 max-w-2xl mt-xl">
+        <div className="relative z-10 max-w-2xl mt-xl mb-[10px]">
           <h1 className="font-display-lg text-display-lg text-white mb-lg leading-tight">
             Start Learning<br />
             <span className="text-tertiary-fixed-dim">Smarter Today</span>
@@ -325,8 +325,8 @@ void main() {
           <div className="relative mt-xxl">
             <img
               alt="AI Learning Hub Illustration"
-              className="w-full h-auto drop-shadow-2xl"
-              src="https://lh3.googleusercontent.com/aida/AP1WRLvSl0MPtC06vfUDPhuQr0AwIWaQVDIZ6g_UXQmC49Q3SFb2EGFLV_Yu_uq3xdr0MYTI9a6pklGPv64NAitdMfxP4gVXdC-v057kg6NHIKTtjoItNpX4BtDLu6RSlviNYj8aEWQNSRhBXs_AM-NeD8owlPN4YCjJRDygW26bwWCDmIkqaxySJj7XhX4RbVAyHRNwWqxY5uQRfcUDOBlqgPikBD_oONEEVoSMH_83aemZXbOJ9Sxh48o5uhs"
+              className="w-4/5 h-auto drop-shadow-2xl"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkj33h6D2g47USm3BTh4VzuA111iK4ACG3usigVIwfGLHfi2xWsvi0AkXcOe7znjwiKzu_Xk8js_8wkQ8aM8i9-dUKfIu0hGXitlPPL6tTfQC4dSGY1aYEzCTx_KlDf8S_b-0EI3Qza29GnuHmJpgh88GCoG3C064oGNeHDeTACwvlw_XYeG9TGSYI1h9QgKoOao2JF8PXux-EFi9P59f2b2YIM_nQdfO4Hq1RxV_mqaRjAQp8geKAEEMORW5lMpGTHfbstJPSCxo"
             />
             {/* Floating Cards */}
             <div
@@ -401,12 +401,12 @@ void main() {
 
         {/* Bottom Text */}
         <p className="relative z-10 text-white/60 font-label-sm text-label-sm">
-          © 2024 Academent AI. Empowering students with enlightened intelligence.
+          © {new Date().getFullYear()} Academent AI. Empowering students with enlightened intelligence.
         </p>
       </section>
 
       {/* Right Sign-up Form Section (40%) */}
-      <section className="w-full lg:w-[40%] bg-surface flex flex-col items-center justify-center p-gutter md:p-xxl overflow-y-auto">
+      <section className="w-full lg:w-[50%] bg-surface flex flex-col items-center justify-center p-gutter md:p-xxl overflow-y-auto">
         <div className="lg:hidden flex items-center gap-3 mb-xl">
           <img alt="Academent AI Logo" className="h-8 w-8 object-contain" src={logo} />
           <span className="font-headline-md text-headline-md font-extrabold text-primary">
@@ -427,10 +427,13 @@ void main() {
           <div className="space-y-lg">
             {/* Account Details */}
             <div className="space-y-xs group">
-              <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
+              <label htmlFor="fullName" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
                 Full Name
               </label>
               <input
+                id="fullName"
+                name="fullName"
+                autoComplete="name"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -441,10 +444,13 @@ void main() {
             </div>
 
             <div className="space-y-xs group">
-              <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
+              <label htmlFor="email" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
                 Email Address
               </label>
               <input
+                id="email"
+                name="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -456,7 +462,7 @@ void main() {
 
             <div className="space-y-xs group">
               <div className="flex justify-between items-center">
-                <label className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
+                <label htmlFor="password" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
                   Password
                 </label>
                 <span
@@ -467,6 +473,9 @@ void main() {
                 </span>
               </div>
               <input
+                id="password"
+                name="password"
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
