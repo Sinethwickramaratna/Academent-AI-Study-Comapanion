@@ -49,24 +49,17 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 	}
 
 
-	/**
-	 * Click handler to authenticate using Google OAuth.
-	 */
 	const handleGoogleLogin = async () => {
 		setErrorMessage('')
 		setIsSubmitting(true)
 		try {
-			const { user, isNewUser } = await signInWithGoogle()
+			const { user, isNewUser } = await signInWithGoogle(false)
 			setIsSubmitting(false)
-			if (isNewUser) {
-				setErrorMessage('Account created successfully! Please sign in again with Google to access your dashboard.')
-			} else {
-				// Trigger manual context sign-in for existing users
-				await handleManualSignIn(user)
-				if (onLoginSuccess) {
-					// Invoke callback to advance user to profile setup/home screen
-					onLoginSuccess(user)
-				}
+			// Trigger manual context sign-in
+			await handleManualSignIn(user)
+			if (onLoginSuccess) {
+				// Invoke callback to advance user to profile setup/home screen
+				onLoginSuccess(user)
 			}
 		} catch (error) {
 			setIsSubmitting(false)

@@ -93,7 +93,7 @@ export const registerUser = async (
  * 
  * @returns {Promise<object>} The UserCredential returned from Firebase.
  */
-export const signInWithGoogle = async () => {
+export const signInWithGoogle = async (isSignup = false) => {
   const provider = new GoogleAuthProvider();
   
   // Flag that Google authentication is active to ignore transient signup states in context
@@ -122,13 +122,16 @@ export const signInWithGoogle = async () => {
             updatedAt: serverTimestamp(),
           }
         );
-        // Immediately sign out to prevent auto-login redirection on signup
-        await signOut(auth);
       } catch (error) {
         // Rollback: delete the Firebase Auth user if Firestore setup fails
         await deleteUser(user).catch(() => {});
         throw error;
       }
+    }
+
+    // Immediately sign out if this is a signup action to prevent auto-login redirection
+    if (isSignup) {
+      await signOut(auth);
     }
 
     return { user, isNewUser };

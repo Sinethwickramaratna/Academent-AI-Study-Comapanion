@@ -219,28 +219,17 @@ void main() {
     }
   };
 
-  /**
-   * Handler to sign up using Google popup authentication.
-   */
   const handleGoogleSignup = async () => {
     setErrorMessage('');
     setIsSubmitting(true);
 
     try {
-      const { user, isNewUser } = await signInWithGoogle();
+      const { user, isNewUser } = await signInWithGoogle(true);
       setIsSubmitting(false);
       setIsSubmitted(true);
       setTimeout(async () => {
-        if (isNewUser) {
-          if (onSignIn) {
-            onSignIn(); // Redirect user to the login page directly
-          }
-        } else {
-          // Trigger manual context sign-in for existing users
-          await handleManualSignIn(user);
-          if (onSignupComplete) {
-            onSignupComplete(user);
-          }
+        if (onSignIn) {
+          onSignIn(); // Redirect user to the login page directly
         }
       }, 1000);
     } catch (error) {
