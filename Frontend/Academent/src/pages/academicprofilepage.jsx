@@ -1,8 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import './academicprofilepage.css';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError } from '../Services/authService';
 import image from "../assets/Images/screen_1.png"
+import WebGLBackground from '../components/WebGLBackground';
+import CircularProgress from '../components/CircularProgress';
+import FormInput from '../components/FormInput';
+import FormSelect from '../components/FormSelect';
 
 /**
  * AcademicProfilePage collects student profiling details (University, Degree, Major, Subjects, etc.)
@@ -12,7 +16,6 @@ import image from "../assets/Images/screen_1.png"
  * @param {function} onComplete - Callback when profiling is completed and saved.
  */
 function AcademicProfilePage({ onBack, onComplete, initialData }) {
-  const canvasRef = useRef(null);
   const cardRef = useRef(null);
 
   // Form input field states
@@ -29,128 +32,6 @@ function AcademicProfilePage({ onBack, onComplete, initialData }) {
   const [cardTransform, setCardTransform] = useState('rotateY(0deg) rotateX(0deg)');
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  // WebGL Shader Background setup for the sidebar
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) return;
-
-    let animationFrameId;
-
-    // Synchronizes WebGL canvas resolution with its layout size
-    function syncSize() {
-      const w = canvas.clientWidth || 600;
-      const h = canvas.clientHeight || 1080;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-      }
-    }
-
-    let resizeObserver;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(syncSize);
-      resizeObserver.observe(canvas);
-    }
-    syncSize();
-
-    // Quad shader configuration
-    const vs = `attribute vec2 a_position;
-varying vec2 v_texCoord;
-void main() {
-  v_texCoord = a_position * 0.5 + 0.5;
-  gl_Position = vec4(a_position, 0.0, 1.0);
-}`;
-    const fs = `precision highp float;
-uniform float u_time;
-uniform vec2 u_resolution;
-varying vec2 v_texCoord;
-
-void main() {
-    vec2 uv = v_texCoord;
-    
-    // Create organic movement using time uniforms
-    float noise = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
-    noise *= cos(uv.y * 8.0 - u_time * 0.7) * 0.5 + 0.5;
-    
-    // Base colors matching the signup theme
-    vec3 color1 = vec3(0.302, 0.169, 0.549); // #4D2B8C - Primary Purple
-    vec3 color2 = vec3(0.522, 0.251, 0.616); // #85409D - Secondary Purple
-    vec3 accent = vec3(0.933, 0.655, 0.153); // #EEA727 - Accent Amber
-    
-    // Dynamic gradient mix
-    vec3 finalColor = mix(color1, color2, uv.y + noise * 0.3);
-    finalColor = mix(finalColor, accent, noise * 0.15);
-    
-    // Subtle vignette overlay
-    float vignette = 1.0 - smoothstep(0.5, 1.5, length(uv - 0.5));
-    finalColor *= vignette;
-    
-    gl_FragColor = vec4(finalColor, 1.0);
-}`;
-
-    function cs(type, src) {
-      const s = gl.createShader(type);
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
-    }
-
-    const prog = gl.createProgram();
-    gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
-    gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
-
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-
-    const pos = gl.getAttribLocation(prog, 'a_position');
-    gl.enableVertexAttribArray(pos);
-    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-
-    const uTime = gl.getUniformLocation(prog, 'u_time');
-    const uRes = gl.getUniformLocation(prog, 'u_resolution');
-    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
-
-    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
-
-    const handleMouseMove = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width && rect.height) {
-        const nx = (event.clientX - rect.left) / rect.width;
-        const ny = 1.0 - (event.clientY - rect.top) / rect.height;
-        mouse.x = nx * canvas.width;
-        mouse.y = ny * canvas.height;
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
-    function render(t) {
-      if (typeof ResizeObserver === 'undefined') syncSize();
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      if (uTime) gl.uniform1f(uTime, t * 0.001);
-      if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
-      if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      animationFrameId = requestAnimationFrame(render);
-    }
-
-    animationFrameId = requestAnimationFrame(render);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-    };
-  }, []);
 
   /**
    * Generates a 3D tilt transformation rotation on the form card
@@ -225,10 +106,7 @@ void main() {
       {/* Left Section: Brand Impact (40% / 1/3 width) */}
       <section className="hidden lg:flex lg:w-1/3 gradient-bg relative overflow-hidden items-center justify-center p-xxl">
         {/* WebGL Shader Background */}
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full -z-10 opacity-30 pointer-events-none"
-        />
+        <WebGLBackground opacity={0.3} />
 
         {/* Grid Background overlay */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -287,31 +165,7 @@ void main() {
                 <p className="text-label-sm text-on-surface-variant font-medium">Step 1 of 3</p>
                 <p className="text-label-md font-bold text-primary">Academic Info</p>
               </div>
-              <div className="relative w-12 h-12 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90">
-                  <circle
-                    className="text-surface-container"
-                    cx="24"
-                    cy="24"
-                    fill="transparent"
-                    r="20"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <circle
-                    className="text-primary"
-                    cx="24"
-                    cy="24"
-                    fill="transparent"
-                    r="20"
-                    stroke="currentColor"
-                    strokeDasharray="125.6"
-                    strokeDashoffset="84.2"
-                    strokeWidth="4"
-                  />
-                </svg>
-                <span className="absolute text-label-sm font-bold text-primary">33%</span>
-              </div>
+              <CircularProgress percentage={33} size={48} />
             </div>
           </header>
 
@@ -342,115 +196,91 @@ void main() {
                 style={{ transform: cardTransform }}
               >
                 {/* University/School */}
-                <div className="space-y-xs group">
-                  <label htmlFor="university" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
-                    <span className="material-symbols-outlined text-[18px]">school</span> University/School
-                  </label>
-                  <input
-                    id="university"
-                    name="university"
-                    required
-                    value={university}
-                    onChange={(e) => setUniversity(e.target.value)}
-                    className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus"
-                    placeholder="e.g. Stanford University"
-                    type="text"
-                  />
-                </div>
+                <FormInput
+                  id="university"
+                  name="university"
+                  label="University/School"
+                  icon="school"
+                  required
+                  value={university}
+                  onChange={(e) => setUniversity(e.target.value)}
+                  placeholder="e.g. Stanford University"
+                />
 
                 {/* Degree/Program */}
-                <div className="space-y-xs group">
-                  <label htmlFor="degree" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
-                    <span className="material-symbols-outlined text-[18px]">workspace_premium</span> Degree/Program
-                  </label>
-                  <input
-                    id="degree"
-                    name="degree"
-                    required
-                    value={degree}
-                    onChange={(e) => setDegree(e.target.value)}
-                    className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus"
-                    placeholder="e.g. Bachelor of Science"
-                    type="text"
-                  />
-                </div>
+                <FormInput
+                  id="degree"
+                  name="degree"
+                  label="Degree/Program"
+                  icon="workspace_premium"
+                  required
+                  value={degree}
+                  onChange={(e) => setDegree(e.target.value)}
+                  placeholder="e.g. Bachelor of Science"
+                />
 
                 {/* Academic Year */}
-                <div className="space-y-xs group">
-                  <label htmlFor="academicYear" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
-                    <span className="material-symbols-outlined text-[18px]">event</span> Academic Year
-                  </label>
-                  <select
-                    id="academicYear"
-                    name="academicYear"
-                    value={academicYear}
-                    onChange={(e) => setAcademicYear(e.target.value)}
-                    className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none"
-                  >
-                    <option value="Freshman (Year 1)">Freshman (Year 1)</option>
-                    <option value="Sophomore (Year 2)">Sophomore (Year 2)</option>
-                    <option value="Junior (Year 3)">Junior (Year 3)</option>
-                    <option value="Senior (Year 4)">Senior (Year 4)</option>
-                    <option value="Postgraduate">Postgraduate</option>
-                  </select>
-                </div>
+                <FormSelect
+                  id="academicYear"
+                  name="academicYear"
+                  label="Academic Year"
+                  icon="event"
+                  value={academicYear}
+                  onChange={(e) => setAcademicYear(e.target.value)}
+                  options={[
+                    { value: 'Freshman (Year 1)', label: 'Freshman (Year 1)' },
+                    { value: 'Sophomore (Year 2)', label: 'Sophomore (Year 2)' },
+                    { value: 'Junior (Year 3)', label: 'Junior (Year 3)' },
+                    { value: 'Senior (Year 4)', label: 'Senior (Year 4)' },
+                    { value: 'Postgraduate', label: 'Postgraduate' },
+                  ]}
+                />
 
                 {/* Major/Specialization */}
-                <div className="space-y-xs group">
-                  <label htmlFor="major" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
-                    <span className="material-symbols-outlined text-[18px]">psychology</span> Major/Specialization
-                  </label>
-                  <input
-                    id="major"
-                    name="major"
-                    required
-                    value={major}
-                    onChange={(e) => setMajor(e.target.value)}
-                    className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus"
-                    placeholder="e.g. Computer Science"
-                    type="text"
-                  />
-                </div>
+                <FormInput
+                  id="major"
+                  name="major"
+                  label="Major/Specialization"
+                  icon="psychology"
+                  required
+                  value={major}
+                  onChange={(e) => setMajor(e.target.value)}
+                  placeholder="e.g. Computer Science"
+                />
 
                 {/* Country */}
-                <div className="space-y-xs group">
-                  <label htmlFor="country" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
-                    <span className="material-symbols-outlined text-[18px]">public</span> Country
-                  </label>
-                  <select
-                    id="country"
-                    name="country"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none"
-                  >
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Canada">Canada</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Germany">Germany</option>
-                  </select>
-                </div>
+                <FormSelect
+                  id="country"
+                  name="country"
+                  label="Country"
+                  icon="public"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  options={[
+                    { value: 'United States', label: 'United States' },
+                    { value: 'United Kingdom', label: 'United Kingdom' },
+                    { value: 'Canada', label: 'Canada' },
+                    { value: 'Australia', label: 'Australia' },
+                    { value: 'Germany', label: 'Germany' },
+                  ]}
+                />
 
                 {/* Preferred Language */}
-                <div className="space-y-xs group">
-                  <label htmlFor="language" className="text-label-md font-label-md text-on-surface group-focus-within:text-primary transition-colors flex items-center gap-1 font-semibold">
-                    <span className="material-symbols-outlined text-[18px]">translate</span> Preferred Language
-                  </label>
-                  <select
-                    id="language"
-                    name="language"
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none"
-                  >
-                    <option value="English (US)">English (US)</option>
-                    <option value="English (UK)">English (UK)</option>
-                    <option value="Spanish">Spanish</option>
-                    <option value="French">French</option>
-                    <option value="Mandarin">Mandarin</option>
-                  </select>
-                </div>
+                <FormSelect
+                  id="language"
+                  name="language"
+                  label="Preferred Language"
+                  icon="translate"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  options={[
+                    { value: 'English (US)', label: 'English (US)' },
+                    { value: 'English (UK)', label: 'English (UK)' },
+                    { value: 'Spanish', label: 'Spanish' },
+                    { value: 'French', label: 'French' },
+                    { value: 'Mandarin', label: 'Mandarin' },
+                  ]}
+                />
               </div>
             </div>
 

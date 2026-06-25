@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import './signuppage.css';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError, registerUser, signInWithGoogle } from '../Services/authService';
 import { useAuth } from '../context/AuthContext';
+import WebGLBackground from '../components/WebGLBackground';
+import FormInput from '../components/FormInput';
 
 /**
  * SignupPage handles user registration via email/password or Google OAuth.
@@ -13,8 +15,6 @@ import { useAuth } from '../context/AuthContext';
  */
 function SignupPage({ onSignIn, onSignupComplete }) {
   const { handleManualSignIn } = useAuth();
-  // Reference for the WebGL background canvas
-  const canvasRef = useRef(null);
 
   // Input states for form fields
   const [fullName, setFullName] = useState('');
@@ -26,139 +26,6 @@ function SignupPage({ onSignIn, onSignupComplete }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  // WebGL Shader Background animation effect
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // Fetch WebGL drawing context
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) return;
-
-    let animationFrameId;
-
-    // Rescale WebGL viewport and drawing buffer to align with layout CSS size
-    function syncSize() {
-      const w = canvas.clientWidth || 1280;
-      const h = canvas.clientHeight || 720;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-      }
-    }
-
-    // Monitor canvas container resizes
-    let resizeObserver;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(syncSize);
-      resizeObserver.observe(canvas);
-    }
-    syncSize();
-
-    // Quad rendering vertex shader
-    const vs = `attribute vec2 a_position;
-varying vec2 v_texCoord;
-void main() {
-  v_texCoord = a_position * 0.5 + 0.5;
-  gl_Position = vec4(a_position, 0.0, 1.0);
-}`;
-
-    // Fragment shader creating a purple/amber fluid motion
-    const fs = `precision highp float;
-uniform float u_time;
-uniform vec2 u_resolution;
-varying vec2 v_texCoord;
-
-void main() {
-    vec2 uv = v_texCoord;
-    
-    // Create organic movement using sine/cosine noise calculations
-    float noise = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
-    noise *= cos(uv.y * 8.0 - u_time * 0.7) * 0.5 + 0.5;
-    
-    // Base colors from the design system
-    vec3 color1 = vec3(0.302, 0.169, 0.549); // #4D2B8C - Primary Purple
-    vec3 color2 = vec3(0.522, 0.251, 0.616); // #85409D - Secondary Purple
-    vec3 accent = vec3(0.933, 0.655, 0.153); // #EEA727 - Accent Amber
-    
-    // Dynamic gradient mix
-    vec3 finalColor = mix(color1, color2, uv.y + noise * 0.3);
-    finalColor = mix(finalColor, accent, noise * 0.15);
-    
-    // Subtle vignette around borders
-    float vignette = 1.0 - smoothstep(0.5, 1.5, length(uv - 0.5));
-    finalColor *= vignette;
-    
-    gl_FragColor = vec4(finalColor, 1.0);
-}`;
-
-    // Helper to compile individual shader stages
-    function cs(type, src) {
-      const s = gl.createShader(type);
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
-    }
-
-    // Link vertex and fragment shader into a program
-    const prog = gl.createProgram();
-    gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
-    gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
-
-    // Setup coordinates for standard full-viewport triangle strip
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-
-    const pos = gl.getAttribLocation(prog, 'a_position');
-    gl.enableVertexAttribArray(pos);
-    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-
-    // Get shader uniform locations
-    const uTime = gl.getUniformLocation(prog, 'u_time');
-    const uRes = gl.getUniformLocation(prog, 'u_resolution');
-    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
-
-    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
-
-    // Update mouse coordinate uniform relative to canvas boundaries
-    const handleMouseMove = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width && rect.height) {
-        const nx = (event.clientX - rect.left) / rect.width;
-        const ny = 1.0 - (event.clientY - rect.top) / rect.height;
-        mouse.x = nx * canvas.width;
-        mouse.y = ny * canvas.height;
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
-    // GL frame rendering function
-    function render(t) {
-      if (typeof ResizeObserver === 'undefined') syncSize();
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      if (uTime) gl.uniform1f(uTime, t * 0.001);
-      if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
-      if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      animationFrameId = requestAnimationFrame(render);
-    }
-
-    animationFrameId = requestAnimationFrame(render);
-
-    // Clean up all events, animation frames, and resize observers
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-    };
-  }, []);
 
   /**
    * Evaluates the complexity and length of the password.
@@ -245,10 +112,7 @@ void main() {
       {/* Left Branding & Illustration Section (50%) */}
       <section className="hidden lg:flex w-[50%] relative gradient-bg overflow-hidden flex-col justify-between p-xxl">
         {/* WebGL Shader Background */}
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full -z-10 opacity-30 pointer-events-none"
-        />
+        <WebGLBackground opacity={0.3} />
 
         {/* Abstract Background Grid Pattern */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -415,62 +279,43 @@ void main() {
 
           <div className="space-y-lg">
             {/* Account Details */}
-            <div className="space-y-xs group">
-              <label htmlFor="fullName" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                name="fullName"
-                autoComplete="name"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full h-12 bg-surface-container-low border-none rounded-2xl px-md font-body-md text-body-md input-focus"
-                placeholder="John Doe"
-                type="text"
-              />
-            </div>
+            <FormInput
+              id="fullName"
+              name="fullName"
+              label="Full Name"
+              autoComplete="name"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="h-12 bg-surface-container-low rounded-2xl"
+              placeholder="John Doe"
+            />
+
+            <FormInput
+              id="email"
+              name="email"
+              label="Email Address"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-12 bg-surface-container-low rounded-2xl"
+              placeholder="john@university.edu"
+            />
 
             <div className="space-y-xs group">
-              <label htmlFor="email" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
-                Email Address
-              </label>
-              <input
-                id="email"
-                name="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-12 bg-surface-container-low border-none rounded-2xl px-md font-body-md text-body-md input-focus"
-                placeholder="john@university.edu"
-                type="email"
-              />
-            </div>
-
-            <div className="space-y-xs group">
-              <div className="flex justify-between items-center">
-                <label htmlFor="password" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block">
-                  Password
-                </label>
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="material-symbols-outlined text-on-surface-variant cursor-pointer text-[20px] select-none hover:text-primary transition-colors"
-                >
-                  {showPassword ? 'visibility_off' : 'visibility'}
-                </span>
-              </div>
-              <input
+              <FormInput
                 id="password"
                 name="password"
+                label="Password"
+                type="password"
                 autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 bg-surface-container-low border-none rounded-2xl px-md font-body-md text-body-md input-focus"
+                className="h-12 bg-surface-container-low rounded-2xl"
                 placeholder="••••••••"
-                type={showPassword ? 'text' : 'password'}
               />
 
               {/* Password Strength */}

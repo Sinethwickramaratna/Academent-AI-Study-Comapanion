@@ -4,6 +4,7 @@ import './resetpasswordpage.css';
 import logo from '../assets/Logo/Logo.png';
 import screenImage from '../assets/Images/screen.png';
 import { getFriendlyAuthError, resetPassword } from '../Services/authService';
+import FormInput from '../components/FormInput';
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -151,22 +152,18 @@ function ResetPasswordPage() {
           </div>
 
           <form id="resetForm" onSubmit={handleSubmit} className="space-y-lg">
-            <div className="space-y-xs group">
-              <label htmlFor="resetEmail" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
-                Email Address
-              </label>
-              <input
-                id="resetEmail"
-                name="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-12 bg-surface-container-low border-none rounded-2xl px-md font-body-md text-body-md input-focus"
-                placeholder="john@university.edu"
-                type="email"
-              />
-            </div>
+            <FormInput
+              id="resetEmail"
+              name="email"
+              label="Email Address"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-12 bg-surface-container-low rounded-2xl"
+              placeholder="john@university.edu"
+            />
 
             {errorMessage && (
               <div className="rounded-2xl bg-error/10 px-md py-sm text-error font-label-md text-label-md">

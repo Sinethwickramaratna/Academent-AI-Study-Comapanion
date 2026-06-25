@@ -30,7 +30,7 @@ export async function extractKnowledge(content) {
   `;
 
   const result = await gemini.models.generateContent({
-    model: 'gemini-3.5-flash',
+    model: 'gemini-2.5-flash',
     contents: prompt,
     config: {
       responseMimeType: 'application/json',
@@ -226,7 +226,7 @@ export async function generateQuiz(knowledge, numQuestions = 10, difficulty = 'e
   const prompt = buildQuizPrompt(knowledge, numQuestions, difficulty);
 
   const result = await gemini.models.generateContent({
-    model: 'gemini-3.5-flash',
+    model: 'gemini-2.5-flash',
     contents: prompt,
     config: {
       responseMimeType: 'application/json',
@@ -238,7 +238,7 @@ export async function generateQuiz(knowledge, numQuestions = 10, difficulty = 'e
 
 export const generateResponse = async (message) => {
   const response = await gemini.models.generateContent({
-    model: "gemini-3.5-flash",
+    model: "gemini-2.5-flash",
     contents: message,
   });
 

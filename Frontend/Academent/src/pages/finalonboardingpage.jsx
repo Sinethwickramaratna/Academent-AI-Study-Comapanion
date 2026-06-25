@@ -1,8 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import './finalonboardingpage.css';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError, updateUserProfileData } from '../Services/authService';
 import { useAuth } from '../context/AuthContext';
+import WebGLBackground from '../components/WebGLBackground';
+import CircularProgress from '../components/CircularProgress';
+import SelectionCard from '../components/SelectionCard';
+import FormInput from '../components/FormInput';
+import FormSelect from '../components/FormSelect';
 
 /**
  * FinalOnboardingPage captures final profiling items (Academic goals, Target GPA, Primary goal).
@@ -13,7 +18,6 @@ import { useAuth } from '../context/AuthContext';
  */
 function FinalOnboardingPage({ onBack, onComplete, academicProfileData, learningPreferencesData }) {
   const { refreshProfile } = useAuth();
-  const canvasRef = useRef(null);
   const leftSectionRef = useRef(null);
 
   // Form input field state hooks
@@ -25,130 +29,6 @@ function FinalOnboardingPage({ onBack, onComplete, academicProfileData, learning
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  // WebGL Shader Background (Left Sidebar illustration)
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) return;
-
-    let animationFrameId;
-
-    // Synchronizes the drawing buffer dimension with layout size
-    function syncSize() {
-      const w = canvas.clientWidth || 600;
-      const h = canvas.clientHeight || 1080;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-      }
-    }
-
-    let resizeObserver;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(syncSize);
-      resizeObserver.observe(canvas);
-    }
-    syncSize();
-
-    // Coordinate mapping vertex shader
-    const vs = `attribute vec2 a_position;
-varying vec2 v_texCoord;
-void main() {
-  v_texCoord = a_position * 0.5 + 0.5;
-  gl_Position = vec4(a_position, 0.0, 1.0);
-}`;
-
-    // Procedural color noise fragment shader
-    const fs = `precision highp float;
-uniform float u_time;
-uniform vec2 u_resolution;
-varying vec2 v_texCoord;
-
-void main() {
-    vec2 uv = v_texCoord;
-    
-    // Create organic movement using time uniforms
-    float noise = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
-    noise *= cos(uv.y * 8.0 - u_time * 0.7) * 0.5 + 0.5;
-    
-    // Base colors matching the signup theme
-    vec3 color1 = vec3(0.302, 0.169, 0.549); // #4D2B8C - Primary Purple
-    vec3 color2 = vec3(0.522, 0.251, 0.616); // #85409D - Secondary Purple
-    vec3 accent = vec3(0.933, 0.655, 0.153); // #EEA727 - Accent Amber
-    
-    // Dynamic gradient mix
-    vec3 finalColor = mix(color1, color2, uv.y + noise * 0.3);
-    finalColor = mix(finalColor, accent, noise * 0.15);
-    
-    // Subtle vignette
-    float vignette = 1.0 - smoothstep(0.5, 1.5, length(uv - 0.5));
-    finalColor *= vignette;
-    
-    gl_FragColor = vec4(finalColor, 1.0);
-}`;
-
-    function cs(type, src) {
-      const s = gl.createShader(type);
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
-    }
-
-    const prog = gl.createProgram();
-    gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
-    gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
-
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-
-    const pos = gl.getAttribLocation(prog, 'a_position');
-    gl.enableVertexAttribArray(pos);
-    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-
-    const uTime = gl.getUniformLocation(prog, 'u_time');
-    const uRes = gl.getUniformLocation(prog, 'u_resolution');
-    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
-
-    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
-
-    const handleMouseMove = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width && rect.height) {
-        const nx = (event.clientX - rect.left) / rect.width;
-        const ny = 1.0 - (event.clientY - rect.top) / rect.height;
-        mouse.x = nx * canvas.width;
-        mouse.y = ny * canvas.height;
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
-    function render(t) {
-      if (typeof ResizeObserver === 'undefined') syncSize();
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      if (uTime) gl.uniform1f(uTime, t * 0.001);
-      if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
-      if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      animationFrameId = requestAnimationFrame(render);
-    }
-
-    animationFrameId = requestAnimationFrame(render);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-    };
-  }, []);
 
   /**
    * Calculates parallax offsets based on mouse moves.
@@ -227,10 +107,7 @@ void main() {
         className="hidden lg:flex lg:w-[40%] relative flex-col justify-center items-center p-xxl text-center overflow-hidden gradient-bg"
       >
         {/* WebGL Shader Background */}
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full z-0 opacity-30 pointer-events-none"
-        />
+        <WebGLBackground opacity={0.3} />
 
         {/* Decorative pattern overlay */}
         <div
@@ -282,32 +159,7 @@ void main() {
               </p>
               <p className="font-label-md text-label-md font-bold text-primary">Academic Goals</p>
             </div>
-            <div className="relative w-14 h-14 flex items-center justify-center">
-              <svg className="w-full h-full -rotate-90">
-                <circle
-                  className="text-surface-container"
-                  cx="28"
-                  cy="28"
-                  fill="transparent"
-                  r="24"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <circle
-                  className="text-primary"
-                  cx="28"
-                  cy="28"
-                  fill="transparent"
-                  r="24"
-                  stroke="currentColor"
-                  strokeDasharray="150.8"
-                  strokeDashoffset="0"
-                  strokeLinecap="round"
-                  strokeWidth="4"
-                />
-              </svg>
-              <span className="absolute text-label-sm font-bold text-primary">100%</span>
-            </div>
+            <CircularProgress percentage={100} size={56} />
           </div>
         </header>
 
@@ -330,78 +182,49 @@ void main() {
               </div>
             )}
 
-            {/* Goal Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
               {goalsList.map((goal) => {
                 const isChecked = selectedGoals.includes(goal.id);
                 return (
-                  <label key={goal.id} htmlFor={goal.id} className="cursor-pointer group">
-                    <input
-                      id={goal.id}
-                      checked={isChecked}
-                      onChange={() => toggleGoal(goal.id)}
-                      className="hidden goal-card-radio"
-                      type="checkbox"
-                    />
-                    <div
-                      className={`goal-card-content flex flex-col p-lg rounded-2xl border-2 border-surface-variant bg-surface-container-lowest hover:border-primary/40 space-y-sm h-full ${
-                        isChecked ? 'goal-card-active' : ''
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform text-2xl">
-                        {goal.icon}
-                      </span>
-                      <span className="font-label-md text-label-md font-semibold">
-                        {goal.label}
-                      </span>
-                    </div>
-                  </label>
+                  <SelectionCard
+                    key={goal.id}
+                    id={goal.id}
+                    name="goalsChecklist"
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleGoal(goal.id)}
+                    icon={goal.icon}
+                    label={goal.label}
+                  />
                 );
               })}
             </div>
 
             {/* Input Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-lg pt-md">
-              <div className="space-y-xs group">
-                <label htmlFor="targetGpa" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
-                  Target GPA
-                </label>
-                <input
-                  id="targetGpa"
-                  name="targetGpa"
-                  value={targetGpa}
-                  onChange={(e) => setTargetGpa(e.target.value)}
-                  className="w-full bg-surface-container-low border-none rounded-xl px-lg py-md focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md input-focus"
-                  placeholder="e.g. 4.0"
-                  type="text"
-                />
-              </div>
+              <FormInput
+                id="targetGpa"
+                name="targetGpa"
+                label="Target GPA"
+                value={targetGpa}
+                onChange={(e) => setTargetGpa(e.target.value)}
+                placeholder="e.g. 4.0"
+              />
 
-              <div className="space-y-xs group">
-                <label htmlFor="primaryGoal" className="font-label-md text-label-md text-on-surface group-focus-within:text-primary transition-colors block font-semibold">
-                  Primary Goal
-                </label>
-                <div className="relative">
-                  <select
-                    id="primaryGoal"
-                    name="primaryGoal"
-                    value={primaryGoal}
-                    onChange={(e) => setPrimaryGoal(e.target.value)}
-                    className="w-full bg-surface-container-low border-none rounded-xl px-lg py-md focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer font-body-md input-focus font-medium"
-                  >
-                    <option value="Pass Upcoming Exams">Pass Upcoming Exams</option>
-                    <option value="Improve Weak Subjects">Improve Weak Subjects</option>
-                    <option value="Increase GPA">Increase GPA</option>
-                    <option value="Complete Semester Successfully">
-                      Complete Semester Successfully
-                    </option>
-                    <option value="Learn New Topics">Learn New Topics</option>
-                  </select>
-                  <span className="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
-                    expand_more
-                  </span>
-                </div>
-              </div>
+              <FormSelect
+                id="primaryGoal"
+                name="primaryGoal"
+                label="Primary Goal"
+                value={primaryGoal}
+                onChange={(e) => setPrimaryGoal(e.target.value)}
+                options={[
+                  { value: 'Pass Upcoming Exams', label: 'Pass Upcoming Exams' },
+                  { value: 'Improve Weak Subjects', label: 'Improve Weak Subjects' },
+                  { value: 'Increase GPA', label: 'Increase GPA' },
+                  { value: 'Complete Semester Successfully', label: 'Complete Semester Successfully' },
+                  { value: 'Learn New Topics', label: 'Learn New Topics' },
+                ]}
+              />
             </div>
 
             {/* AI Setup Status */}

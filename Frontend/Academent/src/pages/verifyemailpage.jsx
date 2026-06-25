@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './verifyemailpage.css';
 import logo from '../assets/Logo/Logo.png';
 import {
@@ -7,7 +7,8 @@ import {
   resendEmailVerification,
 } from '../Services/authService';
 import { auth } from '../firebase/firebase';
-import image from '../assets/Images/screen.png'
+import image from '../assets/Images/screen.png';
+import WebGLBackground from '../components/WebGLBackground';
 
 /**
  * VerifyEmailPage component checks if the user has verified their email address.
@@ -18,114 +19,12 @@ import image from '../assets/Images/screen.png'
  * @param {function} onVerifyComplete - Callback to proceed when verification succeeds.
  */
 function VerifyEmailPage({ email, onBackToLogin, onVerifyComplete }) {
-  // Reference to the sidebar background WebGL canvas
-  const canvasRef = useRef(null);
   // UI states for loading states and countdowns
   const [isResending, setIsResending] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(30);
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
-  // WebGL Shader Animation Setup
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // Retrieve WebGL context
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) return;
-
-    let animationFrameId;
-
-    // Synchronizes the canvas drawing buffer with its CSS layout dimensions
-    function syncSize() {
-      const w = canvas.clientWidth || 600;
-      const h = canvas.clientHeight || 1080;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-      }
-    }
-
-    // Use ResizeObserver if available to react to container resizing
-    let resizeObserver;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(syncSize);
-      resizeObserver.observe(canvas);
-    }
-    syncSize();
-
-    // Vertex shader source (simply passes coordinates through)
-    const vs = `attribute vec2 a_position;
-varying vec2 v_texCoord;
-void main() {
-  v_texCoord = a_position * 0.5 + 0.5;
-  gl_Position = vec4(a_position, 0.0, 1.0);
-}`;
-
-    // Fragment shader source (renders a moving organic color noise gradient in real-time)
-    const fs = `precision highp float;
-uniform float u_time;
-varying vec2 v_texCoord;
-
-void main() {
-    vec2 uv = v_texCoord;
-    float noise = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
-    noise *= cos(uv.y * 8.0 - u_time * 0.7) * 0.5 + 0.5;
-    vec3 color1 = vec3(0.302, 0.169, 0.549);
-    vec3 color2 = vec3(0.522, 0.251, 0.616);
-    vec3 accent = vec3(0.933, 0.655, 0.153);
-    vec3 finalColor = mix(color1, color2, uv.y + noise * 0.3);
-    finalColor = mix(finalColor, accent, noise * 0.15);
-    gl_FragColor = vec4(finalColor, 1.0);
-}`;
-
-    // Compiles a single shader type from GLSL source code
-    function createShader(type, src) {
-      const shader = gl.createShader(type);
-      gl.shaderSource(shader, src);
-      gl.compileShader(shader);
-      return shader;
-    }
-
-    // Link Vertex and Fragment shaders into a single WebGL program
-    const prog = gl.createProgram();
-    gl.attachShader(prog, createShader(gl.VERTEX_SHADER, vs));
-    gl.attachShader(prog, createShader(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
-
-    // Setup rendering vertex buffer (quad covers entire screen/viewport)
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-
-    // Map vertex attributes to shader variables
-    const pos = gl.getAttribLocation(prog, 'a_position');
-    gl.enableVertexAttribArray(pos);
-    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-
-    // Get reference to u_time uniform
-    const uTime = gl.getUniformLocation(prog, 'u_time');
-
-    // WebGL animation render loop
-    function render(t) {
-      if (typeof ResizeObserver === 'undefined') syncSize();
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      if (uTime) gl.uniform1f(uTime, t * 0.001); // Pass time parameter as seconds
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      animationFrameId = requestAnimationFrame(render);
-    }
-
-    animationFrameId = requestAnimationFrame(render);
-
-    // Cleanup WebGL and observers on component unmount
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      if (resizeObserver) resizeObserver.disconnect();
-    };
-  }, []);
 
   // Manage resend verification countdown timer
   useEffect(() => {
@@ -203,10 +102,7 @@ void main() {
   return (
     <div className="min-h-screen w-full flex bg-surface text-on-surface font-body-md overflow-hidden relative">
       <aside className="hidden lg:flex w-[40%] h-full fixed left-0 top-0 gradient-bg-sidebar text-white flex-col border-r border-outline-variant py-xl px-lg z-40 overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full -z-10 opacity-30 pointer-events-none"
-        />
+        <WebGLBackground opacity={0.3} />
 
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg">
