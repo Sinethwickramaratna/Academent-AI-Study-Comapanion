@@ -235,3 +235,12 @@ export async function generateQuiz(knowledge, numQuestions = 10, difficulty = 'e
 
   return JSON.parse(result.text);
 }
+
+export const generateResponse = async (message) => {
+  const response = await gemini.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: message,
+  });
+
+  return response.text;
+}

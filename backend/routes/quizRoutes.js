@@ -1,7 +1,10 @@
 import express from 'express';
 import { extractKnowledge, generateQuiz } from '../services/geminiService.js';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
+
+
 
 router.post('/generate-quiz', async (req, res) => {
   try {
