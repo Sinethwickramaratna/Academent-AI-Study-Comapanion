@@ -1,6 +1,6 @@
 // Import necessary Firebase SDK modules
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserSessionPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // Access Vite's client-side environment variables
@@ -23,6 +23,14 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 // Initialize and export Authentication service
 export const auth = getAuth(app);
+
+setPersistence(auth, browserSessionPersistence)
+  .then(() => {
+    console.log("Session persistance set successfully");
+  })
+  .catch((error) => {
+    console.error("Error setting persistance: ", error);
+  });
 
 // Initialize and export Firestore database service
 export const db = getFirestore(app);
