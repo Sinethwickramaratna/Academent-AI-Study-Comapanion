@@ -6,35 +6,45 @@ const ACCENT_OPTIONS = [
   { value: "rose", label: "Rose" },
 ];
 
-function FolderCreateModal({ type, values, onChange, onClose, onSubmit }) {
+function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "create" }) {
   const copy = {
     semester: {
       title: "Create New Semester",
+      editTitle: "Edit Semester",
       subtitle: "Add a new semester folder to your notes archive.",
+      editSubtitle: "Update this semester folder details.",
       eyebrow: "Semester Generator",
       submit: "Create Semester",
+      editSubmit: "Save Semester",
       titlePlaceholder: "Example: Semester 6",
       subtitlePlaceholder: "Example: Research vault",
     },
     module: {
       title: "Create New Module",
+      editTitle: "Edit Module",
       subtitle: "Add a module folder to this semester vault.",
+      editSubtitle: "Update this module folder details.",
       eyebrow: "Module Generator",
       submit: "Create Module",
+      editSubmit: "Save Module",
       titlePlaceholder: "Example: Machine Learning",
       subtitlePlaceholder: "Example: Neural workspace",
     },
     folder: {
       title: "Create Note Folder",
-      subtitle: "Group notes inside this module workspace.",
+      editTitle: "Edit Folder",
+      subtitle: "Group notes inside this workspace.",
+      editSubtitle: "Update this folder title, subtitle, or accent.",
       eyebrow: "Folder Generator",
       submit: "Create Folder",
+      editSubmit: "Save Folder",
       titlePlaceholder: "Example: Lecture Notes",
       subtitlePlaceholder: "Example: Week 1 to Week 4",
     },
   }[type];
 
   const isModule = type === "module";
+  const isEdit = mode === "edit";
 
   return (
     <div className="notes-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -48,8 +58,8 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit }) {
         <div className="notes-create-modal__header">
           <div>
             <p className="notes-create-modal__eyebrow">{copy.eyebrow}</p>
-            <h3 id="notes-create-modal-title">{copy.title}</h3>
-            <p>{copy.subtitle}</p>
+            <h3 id="notes-create-modal-title">{isEdit ? copy.editTitle : copy.title}</h3>
+            <p>{isEdit ? copy.editSubtitle : copy.subtitle}</p>
           </div>
           <button className="notes-create-modal__close" type="button" onClick={onClose} aria-label="Close window">
             <span className="material-symbols-outlined">close</span>
@@ -65,6 +75,7 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit }) {
                 value={values.moduleId}
                 onChange={(event) => onChange("moduleId", event.target.value)}
                 placeholder="Example: CS501"
+                disabled={isEdit}
                 required
               />
             </label>
@@ -114,8 +125,8 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit }) {
           <div className="notes-create-modal__actions">
             <button className="notes-create-modal__ghost" type="button" onClick={onClose}>Cancel</button>
             <button className="notes-create-modal__primary" type="submit">
-              <span className="material-symbols-outlined">create_new_folder</span>
-              {copy.submit}
+              <span className="material-symbols-outlined">{isEdit ? "save" : "create_new_folder"}</span>
+              {isEdit ? copy.editSubmit : copy.submit}
             </button>
           </div>
         </form>

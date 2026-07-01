@@ -1,13 +1,46 @@
-function FolderVaultCard({ folder, kicker, onClick }) {
+function FolderVaultCard({ folder, kicker, onClick, onEdit, onDelete }) {
+  const hasActions = Boolean(onEdit || onDelete);
+
+  const handleKeyDown = (event) => {
+    if ((event.key === "Enter" || event.key === " ") && onClick) {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
   return (
-    <button
+    <article
       className={`folder-vault-card folder-vault-card--${folder.accent}`}
-      type="button"
-      aria-label={`Open ${folder.title}`}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? `Open ${folder.title}` : undefined}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
     >
       <span className="folder-card-scanline" aria-hidden="true" />
       <span className="folder-card-glow" aria-hidden="true" />
+
+      {hasActions && (
+        <div className="folder-card-menu" onClick={(event) => event.stopPropagation()}>
+          <button className="folder-card-menu__trigger" type="button" aria-label={`Actions for ${folder.title}`}>
+            <span className="material-symbols-outlined">more_horiz</span>
+          </button>
+          <div className="folder-card-menu__content">
+            {onEdit && (
+              <button type="button" onClick={onEdit}>
+                <span className="material-symbols-outlined">edit</span>
+                Edit
+              </button>
+            )}
+            {onDelete && (
+              <button className="folder-card-menu__danger" type="button" onClick={onDelete}>
+                <span className="material-symbols-outlined">delete</span>
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <span className="folder-visual" aria-hidden="true">
         <span className="folder-tab" />
@@ -34,7 +67,7 @@ function FolderVaultCard({ folder, kicker, onClick }) {
       <span className="folder-progress-track" aria-hidden="true">
         <span className="folder-progress-fill" style={{ width: `${folder.progress}%` }} />
       </span>
-    </button>
+    </article>
   );
 }
 

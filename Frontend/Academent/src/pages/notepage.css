@@ -712,3 +712,195 @@
     padding: 0.85rem;
   }
 }
+
+.module-pdf-input {
+  display: none;
+}
+
+.module-file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.module-pdf-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 96px;
+  border: 1px solid rgba(225, 91, 143, 0.16);
+  border-radius: 16px;
+  padding: 1rem;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(255, 248, 252, 0.68)),
+    radial-gradient(circle at 0% 0%, rgba(225, 91, 143, 0.12), transparent 34%);
+  box-shadow: 0 14px 34px rgba(35, 22, 65, 0.06);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.module-pdf-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(225, 91, 143, 0.28);
+  box-shadow: 0 18px 42px rgba(35, 22, 65, 0.1);
+}
+
+.module-pdf-card__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 15px;
+  background: linear-gradient(135deg, rgba(225, 91, 143, 0.16), rgba(77, 43, 140, 0.1));
+  color: #d94178;
+}
+
+.module-pdf-card__icon .material-symbols-outlined {
+  font-size: 1.7rem;
+  font-variation-settings: 'FILL' 1;
+}
+
+.module-pdf-card__content {
+  min-width: 0;
+}
+
+.module-pdf-card h4 {
+  margin: 0;
+  overflow: hidden;
+  color: #20172f;
+  font-size: 0.92rem;
+  font-weight: 900;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.module-pdf-card p {
+  margin-top: 0.3rem;
+  color: rgba(32, 23, 47, 0.62);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.folder-card-menu,
+.file-card-menu,
+.workspace-actions-menu {
+  position: relative;
+  z-index: 5;
+}
+
+.folder-card-menu {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+}
+
+.folder-card-menu__trigger,
+.file-card-menu__trigger,
+.workspace-actions-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  border: 1px solid rgba(77, 43, 140, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #4d2b8c;
+  font-size: 0.78rem;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(35, 22, 65, 0.08);
+}
+
+.folder-card-menu__trigger,
+.file-card-menu__trigger {
+  width: 36px;
+  padding: 0;
+}
+
+.workspace-actions-menu__trigger {
+  padding: 0.55rem 0.8rem;
+}
+
+.folder-card-menu__content,
+.file-card-menu__content,
+.workspace-actions-menu__content {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  display: grid;
+  min-width: 150px;
+  padding: 0.35rem;
+  border: 1px solid rgba(77, 43, 140, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 44px rgba(35, 22, 65, 0.16);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.folder-card-menu:hover .folder-card-menu__content,
+.folder-card-menu:focus-within .folder-card-menu__content,
+.file-card-menu:hover .file-card-menu__content,
+.file-card-menu:focus-within .file-card-menu__content,
+.workspace-actions-menu:hover .workspace-actions-menu__content,
+.workspace-actions-menu:focus-within .workspace-actions-menu__content {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.folder-card-menu__content button,
+.file-card-menu__content button,
+.workspace-actions-menu__content button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(32, 23, 47, 0.78);
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.folder-card-menu__content button:hover,
+.file-card-menu__content button:hover,
+.workspace-actions-menu__content button:hover {
+  background: rgba(77, 43, 140, 0.07);
+  color: #4d2b8c;
+}
+
+.folder-card-menu__danger,
+.file-card-menu__danger,
+.workspace-actions-menu__danger {
+  color: #c92d5c !important;
+}
+
+.folder-card-menu__danger:hover,
+.file-card-menu__danger:hover,
+.workspace-actions-menu__danger:hover {
+  background: rgba(201, 45, 92, 0.08) !important;
+}
+
+.file-card-menu {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.module-note-card,
+.module-pdf-card {
+  position: relative;
+}
+
+.notes-create-field input:disabled {
+  color: rgba(32, 23, 47, 0.5);
+  background: rgba(77, 43, 140, 0.06);
+  cursor: not-allowed;
+}
