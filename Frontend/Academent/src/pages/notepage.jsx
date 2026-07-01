@@ -6,136 +6,85 @@ import NotesActionButton from '../components/NotesActionButton';
 import NotesBreadcrumb from '../components/NotesBreadcrumb';
 import NotesSectionHeader from '../components/NotesSectionHeader';
 import TopBar from '../components/TopBar';
+import { findFolderById } from '../Services/noteManagementUtils';
+import useNoteManagement from '../Services/useNoteManagement';
 import './notepage.css';
 
-const INITIAL_SEMESTERS = [
-  { id: 1, title: "Semester 1", subtitle: "Foundation archive", files: 18, progress: 82, accent: "cyan", icon: "neurology" },
-  { id: 2, title: "Semester 2", subtitle: "Core systems", files: 24, progress: 64, accent: "violet", icon: "hub" },
-  { id: 3, title: "Semester 3", subtitle: "Research stack", files: 31, progress: 48, accent: "emerald", icon: "science" },
-  { id: 4, title: "Semester 4", subtitle: "Exam capsule", files: 16, progress: 91, accent: "amber", icon: "auto_stories" },
-  { id: 5, title: "Semester 5", subtitle: "Project vault", files: 27, progress: 36, accent: "rose", icon: "token" },
-];
+const EMPTY_SEMESTER_FORM = { title: '', subtitle: '', accent: 'cyan' };
+const EMPTY_MODULE_FORM = { moduleId: '', title: '', subtitle: '', accent: 'cyan' };
+const EMPTY_FOLDER_FORM = { title: '', subtitle: '', accent: 'cyan' };
+const EMPTY_NOTE_FORM = { title: '', content: '' };
 
-const INITIAL_SEMESTER_MODULES = [
-  {
-    semesterId: 1,
-    modules: [
-      { moduleId: "MATH101", title: "Mathematics", subtitle: "Calculus and vectors", files: 5, progress: 78, accent: "cyan", icon: "functions" },
-      { moduleId: "PHYS101", title: "Physics", subtitle: "Motion lab notes", files: 3, progress: 62, accent: "violet", icon: "speed" },
-      { moduleId: "CHEM101", title: "Chemistry", subtitle: "Atomic systems", files: 4, progress: 70, accent: "emerald", icon: "science" },
-    ],
-  },
-  {
-    semesterId: 2,
-    modules: [
-      { moduleId: "CS201", title: "Computer Science", subtitle: "Logic and code", files: 6, progress: 74, accent: "violet", icon: "terminal" },
-      { moduleId: "ENG201", title: "English Literature", subtitle: "Critical essays", files: 4, progress: 51, accent: "rose", icon: "history_edu" },
-      { moduleId: "HIST201", title: "History", subtitle: "Timeline archive", files: 5, progress: 66, accent: "amber", icon: "account_balance" },
-    ],
-  },
-  {
-    semesterId: 3,
-    modules: [
-      { moduleId: "BIO301", title: "Biology", subtitle: "Cell systems", files: 7, progress: 84, accent: "emerald", icon: "biotech" },
-      { moduleId: "CHEM301", title: "Advanced Chemistry", subtitle: "Reaction network", files: 5, progress: 58, accent: "amber", icon: "experiment" },
-      { moduleId: "PHYS301", title: "Advanced Physics", subtitle: "Quantum notes", files: 6, progress: 46, accent: "cyan", icon: "orbit" },
-    ],
-  },
-  {
-    semesterId: 4,
-    modules: [
-      { moduleId: "CS401", title: "Algorithms", subtitle: "Complexity vault", files: 8, progress: 88, accent: "violet", icon: "schema" },
-      { moduleId: "MATH401", title: "Linear Algebra", subtitle: "Matrix systems", files: 5, progress: 72, accent: "cyan", icon: "grid_on" },
-      { moduleId: "STAT401", title: "Statistics", subtitle: "Probability engine", files: 4, progress: 63, accent: "rose", icon: "monitoring" },
-    ],
-  },
-  {
-    semesterId: 5,
-    modules: [
-      { moduleId: "CS501", title: "Machine Learning", subtitle: "Model training", files: 9, progress: 81, accent: "emerald", icon: "model_training" },
-      { moduleId: "AI501", title: "Artificial Intelligence", subtitle: "Neural workspace", files: 7, progress: 76, accent: "violet", icon: "psychology" },
-      { moduleId: "DATA501", title: "Data Science", subtitle: "Dataset capsule", files: 6, progress: 69, accent: "amber", icon: "database" },
-    ],
-  },
-];
+const toAccentColor = (accent) => accent ? `${accent.charAt(0).toUpperCase()}${accent.slice(1)}` : 'Cyan';
+const toUiAccent = (accentColor) => (accentColor || 'Cyan').toLowerCase();
 
-const createEmptyWorkspace = () => ({ folders: [], notes: [], pdfs: [] });
+const countWorkspaceFiles = (workspace) => {
+  if (!workspace) return 0;
 
-const INITIAL_MODULE_WORKSPACES = {
-  MATH101: {
-    folders: [
-      { id: 1, workspaceKey: "MATH101/folder-1", title: "Lecture Notes", subtitle: "Core formulas", files: 3, progress: 74, accent: "cyan", icon: "folder_special" },
-      { id: 2, workspaceKey: "MATH101/folder-2", title: "Practice Sets", subtitle: "Weekly drills", files: 2, progress: 58, accent: "violet", icon: "folder_open" },
-    ],
-    notes: [
-      { id: 1, title: "Limits quick review", content: "Focus on one-sided limits, continuity checks, and substitution traps." },
-      { id: 2, title: "Vector identities", content: "Dot product measures projection. Cross product gives a perpendicular vector and area scale." },
-    ],
-    pdfs: [
-      { id: 1, name: "Calculus_Formula_Sheet.pdf", size: 820000, uploadedAt: "Ready for review" },
-    ],
-  },
-  "MATH101/folder-1": createEmptyWorkspace(),
-  "MATH101/folder-2": createEmptyWorkspace(),
-  PHYS101: {
-    folders: [
-      { id: 1, workspaceKey: "PHYS101/folder-1", title: "Lab Records", subtitle: "Motion experiments", files: 2, progress: 66, accent: "violet", icon: "folder_special" },
-    ],
-    notes: [
-      { id: 1, title: "Newton laws", content: "Net force changes acceleration. Keep units consistent before solving." },
-    ],
-    pdfs: [],
-  },
-  "PHYS101/folder-1": createEmptyWorkspace(),
-  CHEM101: {
-    folders: [
-      { id: 1, workspaceKey: "CHEM101/folder-1", title: "Reactions", subtitle: "Atomic basics", files: 2, progress: 62, accent: "emerald", icon: "folder_special" },
-    ],
-    notes: [
-      { id: 1, title: "Periodic trends", content: "Atomic radius decreases across a period and increases down a group." },
-    ],
-    pdfs: [],
-  },
-  "CHEM101/folder-1": createEmptyWorkspace(),
+  return [
+    ...(workspace.pdfs || []),
+    ...(workspace.notes || []),
+    ...(workspace.folders || []).flatMap((folder) => Array(countWorkspaceFiles(folder)).fill(null)),
+  ].length;
 };
 
-const EMPTY_SEMESTER_FORM = { title: "", subtitle: "", accent: "cyan" };
-const EMPTY_MODULE_FORM = { moduleId: "", title: "", subtitle: "", accent: "cyan" };
-const EMPTY_FOLDER_FORM = { title: "", subtitle: "", accent: "cyan" };
-const EMPTY_NOTE_FORM = { title: "", content: "" };
+const mapSemesterForCard = (semester, index = 0) => ({
+  ...semester,
+  id: semester.semesterId,
+  files: countWorkspaceFiles({ folders: (semester.modules || []).flatMap((module) => module.folders || []), pdfs: [], notes: [] })
+    + (semester.modules || []).reduce((total, module) => total + (module.pdfs || []).length + (module.notes || []).length, 0),
+  progress: Math.min(100, 35 + ((index + 1) * 9)),
+  accent: toUiAccent(semester.accentColor),
+  icon: 'auto_stories',
+});
 
-function formatFileSize(bytes) {
-  if (!bytes) return "0 KB";
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / (1024 ** index)).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
-}
+const mapModuleForCard = (module, index = 0) => ({
+  ...module,
+  id: module.moduleId,
+  files: countWorkspaceFiles(module),
+  progress: Math.min(100, 40 + ((index + 1) * 8)),
+  accent: toUiAccent(module.accentColor),
+  icon: 'topic',
+});
+
+const mapFolderForCard = (folder, index = 0) => ({
+  ...folder,
+  id: folder.folderId,
+  workspaceKey: folder.folderId,
+  files: countWorkspaceFiles(folder),
+  progress: Math.min(100, 45 + ((index + 1) * 7)),
+  accent: toUiAccent(folder.accentColor),
+  icon: 'folder_special',
+});
 
 function NotePage({ profile, currentUser }) {
+  const notes = useNoteManagement();
   const [activeSemester, setActiveSemester] = useState(null);
   const [activeModuleId, setActiveModuleId] = useState(null);
   const [activeFolderTrail, setActiveFolderTrail] = useState([]);
-  const [semesters, setSemesters] = useState(INITIAL_SEMESTERS);
-  const [semesterModules, setSemesterModules] = useState(INITIAL_SEMESTER_MODULES);
-  const [moduleWorkspaces, setModuleWorkspaces] = useState(INITIAL_MODULE_WORKSPACES);
   const [modalType, setModalType] = useState(null);
   const [semesterForm, setSemesterForm] = useState(EMPTY_SEMESTER_FORM);
   const [moduleForm, setModuleForm] = useState(EMPTY_MODULE_FORM);
   const [folderForm, setFolderForm] = useState(EMPTY_FOLDER_FORM);
   const [noteForm, setNoteForm] = useState(EMPTY_NOTE_FORM);
   const [editingFolder, setEditingFolder] = useState(null);
+  const [editingSemester, setEditingSemester] = useState(null);
+  const [editingModule, setEditingModule] = useState(null);
   const pdfInputRef = useRef(null);
 
-  const fullName = profile?.fullName || currentUser?.displayName || "Student";
-  const photoURL = currentUser?.photoURL || profile?.photoURL || "";
-  const selectedSemester = semesters.find((semester) => semester.id === activeSemester);
-  const selectedModules = semesterModules.find((semester) => semester.semesterId === activeSemester)?.modules || [];
+  const semesters = notes.data.semesters || [];
+  const fullName = profile?.fullName || currentUser?.displayName || 'Student';
+  const photoURL = currentUser?.photoURL || profile?.photoURL || '';
+  const selectedSemester = semesters.find((semester) => semester.semesterId === activeSemester);
+  const selectedModules = selectedSemester?.modules || [];
   const selectedModule = selectedModules.find((module) => module.moduleId === activeModuleId);
-  const currentWorkspaceKey = activeFolderTrail.at(-1)?.workspaceKey || activeModuleId;
-  const selectedWorkspace = moduleWorkspaces[currentWorkspaceKey] || createEmptyWorkspace();
-  const currentFolder = activeFolderTrail.at(-1);
-  const currentWorkspaceTitle = currentFolder?.title || selectedModule?.title || activeModuleId;
+  const currentFolderId = activeFolderTrail.at(-1)?.folderId || null;
+  const currentFolder = currentFolderId && selectedModule ? findFolderById(selectedModule.folders || [], currentFolderId) : null;
+  const selectedWorkspace = currentFolder || selectedModule || { folders: [], notes: [], pdfs: [] };
+  const isSemesterWorkspace = Boolean(activeSemester && !activeModuleId && !currentFolderId);
+  const isModuleWorkspace = Boolean(activeModuleId && !currentFolderId);
   const isFolderWorkspace = activeFolderTrail.length > 0;
+  const currentWorkspaceTitle = currentFolder?.title || selectedModule?.title || selectedSemester?.title || 'My Notes';
 
   const closeModal = () => {
     setModalType(null);
@@ -144,6 +93,8 @@ function NotePage({ profile, currentUser }) {
     setFolderForm(EMPTY_FOLDER_FORM);
     setNoteForm(EMPTY_NOTE_FORM);
     setEditingFolder(null);
+    setEditingSemester(null);
+    setEditingModule(null);
   };
 
   const goToNotesHome = () => {
@@ -152,400 +103,319 @@ function NotePage({ profile, currentUser }) {
     setActiveFolderTrail([]);
   };
 
-  const goToSemesterModules = () => {
+  const goToSemesterRoot = () => {
     setActiveModuleId(null);
     setActiveFolderTrail([]);
   };
 
-  const goToModuleRoot = () => {
-    setActiveFolderTrail([]);
-  };
-
-  const goToFolderTrailIndex = (index) => {
-    setActiveFolderTrail((current) => current.slice(0, index + 1));
-  };
-
+  const goToModuleRoot = () => setActiveFolderTrail([]);
+  const goToFolderTrailIndex = (index) => setActiveFolderTrail((current) => current.slice(0, index + 1));
   const updateSemesterForm = (field, value) => setSemesterForm((current) => ({ ...current, [field]: value }));
   const updateModuleForm = (field, value) => setModuleForm((current) => ({ ...current, [field]: value }));
   const updateFolderForm = (field, value) => setFolderForm((current) => ({ ...current, [field]: value }));
   const updateNoteForm = (field, value) => setNoteForm((current) => ({ ...current, [field]: value }));
 
-  const updateFolderEverywhere = (workspaceKey, updater) => {
-    setModuleWorkspaces((current) => Object.fromEntries(Object.entries(current).map(([key, workspace]) => [
-      key,
-      { ...workspace, folders: workspace.folders.map((folder) => (folder.workspaceKey === workspaceKey ? updater(folder) : folder)) },
-    ])));
+  const openEditSemester = (semester) => {
+    setEditingSemester(semester);
+    setSemesterForm({ title: semester.title, subtitle: semester.subtitle, accent: toUiAccent(semester.accentColor) });
+    setModalType('editSemester');
   };
 
-  const removeWorkspaceBranch = (workspaces, rootKey) => {
-    const keysToRemove = new Set([rootKey]);
-    const queue = [rootKey];
-
-    while (queue.length) {
-      const key = queue.shift();
-      const workspace = workspaces[key];
-      if (!workspace) continue;
-
-      workspace.folders.forEach((folder) => {
-        if (!keysToRemove.has(folder.workspaceKey)) {
-          keysToRemove.add(folder.workspaceKey);
-          queue.push(folder.workspaceKey);
-        }
-      });
-    }
-
-    return Object.fromEntries(Object.entries(workspaces).filter(([key]) => !keysToRemove.has(key)));
-  };
-
-  const bumpActiveContainerFileCount = (count = 1) => {
-    if (!activeModuleId) return;
-
-    setSemesterModules((current) => current.map((semester) => (
-      semester.semesterId === activeSemester
-        ? {
-          ...semester,
-          modules: semester.modules.map((module) => (
-            module.moduleId === activeModuleId
-              ? { ...module, files: Math.max(0, module.files + count), progress: Math.min(100, Math.max(0, module.progress + (4 * count))) }
-              : module
-          )),
-        }
-        : semester
-    )));
-
-    setSemesters((current) => current.map((semester) => (
-      semester.id === activeSemester
-        ? { ...semester, files: Math.max(0, semester.files + count), progress: Math.min(100, Math.max(0, semester.progress + (2 * count))) }
-        : semester
-    )));
-
-    if (isFolderWorkspace) {
-      updateFolderEverywhere(currentWorkspaceKey, (folder) => ({
-        ...folder,
-        files: Math.max(0, folder.files + count),
-        progress: Math.min(100, Math.max(0, folder.progress + (5 * count))),
-      }));
-    }
-  };
-
-  const handleCreateSemester = (event) => {
+  const handleEditSemester = async (event) => {
     event.preventDefault();
+    if (!editingSemester) return;
 
-    const nextSemesterId = Math.max(0, ...semesters.map((semester) => semester.id)) + 1;
-    const newSemester = {
-      id: nextSemesterId,
+    await notes.updateSemester(editingSemester.semesterId, {
       title: semesterForm.title.trim(),
       subtitle: semesterForm.subtitle.trim(),
-      files: 0,
-      progress: 0,
-      accent: semesterForm.accent,
-      icon: "auto_stories",
-    };
-
-    setSemesters((current) => [...current, newSemester]);
-    setSemesterModules((current) => [...current, { semesterId: nextSemesterId, modules: [] }]);
+      accentColor: toAccentColor(semesterForm.accent),
+    });
     closeModal();
   };
 
-  const handleCreateModule = (event) => {
+  const removeSemester = async (semesterToRemove) => {
+    await notes.deleteSemester(semesterToRemove.semesterId);
+    if (activeSemester === semesterToRemove.semesterId) goToNotesHome();
+  };
+
+  const openEditModule = (module) => {
+    setEditingModule(module);
+    setModuleForm({ moduleId: module.moduleId, title: module.title, subtitle: module.subtitle, accent: toUiAccent(module.accentColor) });
+    setModalType('editModule');
+  };
+
+  const handleEditModule = async (event) => {
+    event.preventDefault();
+    if (!editingModule || !activeSemester) return;
+
+    await notes.updateModule(activeSemester, editingModule.moduleId, {
+      title: moduleForm.title.trim(),
+      subtitle: moduleForm.subtitle.trim(),
+      accentColor: toAccentColor(moduleForm.accent),
+    });
+    closeModal();
+  };
+
+  const removeModule = async (moduleToRemove) => {
+    if (!activeSemester) return;
+
+    await notes.deleteModule(activeSemester, moduleToRemove.moduleId);
+    if (activeModuleId === moduleToRemove.moduleId) goToSemesterRoot();
+  };
+
+  const handleCreateSemester = async (event) => {
+    event.preventDefault();
+
+    await notes.addSemester({
+      title: semesterForm.title.trim(),
+      subtitle: semesterForm.subtitle.trim(),
+      accentColor: toAccentColor(semesterForm.accent),
+    });
+    closeModal();
+  };
+
+  const handleCreateModule = async (event) => {
     event.preventDefault();
     if (!activeSemester) return;
 
-    const newModule = {
+    await notes.addModule(activeSemester, {
       moduleId: moduleForm.moduleId.trim().toUpperCase(),
       title: moduleForm.title.trim(),
       subtitle: moduleForm.subtitle.trim(),
-      files: 0,
-      progress: 0,
-      accent: moduleForm.accent,
-      icon: "topic",
-    };
-
-    setSemesterModules((current) => current.map((semester) => (
-      semester.semesterId === activeSemester
-        ? { ...semester, modules: [...semester.modules, newModule] }
-        : semester
-    )));
-    setModuleWorkspaces((current) => ({ ...current, [newModule.moduleId]: createEmptyWorkspace() }));
-    closeModal();
-  };
-
-  const handleCreateFolder = (event) => {
-    event.preventDefault();
-    if (!currentWorkspaceKey) return;
-
-    const existingFolders = selectedWorkspace.folders;
-    const nextFolderId = Math.max(0, ...existingFolders.map((folder) => folder.id)) + 1;
-    const workspaceKey = `${currentWorkspaceKey}/folder-${Date.now()}`;
-    const newFolder = {
-      id: nextFolderId,
-      workspaceKey,
-      title: folderForm.title.trim(),
-      subtitle: folderForm.subtitle.trim(),
-      files: 0,
-      progress: 0,
-      accent: folderForm.accent,
-      icon: "folder_special",
-    };
-
-    setModuleWorkspaces((current) => {
-      const workspace = current[currentWorkspaceKey] || createEmptyWorkspace();
-      return {
-        ...current,
-        [currentWorkspaceKey]: { ...workspace, folders: [...workspace.folders, newFolder] },
-        [workspaceKey]: createEmptyWorkspace(),
-      };
+      accentColor: toAccentColor(moduleForm.accent || 'violet'),
     });
-    bumpActiveContainerFileCount();
     closeModal();
   };
 
-  const handleEditFolder = (event) => {
+  const handleCreateFolder = async (event) => {
     event.preventDefault();
-    if (!editingFolder) return;
+    if (!activeSemester || !activeModuleId) return;
 
-    updateFolderEverywhere(editingFolder.workspaceKey, (folder) => ({
-      ...folder,
+    await notes.addFolder(activeSemester, activeModuleId, currentFolderId, {
       title: folderForm.title.trim(),
       subtitle: folderForm.subtitle.trim(),
-      accent: folderForm.accent,
-    }));
-    setActiveFolderTrail((current) => current.map((folder) => (
-      folder.workspaceKey === editingFolder.workspaceKey
-        ? { ...folder, title: folderForm.title.trim(), subtitle: folderForm.subtitle.trim(), accent: folderForm.accent }
-        : folder
-    )));
+      accentColor: toAccentColor(folderForm.accent || 'emerald'),
+    });
     closeModal();
   };
 
   const openEditFolder = (folder) => {
     setEditingFolder(folder);
-    setFolderForm({ title: folder.title, subtitle: folder.subtitle, accent: folder.accent });
-    setModalType("editFolder");
+    setFolderForm({ title: folder.title, subtitle: folder.subtitle, accent: toUiAccent(folder.accentColor) });
+    setModalType('editFolder');
   };
 
-  const removeFolder = (folderToRemove) => {
-    setModuleWorkspaces((current) => {
-      const workspace = current[currentWorkspaceKey] || createEmptyWorkspace();
-      const updated = {
-        ...current,
-        [currentWorkspaceKey]: {
-          ...workspace,
-          folders: workspace.folders.filter((folder) => folder.workspaceKey !== folderToRemove.workspaceKey),
-        },
-      };
-      return removeWorkspaceBranch(updated, folderToRemove.workspaceKey);
-    });
-    bumpActiveContainerFileCount(-1);
-  };
-
-  const removeCurrentFolder = () => {
-    if (!currentFolder) return;
-    const parentKey = activeFolderTrail.at(-2)?.workspaceKey || activeModuleId;
-
-    setModuleWorkspaces((current) => {
-      const parentWorkspace = current[parentKey] || createEmptyWorkspace();
-      const updated = {
-        ...current,
-        [parentKey]: {
-          ...parentWorkspace,
-          folders: parentWorkspace.folders.filter((folder) => folder.workspaceKey !== currentFolder.workspaceKey),
-        },
-      };
-      return removeWorkspaceBranch(updated, currentFolder.workspaceKey);
-    });
-    setActiveFolderTrail((current) => current.slice(0, -1));
-    bumpActiveContainerFileCount(-1);
-  };
-
-  const handleCreateNote = (event) => {
+  const handleEditFolder = async (event) => {
     event.preventDefault();
-    if (!currentWorkspaceKey) return;
+    if (!editingFolder || !activeSemester || !activeModuleId) return;
 
-    const existingNotes = selectedWorkspace.notes;
-    const nextNoteId = Math.max(0, ...existingNotes.map((note) => note.id)) + 1;
-    const newNote = {
-      id: nextNoteId,
-      title: noteForm.title.trim(),
-      content: noteForm.content.trim(),
+    const updatedFolder = {
+      title: folderForm.title.trim(),
+      subtitle: folderForm.subtitle.trim(),
+      accentColor: toAccentColor(folderForm.accent),
     };
 
-    setModuleWorkspaces((current) => {
-      const workspace = current[currentWorkspaceKey] || createEmptyWorkspace();
-      return {
-        ...current,
-        [currentWorkspaceKey]: { ...workspace, notes: [...workspace.notes, newNote] },
-      };
-    });
-    bumpActiveContainerFileCount();
+    await notes.updateFolder(activeSemester, activeModuleId, editingFolder.folderId, updatedFolder);
+    setActiveFolderTrail((current) => current.map((folder) => (
+      folder.folderId === editingFolder.folderId ? { ...folder, ...updatedFolder } : folder
+    )));
     closeModal();
   };
 
-  const removeNote = (noteId) => {
-    setModuleWorkspaces((current) => {
-      const workspace = current[currentWorkspaceKey] || createEmptyWorkspace();
-      return {
-        ...current,
-        [currentWorkspaceKey]: { ...workspace, notes: workspace.notes.filter((note) => note.id !== noteId) },
-      };
+  const removeFolder = async (folderToRemove) => {
+    if (!activeSemester || !activeModuleId) return;
+    await notes.deleteFolder(activeSemester, activeModuleId, folderToRemove.folderId);
+  };
+
+  const removeCurrentFolder = async () => {
+    if (!currentFolder || !activeSemester || !activeModuleId) return;
+
+    await notes.deleteFolder(activeSemester, activeModuleId, currentFolder.folderId);
+    setActiveFolderTrail((current) => current.slice(0, -1));
+  };
+
+  const handleCreateNote = async (event) => {
+    event.preventDefault();
+    if (!activeSemester || !activeModuleId) return;
+
+    await notes.addNote(activeSemester, activeModuleId, currentFolderId, {
+      title: noteForm.title.trim(),
+      content: noteForm.content.trim(),
     });
-    bumpActiveContainerFileCount(-1);
+    closeModal();
   };
 
-  const handleUploadPdfs = (event) => {
-    if (!currentWorkspaceKey) return;
+  const editNote = async (noteToEdit) => {
+    if (!activeSemester || !activeModuleId) return;
 
-    const files = Array.from(event.target.files || []).filter((file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
-    if (!files.length) return;
+    const title = window.prompt('Note title', noteToEdit.title);
+    if (title === null) return;
+    const content = window.prompt('Note content', noteToEdit.content);
+    if (content === null) return;
 
-    setModuleWorkspaces((current) => {
-      const workspace = current[currentWorkspaceKey] || createEmptyWorkspace();
-      const nextPdfId = Math.max(0, ...workspace.pdfs.map((pdf) => pdf.id)) + 1;
-      const uploadedPdfs = files.map((file, index) => ({
-        id: nextPdfId + index,
-        name: file.name,
-        size: file.size,
-        uploadedAt: "Uploaded just now",
-      }));
-
-      return {
-        ...current,
-        [currentWorkspaceKey]: { ...workspace, pdfs: [...workspace.pdfs, ...uploadedPdfs] },
-      };
+    await notes.updateNote(activeSemester, activeModuleId, noteToEdit.noteId, {
+      title: title.trim(),
+      content: content.trim(),
     });
-
-    bumpActiveContainerFileCount(files.length);
-    event.target.value = "";
   };
 
-  const removePdf = (pdfId) => {
-    setModuleWorkspaces((current) => {
-      const workspace = current[currentWorkspaceKey] || createEmptyWorkspace();
-      return {
-        ...current,
-        [currentWorkspaceKey]: { ...workspace, pdfs: workspace.pdfs.filter((pdf) => pdf.id !== pdfId) },
-      };
-    });
-    bumpActiveContainerFileCount(-1);
+  const removeNote = async (noteId) => {
+    if (!activeSemester || !activeModuleId) return;
+    await notes.deleteNote(activeSemester, activeModuleId, noteId);
   };
 
-  const openFolder = (folder) => {
-    setActiveFolderTrail((current) => [...current, folder]);
+  const handleUploadPdfs = async (event) => {
+    if (!activeSemester || !activeModuleId) return;
+
+    const files = Array.from(event.target.files || []).filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+    for (const file of files) {
+      const url = window.prompt(`Cloudinary URL for ${file.name}`);
+      if (url) {
+        await notes.addPdf(activeSemester, activeModuleId, currentFolderId, {
+          title: file.name,
+          url: url.trim(),
+        });
+      }
+    }
+    event.target.value = '';
   };
+
+  const removePdf = async (pdfId) => {
+    if (!activeSemester || !activeModuleId) return;
+    await notes.deletePdf(activeSemester, activeModuleId, pdfId);
+  };
+
+  const openFolder = (folder) => setActiveFolderTrail((current) => [...current, folder]);
+
+  const renderWorkspaceActions = () => (
+    <div className="notes-header-actions">
+      {isSemesterWorkspace ? (
+        <NotesActionButton icon="create_new_folder" label="New Module" onClick={() => setModalType('module')} />
+      ) : (
+        <>
+          <NotesActionButton icon="create_new_folder" label="New Folder" onClick={() => setModalType('folder')} />
+          <NotesActionButton icon="upload_file" label="Upload PDF" onClick={() => pdfInputRef.current?.click()} />
+          <NotesActionButton icon="note_add" label="New Note" onClick={() => setModalType('note')} />
+        </>
+      )}
+      {(isSemesterWorkspace || isModuleWorkspace || isFolderWorkspace) && (
+        <div className="workspace-actions-menu">
+          <button className="workspace-actions-menu__trigger" type="button">
+            <span className="material-symbols-outlined">more_horiz</span>
+            Actions
+          </button>
+          <div className="workspace-actions-menu__content">
+            {isSemesterWorkspace && selectedSemester && (
+              <>
+                <button type="button" onClick={() => openEditSemester(selectedSemester)}><span className="material-symbols-outlined">edit</span>Edit Semester</button>
+                <button className="workspace-actions-menu__danger" type="button" onClick={() => removeSemester(selectedSemester)}><span className="material-symbols-outlined">delete</span>Remove Semester</button>
+              </>
+            )}
+            {isModuleWorkspace && selectedModule && (
+              <>
+                <button type="button" onClick={() => openEditModule(selectedModule)}><span className="material-symbols-outlined">edit</span>Edit Module</button>
+                <button className="workspace-actions-menu__danger" type="button" onClick={() => removeModule(selectedModule)}><span className="material-symbols-outlined">delete</span>Remove Module</button>
+              </>
+            )}
+            {isFolderWorkspace && currentFolder && (
+              <>
+                <button type="button" onClick={() => openEditFolder(currentFolder)}><span className="material-symbols-outlined">edit</span>Edit Folder</button>
+                <button className="workspace-actions-menu__danger" type="button" onClick={removeCurrentFolder}><span className="material-symbols-outlined">delete</span>Remove Folder</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   const renderWorkspace = () => (
     <>
-      <input
-        ref={pdfInputRef}
-        className="module-pdf-input"
-        type="file"
-        accept="application/pdf,.pdf"
-        multiple
-        onChange={handleUploadPdfs}
-      />
+      {!isSemesterWorkspace && (
+        <input ref={pdfInputRef} className="module-pdf-input" type="file" accept="application/pdf,.pdf" multiple onChange={handleUploadPdfs} />
+      )}
 
-      <div className="module-workspace-panel">
-        <div className="module-workspace-panel__heading">
-          <div>
-            <h3>Folders</h3>
-            <p>Create nested folders for lectures, labs, weeks, or revision sets.</p>
+      {isSemesterWorkspace && (
+        <div className="module-workspace-panel">
+          <div className="module-workspace-panel__heading"><div><h3>Modules</h3><p>Open a module or manage it from the dropdown menu.</p></div></div>
+          <div className="folder-vault-grid modules-vault-grid">
+            {selectedModules.map((module, index) => {
+              const moduleCard = mapModuleForCard(module, index);
+              return <FolderVaultCard key={module.moduleId} folder={moduleCard} kicker={module.moduleId} onClick={() => setActiveModuleId(module.moduleId)} onEdit={() => openEditModule(module)} onDelete={() => removeModule(module)} />;
+            })}
           </div>
         </div>
-        <div className="folder-vault-grid modules-vault-grid">
-          {selectedWorkspace.folders.map((folder) => (
-            <FolderVaultCard
-              key={folder.workspaceKey}
-              folder={folder}
-              kicker="FOLDER"
-              onClick={() => openFolder(folder)}
-              onEdit={() => openEditFolder(folder)}
-              onDelete={() => removeFolder(folder)}
-            />
-          ))}
-        </div>
-      </div>
+      )}
 
-      <div className="module-workspace-panel">
-        <div className="module-workspace-panel__heading">
-          <div>
-            <h3>PDFs</h3>
-            <p>Upload lecture slides, readings, handouts, and scanned materials.</p>
+      {!isSemesterWorkspace && (
+        <>
+          <div className="module-workspace-panel">
+            <div className="module-workspace-panel__heading"><div><h3>Folders</h3><p>Create nested folders for lectures, labs, weeks, or revision sets.</p></div></div>
+            <div className="folder-vault-grid modules-vault-grid">
+              {(selectedWorkspace.folders || []).map((folder, index) => {
+                const folderCard = mapFolderForCard(folder, index);
+                return <FolderVaultCard key={folder.folderId} folder={folderCard} kicker="FOLDER" onClick={() => openFolder(folder)} onEdit={() => openEditFolder(folder)} onDelete={() => removeFolder(folder)} />;
+              })}
+            </div>
           </div>
-        </div>
-        <div className="module-file-grid">
-          {selectedWorkspace.pdfs.map((pdf) => (
-            <article key={pdf.id} className="module-pdf-card">
-              <div className="module-pdf-card__icon">
-                <span className="material-symbols-outlined">picture_as_pdf</span>
-              </div>
-              <div className="module-pdf-card__content">
-                <h4>{pdf.name}</h4>
-                <p>{formatFileSize(pdf.size)} - {pdf.uploadedAt}</p>
-              </div>
-              <div className="file-card-menu">
-                <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${pdf.name}`}>
-                  <span className="material-symbols-outlined">more_horiz</span>
-                </button>
-                <div className="file-card-menu__content">
-                  <button className="file-card-menu__danger" type="button" onClick={() => removePdf(pdf.id)}>
-                    <span className="material-symbols-outlined">delete</span>
-                    Remove
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
 
-      <div className="module-workspace-panel">
-        <div className="module-workspace-panel__heading">
-          <div>
-            <h3>Notes</h3>
-            <p>Capture quick summaries, formulas, reminders, and study prompts.</p>
+          <div className="module-workspace-panel">
+            <div className="module-workspace-panel__heading"><div><h3>PDFs</h3><p>Upload lecture slides, readings, handouts, and scanned materials.</p></div></div>
+            <div className="module-file-grid">
+              {(selectedWorkspace.pdfs || []).map((pdf) => (
+                <article key={pdf.pdfId} className="module-pdf-card">
+                  <div className="module-pdf-card__icon"><span className="material-symbols-outlined">picture_as_pdf</span></div>
+                  <div className="module-pdf-card__content"><h4>{pdf.title}</h4><p>{pdf.url}</p></div>
+                  <div className="file-card-menu">
+                    <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${pdf.title}`}><span className="material-symbols-outlined">more_horiz</span></button>
+                    <div className="file-card-menu__content">
+                      <a href={pdf.url} target="_blank" rel="noreferrer"><span className="material-symbols-outlined">open_in_new</span>Open</a>
+                      <button className="file-card-menu__danger" type="button" onClick={() => removePdf(pdf.pdfId)}><span className="material-symbols-outlined">delete</span>Remove</button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="module-note-grid">
-          {selectedWorkspace.notes.map((note) => (
-            <article key={note.id} className="module-note-card">
-              <div className="module-note-card__icon">
-                <span className="material-symbols-outlined">description</span>
-              </div>
-              <div>
-                <h4>{note.title}</h4>
-                <p>{note.content}</p>
-              </div>
-              <div className="file-card-menu">
-                <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${note.title}`}>
-                  <span className="material-symbols-outlined">more_horiz</span>
-                </button>
-                <div className="file-card-menu__content">
-                  <button className="file-card-menu__danger" type="button" onClick={() => removeNote(note.id)}>
-                    <span className="material-symbols-outlined">delete</span>
-                    Remove
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
+
+          <div className="module-workspace-panel">
+            <div className="module-workspace-panel__heading"><div><h3>Notes</h3><p>Capture quick summaries, formulas, reminders, and study prompts.</p></div></div>
+            <div className="module-note-grid">
+              {(selectedWorkspace.notes || []).map((note) => (
+                <article key={note.noteId} className="module-note-card">
+                  <div className="module-note-card__icon"><span className="material-symbols-outlined">description</span></div>
+                  <div><h4>{note.title}</h4><p>{note.content}</p></div>
+                  <div className="file-card-menu">
+                    <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${note.title}`}><span className="material-symbols-outlined">more_horiz</span></button>
+                    <div className="file-card-menu__content">
+                      <button type="button" onClick={() => editNote(note)}><span className="material-symbols-outlined">edit</span>Edit</button>
+                      <button className="file-card-menu__danger" type="button" onClick={() => removeNote(note.noteId)}><span className="material-symbols-outlined">delete</span>Remove</button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 
   return (
     <main className="p-gutter md:p-margin-desktop space-y-xl notes-page">
       <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search your knowledge base..." />
+      {notes.loading && <p>Loading notes...</p>}
+      {notes.error && <p>{notes.error.message}</p>}
 
-      {activeSemester && activeModuleId ? (
+      {!notes.loading && (activeSemester ? (
         <section>
           <NotesBreadcrumb
             items={[
-              { label: "My Notes", onClick: goToNotesHome },
-              { label: selectedSemester?.title || "Semester", onClick: goToSemesterModules },
-              { label: selectedModule?.title || activeModuleId, onClick: goToModuleRoot },
+              { label: 'My Notes', onClick: goToNotesHome },
+              { label: selectedSemester?.title || 'Semester', active: isSemesterWorkspace, onClick: isSemesterWorkspace ? undefined : goToSemesterRoot },
+              ...(activeModuleId ? [{ label: selectedModule?.title || activeModuleId, active: isModuleWorkspace, onClick: isModuleWorkspace ? undefined : goToModuleRoot }] : []),
               ...activeFolderTrail.map((folder, index) => ({
-                label: folder.title,
+                label: findFolderById(selectedModule?.folders || [], folder.folderId)?.title || folder.title,
                 active: index === activeFolderTrail.length - 1,
                 onClick: index === activeFolderTrail.length - 1 ? undefined : () => goToFolderTrailIndex(index),
               })),
@@ -554,116 +424,35 @@ function NotePage({ profile, currentUser }) {
 
           <NotesSectionHeader
             title={currentWorkspaceTitle}
-            description={isFolderWorkspace ? "Folder workspace for nested folders, PDFs, and notes" : "Module workspace for folders, PDFs, and notes"}
-            backAction={(
-              <NotesActionButton
-                className="back-button"
-                icon="chevron_left"
-                label={isFolderWorkspace ? "Back" : "Back to Modules"}
-                onClick={isFolderWorkspace ? () => setActiveFolderTrail((current) => current.slice(0, -1)) : goToSemesterModules}
-              />
-            )}
-            action={(
-              <div className="notes-header-actions">
-                <NotesActionButton icon="create_new_folder" label="New Folder" onClick={() => setModalType("folder")} />
-                <NotesActionButton icon="upload_file" label="Upload PDF" onClick={() => pdfInputRef.current?.click()} />
-                <NotesActionButton icon="note_add" label="New Note" onClick={() => setModalType("note")} />
-                {isFolderWorkspace && (
-                  <div className="workspace-actions-menu">
-                    <button className="workspace-actions-menu__trigger" type="button">
-                      <span className="material-symbols-outlined">more_horiz</span>
-                      Folder Actions
-                    </button>
-                    <div className="workspace-actions-menu__content">
-                      <button type="button" onClick={() => openEditFolder(currentFolder)}>
-                        <span className="material-symbols-outlined">edit</span>
-                        Edit Folder
-                      </button>
-                      <button className="workspace-actions-menu__danger" type="button" onClick={removeCurrentFolder}>
-                        <span className="material-symbols-outlined">delete</span>
-                        Remove Folder
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            description={isSemesterWorkspace ? 'Semester workspace for modules' : isModuleWorkspace ? 'Module workspace for folders, PDFs, and notes' : 'Folder workspace for nested folders, PDFs, and notes'}
+            backAction={<NotesActionButton className="back-button" icon="chevron_left" label="Back" onClick={isSemesterWorkspace ? goToNotesHome : isModuleWorkspace ? goToSemesterRoot : () => setActiveFolderTrail((current) => current.slice(0, -1))} />}
+            action={renderWorkspaceActions()}
           />
 
           {renderWorkspace()}
         </section>
-      ) : activeSemester ? (
-        <section>
-          <NotesBreadcrumb
-            items={[
-              { label: "My Notes", onClick: goToNotesHome },
-              { label: selectedSemester?.title || "Semester", active: true },
-            ]}
-          />
-
-          <NotesSectionHeader
-            title={`${selectedSemester?.title || "Semester"} Modules`}
-            description="Module folders linked to this semester vault"
-            backAction={<NotesActionButton className="back-button" icon="chevron_left" label="Back" onClick={goToNotesHome} />}
-            action={<NotesActionButton icon="create_new_folder" label="New Module" onClick={() => setModalType("module")} />}
-          />
-
-          <div className="folder-vault-grid modules-vault-grid">
-            {selectedModules.map((module) => (
-              <FolderVaultCard
-                key={module.moduleId}
-                folder={module}
-                kicker={module.moduleId}
-                onClick={() => setActiveModuleId(module.moduleId)}
-              />
-            ))}
-          </div>
-        </section>
       ) : (
         <section>
-          <NotesBreadcrumb items={[{ label: "My Notes" }]} />
-
-          <NotesSectionHeader
-            title="My Notes"
-            description="Your personal knowledge base"
-            action={<NotesActionButton icon="create_new_folder" label="New Semester" onClick={() => setModalType("semester")} />}
-          />
-
+          <NotesBreadcrumb items={[{ label: 'My Notes' }]} />
+          <NotesSectionHeader title="My Notes" description="Your personal knowledge base" action={<NotesActionButton icon="create_new_folder" label="New Semester" onClick={() => setModalType('semester')} />} />
           <div className="folder-vault-grid">
-            {semesters.map((semester) => (
-              <FolderVaultCard
-                key={semester.id}
-                folder={semester}
-                kicker={`S${semester.id.toString().padStart(2, '0')} NODE`}
-                onClick={() => setActiveSemester(semester.id)}
-              />
-            ))}
+            {semesters.map((semester, index) => {
+              const semesterCard = mapSemesterForCard(semester, index);
+              return <FolderVaultCard key={semester.semesterId} folder={semesterCard} kicker={`S${(index + 1).toString().padStart(2, '0')} NODE`} onClick={() => setActiveSemester(semester.semesterId)} onEdit={() => openEditSemester(semester)} onDelete={() => removeSemester(semester)} />;
+            })}
           </div>
         </section>
-      )}
+      ))}
 
-      {modalType === "semester" && (
-        <FolderCreateModal type="semester" values={semesterForm} onChange={updateSemesterForm} onClose={closeModal} onSubmit={handleCreateSemester} />
-      )}
-
-      {modalType === "module" && (
-        <FolderCreateModal type="module" values={moduleForm} onChange={updateModuleForm} onClose={closeModal} onSubmit={handleCreateModule} />
-      )}
-
-      {modalType === "folder" && (
-        <FolderCreateModal type="folder" values={folderForm} onChange={updateFolderForm} onClose={closeModal} onSubmit={handleCreateFolder} />
-      )}
-
-      {modalType === "editFolder" && (
-        <FolderCreateModal type="folder" mode="edit" values={folderForm} onChange={updateFolderForm} onClose={closeModal} onSubmit={handleEditFolder} />
-      )}
-
-      {modalType === "note" && (
-        <NoteCreateModal values={noteForm} onChange={updateNoteForm} onClose={closeModal} onSubmit={handleCreateNote} />
-      )}
+      {modalType === 'semester' && <FolderCreateModal type="semester" values={semesterForm} onChange={updateSemesterForm} onClose={closeModal} onSubmit={handleCreateSemester} />}
+      {modalType === 'editSemester' && <FolderCreateModal type="semester" mode="edit" values={semesterForm} onChange={updateSemesterForm} onClose={closeModal} onSubmit={handleEditSemester} />}
+      {modalType === 'module' && <FolderCreateModal type="module" values={moduleForm} onChange={updateModuleForm} onClose={closeModal} onSubmit={handleCreateModule} />}
+      {modalType === 'editModule' && <FolderCreateModal type="module" mode="edit" values={moduleForm} onChange={updateModuleForm} onClose={closeModal} onSubmit={handleEditModule} />}
+      {modalType === 'folder' && <FolderCreateModal type="folder" values={folderForm} onChange={updateFolderForm} onClose={closeModal} onSubmit={handleCreateFolder} />}
+      {modalType === 'editFolder' && <FolderCreateModal type="folder" mode="edit" values={folderForm} onChange={updateFolderForm} onClose={closeModal} onSubmit={handleEditFolder} />}
+      {modalType === 'note' && <NoteCreateModal values={noteForm} onChange={updateNoteForm} onClose={closeModal} onSubmit={handleCreateNote} />}
     </main>
   );
 }
 
 export default NotePage;
-
