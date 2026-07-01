@@ -2,11 +2,14 @@ import { useRef, useState } from 'react';
 import FolderCreateModal from '../components/FolderCreateModal';
 import FolderVaultCard from '../components/FolderVaultCard';
 import NoteCreateModal from '../components/NoteCreateModal';
+import NoteViewModal from '../components/NoteViewModal';
+import PdfViewModal from '../components/PdfViewModal';
 import NotesActionButton from '../components/NotesActionButton';
 import NotesBreadcrumb from '../components/NotesBreadcrumb';
 import NotesSectionHeader from '../components/NotesSectionHeader';
 import TopBar from '../components/TopBar';
 import { findFolderById } from '../Services/noteManagementUtils';
+import { uploadPdfToCloudinary } from '../Services/pdfUploadService';
 import useNoteManagement from '../Services/useNoteManagement';
 import './notepage.css';
 
@@ -67,6 +70,10 @@ function NotePage({ profile, currentUser }) {
   const [moduleForm, setModuleForm] = useState(EMPTY_MODULE_FORM);
   const [folderForm, setFolderForm] = useState(EMPTY_FOLDER_FORM);
   const [noteForm, setNoteForm] = useState(EMPTY_NOTE_FORM);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [viewingNote, setViewingNote] = useState(null);
+  const [viewingPdf, setViewingPdf] = useState(null);
   const [editingFolder, setEditingFolder] = useState(null);
   const [editingSemester, setEditingSemester] = useState(null);
   const [editingModule, setEditingModule] = useState(null);
@@ -117,7 +124,7 @@ function NotePage({ profile, currentUser }) {
 
   const openEditSemester = (semester) => {
     setEditingSemester(semester);
-    setSemesterForm({ title: semester.title, subtitle: semester.subtitle, accent: toUiAccent(semester.accentColor) });
+    setSemesterForm({ title: semester.title, subtitle: semester.subtitle || '', accent: toUiAccent(semester.accentColor) });
     setModalType('editSemester');
   };
 
@@ -140,7 +147,7 @@ function NotePage({ profile, currentUser }) {
 
   const openEditModule = (module) => {
     setEditingModule(module);
-    setModuleForm({ moduleId: module.moduleId, title: module.title, subtitle: module.subtitle, accent: toUiAccent(module.accentColor) });
+    setModuleForm({ moduleId: module.moduleId, title: module.title, subtitle: module.subtitle || '', accent: toUiAccent(module.accentColor) });
     setModalType('editModule');
   };
 
@@ -166,12 +173,16 @@ function NotePage({ profile, currentUser }) {
   const handleCreateSemester = async (event) => {
     event.preventDefault();
 
-    await notes.addSemester({
-      title: semesterForm.title.trim(),
-      subtitle: semesterForm.subtitle.trim(),
-      accentColor: toAccentColor(semesterForm.accent),
-    });
-    closeModal();
+    try {
+      await notes.addSemester({
+        title: semesterForm.title.trim(),
+        subtitle: semesterForm.subtitle.trim(),
+        accentColor: toAccentColor(semesterForm.accent),
+      });
+      closeModal();
+    } catch (error) {
+      console.error("Unable to create semester:", error);
+    }
   };
 
   const handleCreateModule = async (event) => {
@@ -201,7 +212,7 @@ function NotePage({ profile, currentUser }) {
 
   const openEditFolder = (folder) => {
     setEditingFolder(folder);
-    setFolderForm({ title: folder.title, subtitle: folder.subtitle, accent: toUiAccent(folder.accentColor) });
+    setFolderForm({ title: folder.title, subtitle: folder.subtitle || '', accent: toUiAccent(folder.accentColor) });
     setModalType('editFolder');
   };
 
@@ -268,18 +279,37 @@ function NotePage({ profile, currentUser }) {
     if (!activeSemester || !activeModuleId) return;
 
     const files = Array.from(event.target.files || []).filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
-    for (const file of files) {
-      const url = window.prompt(`Cloudinary URL for ${file.name}`);
-      if (url) {
+    if (!files.length) return;
+
+    setIsUploadingPdf(true);
+    setUploadError(null);
+
+    try {
+      for (const file of files) {
+        const uploadedPdf = await uploadPdfToCloudinary(file);
         await notes.addPdf(activeSemester, activeModuleId, currentFolderId, {
-          title: file.name,
-          url: url.trim(),
+          title: uploadedPdf.title,
+          url: uploadedPdf.url,
+          publicId: uploadedPdf.publicId,
+          size: uploadedPdf.size,
+          storageProvider: uploadedPdf.storageProvider,
+          fileType: uploadedPdf.fileType,
         });
       }
+    } catch (error) {
+      console.error('Unable to upload PDF:', error);
+      setUploadError(error.message || 'PDF upload failed');
+    } finally {
+      setIsUploadingPdf(false);
+      event.target.value = '';
     }
-    event.target.value = '';
   };
 
+
+  const openPdf = (pdf) => {
+    if (!pdf?.url) return;
+    setViewingPdf(pdf);
+  };
   const removePdf = async (pdfId) => {
     if (!activeSemester || !activeModuleId) return;
     await notes.deletePdf(activeSemester, activeModuleId, pdfId);
@@ -294,7 +324,7 @@ function NotePage({ profile, currentUser }) {
       ) : (
         <>
           <NotesActionButton icon="create_new_folder" label="New Folder" onClick={() => setModalType('folder')} />
-          <NotesActionButton icon="upload_file" label="Upload PDF" onClick={() => pdfInputRef.current?.click()} />
+          <NotesActionButton icon="upload_file" label={isUploadingPdf ? "Uploading..." : "Upload PDF"} onClick={() => !isUploadingPdf && pdfInputRef.current?.click()} />
           <NotesActionButton icon="note_add" label="New Note" onClick={() => setModalType('note')} />
         </>
       )}
@@ -361,15 +391,15 @@ function NotePage({ profile, currentUser }) {
 
           <div className="module-workspace-panel">
             <div className="module-workspace-panel__heading"><div><h3>PDFs</h3><p>Upload lecture slides, readings, handouts, and scanned materials.</p></div></div>
-            <div className="module-file-grid">
+            <div className={`module-file-grid ${currentFolderId ? 'module-file-grid--list' : ''}`}>
               {(selectedWorkspace.pdfs || []).map((pdf) => (
-                <article key={pdf.pdfId} className="module-pdf-card">
+                <article key={pdf.pdfId} className="module-pdf-card module-pdf-card--clickable" role="button" tabIndex={0} onClick={() => openPdf(pdf)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openPdf(pdf); }}>
                   <div className="module-pdf-card__icon"><span className="material-symbols-outlined">picture_as_pdf</span></div>
                   <div className="module-pdf-card__content"><h4>{pdf.title}</h4><p>{pdf.url}</p></div>
-                  <div className="file-card-menu">
+                  <div className="file-card-menu" onClick={(event) => event.stopPropagation()}>
                     <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${pdf.title}`}><span className="material-symbols-outlined">more_horiz</span></button>
                     <div className="file-card-menu__content">
-                      <a href={pdf.url} target="_blank" rel="noreferrer"><span className="material-symbols-outlined">open_in_new</span>Open</a>
+                      <a href={pdf.url} target="_blank" rel="noreferrer"><span className="material-symbols-outlined">open_in_new</span>Open Original</a>
                       <button className="file-card-menu__danger" type="button" onClick={() => removePdf(pdf.pdfId)}><span className="material-symbols-outlined">delete</span>Remove</button>
                     </div>
                   </div>
@@ -380,12 +410,12 @@ function NotePage({ profile, currentUser }) {
 
           <div className="module-workspace-panel">
             <div className="module-workspace-panel__heading"><div><h3>Notes</h3><p>Capture quick summaries, formulas, reminders, and study prompts.</p></div></div>
-            <div className="module-note-grid">
+            <div className={`module-note-grid ${currentFolderId ? 'module-note-grid--list' : ''}`}>
               {(selectedWorkspace.notes || []).map((note) => (
-                <article key={note.noteId} className="module-note-card">
+                <article key={note.noteId} className="module-note-card module-note-card--clickable" role="button" tabIndex={0} onClick={() => setViewingNote(note)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setViewingNote(note); }}>
                   <div className="module-note-card__icon"><span className="material-symbols-outlined">description</span></div>
-                  <div><h4>{note.title}</h4><p>{note.content}</p></div>
-                  <div className="file-card-menu">
+                  <div className="module-note-card__content"><h4>{note.title}</h4><p>{note.content}</p></div>
+                  <div className="file-card-menu" onClick={(event) => event.stopPropagation()}>
                     <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${note.title}`}><span className="material-symbols-outlined">more_horiz</span></button>
                     <div className="file-card-menu__content">
                       <button type="button" onClick={() => editNote(note)}><span className="material-symbols-outlined">edit</span>Edit</button>
@@ -406,6 +436,7 @@ function NotePage({ profile, currentUser }) {
       <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search your knowledge base..." />
       {notes.loading && <p>Loading notes...</p>}
       {notes.error && <p>{notes.error.message}</p>}
+      {uploadError && <p>{uploadError}</p>}
 
       {!notes.loading && (activeSemester ? (
         <section>
@@ -451,6 +482,8 @@ function NotePage({ profile, currentUser }) {
       {modalType === 'folder' && <FolderCreateModal type="folder" values={folderForm} onChange={updateFolderForm} onClose={closeModal} onSubmit={handleCreateFolder} />}
       {modalType === 'editFolder' && <FolderCreateModal type="folder" mode="edit" values={folderForm} onChange={updateFolderForm} onClose={closeModal} onSubmit={handleEditFolder} />}
       {modalType === 'note' && <NoteCreateModal values={noteForm} onChange={updateNoteForm} onClose={closeModal} onSubmit={handleCreateNote} />}
+      {viewingNote && <NoteViewModal note={viewingNote} onClose={() => setViewingNote(null)} onEdit={(note) => { setViewingNote(null); editNote(note); }} />}
+      {viewingPdf && <PdfViewModal pdf={viewingPdf} onClose={() => setViewingPdf(null)} />}
     </main>
   );
 }

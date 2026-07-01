@@ -106,6 +106,10 @@ export const createPdf = (pdfData) => ({
   pdfId: pdfData.pdfId || createId("pdf"),
   title: pdfData.title || "",
   url: pdfData.url || "",
+  publicId: pdfData.publicId || "",
+  size: pdfData.size || 0,
+  storageProvider: pdfData.storageProvider || "cloudinary",
+  fileType: pdfData.fileType || "application/pdf",
 });
 
 export const createNote = (noteData) => ({

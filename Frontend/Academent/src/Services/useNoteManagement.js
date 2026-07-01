@@ -68,8 +68,45 @@ export const useNoteManagement = () => {
   }, [uid]);
 
   useEffect(() => {
-    reload();
-  }, [reload]);
+    let isMounted = true;
+
+    if (!uid) {
+      Promise.resolve().then(() => {
+        if (!isMounted) return;
+        setData({ semesters: [] });
+        setLoading(false);
+      });
+
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    Promise.resolve()
+      .then(() => {
+        if (!isMounted) return null;
+        setLoading(true);
+        setError(null);
+        return createNoteManagementIfMissing(uid);
+      })
+      .then((existingData) => {
+        if (!existingData) return;
+        if (!isMounted) return;
+        setData(existingData);
+      })
+      .catch((loadError) => {
+        if (!isMounted) return;
+        setError(loadError);
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [uid]);
 
   const methods = useMemo(() => ({
     reload,
@@ -105,3 +142,5 @@ export const useNoteManagement = () => {
 };
 
 export default useNoteManagement;
+
+

@@ -96,11 +96,10 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
             <span>Subtitle</span>
             <input
               type="text"
-              value={values.subtitle}
+              value={values.subtitle || ""}
               onChange={(event) => onChange("subtitle", event.target.value)}
               placeholder={copy.subtitlePlaceholder}
-              required
-            />
+              />
           </label>
 
           <fieldset className="notes-accent-picker">
@@ -136,3 +135,5 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
 }
 
 export default FolderCreateModal;
+
+

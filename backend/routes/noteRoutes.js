@@ -24,6 +24,14 @@ const removeTempFile = (filePath) => {
   }
 };
 
+const sanitizeFileBaseName = (fileName) => {
+  const parsedName = path.parse(fileName).name;
+  return parsedName
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "academent-pdf";
+};
+
 router.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
   const file = req.file;
 
@@ -38,11 +46,14 @@ router.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
       return res.status(400).json({ message: "Only PDF files are allowed" });
     }
 
+    const publicId = `${sanitizeFileBaseName(file.originalname)}-${Date.now()}.pdf`;
     const result = await cloudinary.uploader.upload(file.path, {
       resource_type: "raw",
+      type: "upload",
+      access_mode: "public",
       folder: "academent/pdfs",
-      use_filename: true,
-      unique_filename: true,
+      public_id: publicId,
+      overwrite: false,
     });
 
     removeTempFile(file.path);
@@ -52,10 +63,11 @@ router.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
       pdfUrl: result.secure_url,
       publicId: result.public_id,
       size: result.bytes,
-      format: result.format,
+      format: result.format || "pdf",
       originalName: file.originalname,
       storageProvider: "cloudinary",
       fileType: "application/pdf",
+      resourceType: result.resource_type,
     });
   } catch (error) {
     removeTempFile(file?.path);
