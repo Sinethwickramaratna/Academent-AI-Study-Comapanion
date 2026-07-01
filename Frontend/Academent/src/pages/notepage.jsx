@@ -18,7 +18,11 @@ const EMPTY_MODULE_FORM = { moduleId: '', title: '', subtitle: '', accent: 'cyan
 const EMPTY_FOLDER_FORM = { title: '', subtitle: '', accent: 'cyan' };
 const EMPTY_NOTE_FORM = { title: '', content: '' };
 
-const toAccentColor = (accent) => accent ? `${accent.charAt(0).toUpperCase()}${accent.slice(1)}` : 'Cyan';
+const isHexAccent = (accent) => /^#[0-9a-f]{6}$/i.test(accent || '');
+const toAccentColor = (accent) => {
+  if (!accent) return 'Cyan';
+  return isHexAccent(accent) ? accent : `${accent.charAt(0).toUpperCase()}${accent.slice(1)}`;
+};
 const toUiAccent = (accentColor) => (accentColor || 'Cyan').toLowerCase();
 
 const countWorkspaceFiles = (workspace) => {

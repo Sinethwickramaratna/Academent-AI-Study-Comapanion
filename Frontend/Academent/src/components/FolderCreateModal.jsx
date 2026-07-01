@@ -130,6 +130,12 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
                   checked={!selectedPreset}
                   onChange={() => onChange("accent", customAccent)}
                 />
+                <span className="notes-accent-choice__custom-orb" aria-hidden="true" />
+                <span className="notes-accent-choice__custom-copy">
+                  <span>Custom Color</span>
+                  <span>{customAccent.toUpperCase()}</span>
+                </span>
+                <span className="notes-accent-choice__custom-action">Pick</span>
                 <input
                   className="notes-accent-choice__color"
                   type="color"
@@ -137,7 +143,6 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
                   aria-label="Custom accent color"
                   onChange={(event) => onChange("accent", event.target.value)}
                 />
-                <span>Custom</span>
               </label>
             </div>
           </fieldset>

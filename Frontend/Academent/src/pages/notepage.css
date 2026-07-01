@@ -495,12 +495,36 @@
   border-color: color-mix(in srgb, var(--choice-accent) 46%, white);
 }
 
-.notes-accent-choice input {
+.notes-accent-choice input[type="radio"] {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
+
+.notes-accent-choice--custom {
+  grid-column: 1 / -1;
+}
+
+.notes-accent-choice__color {
+  width: 34px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 9px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.notes-accent-choice__color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.notes-accent-choice__color::-webkit-color-swatch {
+  border: 0;
+  border-radius: 9px;
+}
 .notes-accent-choice:has(input:checked) {
   border-color: color-mix(in srgb, var(--choice-accent) 58%, white);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--choice-accent) 16%, transparent);
