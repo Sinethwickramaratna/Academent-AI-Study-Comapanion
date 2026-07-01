@@ -317,6 +317,16 @@ function NotePage({ profile, currentUser }) {
 
   const openFolder = (folder) => setActiveFolderTrail((current) => [...current, folder]);
 
+  const renderEmptyState = ({ icon, title, description, action }) => (
+    <div className="notes-empty-state">
+      <span className="notes-empty-state__icon material-symbols-outlined">{icon}</span>
+      <div>
+        <h4>{title}</h4>
+        <p>{description}</p>
+      </div>
+      {action}
+    </div>
+  );
   const renderWorkspaceActions = () => (
     <div className="notes-header-actions">
       {isSemesterWorkspace ? (
@@ -368,12 +378,19 @@ function NotePage({ profile, currentUser }) {
       {isSemesterWorkspace && (
         <div className="module-workspace-panel">
           <div className="module-workspace-panel__heading"><div><h3>Modules</h3><p>Open a module or manage it from the dropdown menu.</p></div></div>
-          <div className="folder-vault-grid modules-vault-grid">
-            {selectedModules.map((module, index) => {
-              const moduleCard = mapModuleForCard(module, index);
-              return <FolderVaultCard key={module.moduleId} folder={moduleCard} kicker={module.moduleId} onClick={() => setActiveModuleId(module.moduleId)} onEdit={() => openEditModule(module)} onDelete={() => removeModule(module)} />;
-            })}
-          </div>
+          {selectedModules.length ? (
+            <div className="folder-vault-grid modules-vault-grid">
+              {selectedModules.map((module, index) => {
+                const moduleCard = mapModuleForCard(module, index);
+                return <FolderVaultCard key={module.moduleId} folder={moduleCard} kicker={module.moduleId} onClick={() => setActiveModuleId(module.moduleId)} onEdit={() => openEditModule(module)} onDelete={() => removeModule(module)} />;
+              })}
+            </div>
+          ) : renderEmptyState({
+            icon: "view_module",
+            title: "No modules yet",
+            description: "Create your first module to start organizing notes for this semester.",
+            action: <NotesActionButton icon="add" label="New Module" onClick={() => setModalType('module')} />,
+          })}
         </div>
       )}
 
@@ -381,56 +398,76 @@ function NotePage({ profile, currentUser }) {
         <>
           <div className="module-workspace-panel">
             <div className="module-workspace-panel__heading"><div><h3>Folders</h3><p>Create nested folders for lectures, labs, weeks, or revision sets.</p></div></div>
-            <div className="folder-vault-grid modules-vault-grid">
-              {(selectedWorkspace.folders || []).map((folder, index) => {
-                const folderCard = mapFolderForCard(folder, index);
-                return <FolderVaultCard key={folder.folderId} folder={folderCard} kicker="FOLDER" onClick={() => openFolder(folder)} onEdit={() => openEditFolder(folder)} onDelete={() => removeFolder(folder)} />;
-              })}
-            </div>
+            {(selectedWorkspace.folders || []).length ? (
+              <div className="folder-vault-grid modules-vault-grid">
+                {(selectedWorkspace.folders || []).map((folder, index) => {
+                  const folderCard = mapFolderForCard(folder, index);
+                  return <FolderVaultCard key={folder.folderId} folder={folderCard} kicker="FOLDER" onClick={() => openFolder(folder)} onEdit={() => openEditFolder(folder)} onDelete={() => removeFolder(folder)} />;
+                })}
+              </div>
+            ) : renderEmptyState({
+              icon: "folder",
+              title: "No folders yet",
+              description: "Create a folder when you want to group lectures, labs, weeks, or revision sets.",
+              action: <NotesActionButton icon="create_new_folder" label="New Folder" onClick={() => setModalType('folder')} />,
+            })}
           </div>
 
           <div className="module-workspace-panel">
             <div className="module-workspace-panel__heading"><div><h3>PDFs</h3><p>Upload lecture slides, readings, handouts, and scanned materials.</p></div></div>
-            <div className={`module-file-grid ${currentFolderId ? 'module-file-grid--list' : ''}`}>
-              {(selectedWorkspace.pdfs || []).map((pdf) => (
-                <article key={pdf.pdfId} className="module-pdf-card module-pdf-card--clickable" role="button" tabIndex={0} onClick={() => openPdf(pdf)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openPdf(pdf); }}>
-                  <div className="module-pdf-card__icon"><span className="material-symbols-outlined">picture_as_pdf</span></div>
-                  <div className="module-pdf-card__content"><h4>{pdf.title}</h4><p>{pdf.url}</p></div>
-                  <div className="file-card-menu" onClick={(event) => event.stopPropagation()}>
-                    <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${pdf.title}`}><span className="material-symbols-outlined">more_horiz</span></button>
-                    <div className="file-card-menu__content">
-                      <a href={pdf.url} target="_blank" rel="noreferrer"><span className="material-symbols-outlined">open_in_new</span>Open Original</a>
-                      <button className="file-card-menu__danger" type="button" onClick={() => removePdf(pdf.pdfId)}><span className="material-symbols-outlined">delete</span>Remove</button>
+            {(selectedWorkspace.pdfs || []).length ? (
+              <div className="module-file-grid">
+                {(selectedWorkspace.pdfs || []).map((pdf) => (
+                  <article key={pdf.pdfId} className="module-pdf-card module-pdf-card--clickable" role="button" tabIndex={0} onClick={() => openPdf(pdf)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openPdf(pdf); }}>
+                    <div className="module-pdf-card__icon"><span className="material-symbols-outlined">picture_as_pdf</span></div>
+                    <div className="module-pdf-card__content"><h4>{pdf.title}</h4><p>{pdf.url}</p></div>
+                    <div className="file-card-menu" onClick={(event) => event.stopPropagation()}>
+                      <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${pdf.title}`}><span className="material-symbols-outlined">more_horiz</span></button>
+                      <div className="file-card-menu__content">
+                        <a href={pdf.url} target="_blank" rel="noreferrer"><span className="material-symbols-outlined">open_in_new</span>Open Original</a>
+                        <button className="file-card-menu__danger" type="button" onClick={() => removePdf(pdf.pdfId)}><span className="material-symbols-outlined">delete</span>Remove</button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                  </article>
+                ))}
+              </div>
+            ) : renderEmptyState({
+              icon: "picture_as_pdf",
+              title: "No PDFs uploaded",
+              description: "Upload lecture slides, readings, or handouts to keep them beside your notes.",
+              action: <NotesActionButton icon="upload_file" label="Upload PDF" onClick={() => pdfInputRef.current?.click()} />,
+            })}
           </div>
 
           <div className="module-workspace-panel">
             <div className="module-workspace-panel__heading"><div><h3>Notes</h3><p>Capture quick summaries, formulas, reminders, and study prompts.</p></div></div>
-            <div className={`module-note-grid ${currentFolderId ? 'module-note-grid--list' : ''}`}>
-              {(selectedWorkspace.notes || []).map((note) => (
-                <article key={note.noteId} className="module-note-card module-note-card--clickable" role="button" tabIndex={0} onClick={() => setViewingNote(note)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setViewingNote(note); }}>
-                  <div className="module-note-card__icon"><span className="material-symbols-outlined">description</span></div>
-                  <div className="module-note-card__content"><h4>{note.title}</h4><p>{note.content}</p></div>
-                  <div className="file-card-menu" onClick={(event) => event.stopPropagation()}>
-                    <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${note.title}`}><span className="material-symbols-outlined">more_horiz</span></button>
-                    <div className="file-card-menu__content">
-                      <button type="button" onClick={() => editNote(note)}><span className="material-symbols-outlined">edit</span>Edit</button>
-                      <button className="file-card-menu__danger" type="button" onClick={() => removeNote(note.noteId)}><span className="material-symbols-outlined">delete</span>Remove</button>
+            {(selectedWorkspace.notes || []).length ? (
+              <div className="module-note-grid">
+                {(selectedWorkspace.notes || []).map((note) => (
+                  <article key={note.noteId} className="module-note-card module-note-card--clickable" role="button" tabIndex={0} onClick={() => setViewingNote(note)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setViewingNote(note); }}>
+                    <div className="module-note-card__icon"><span className="material-symbols-outlined">description</span></div>
+                    <div className="module-note-card__content"><h4>{note.title}</h4><p>{note.content}</p></div>
+                    <div className="file-card-menu" onClick={(event) => event.stopPropagation()}>
+                      <button className="file-card-menu__trigger" type="button" aria-label={`Actions for ${note.title}`}><span className="material-symbols-outlined">more_horiz</span></button>
+                      <div className="file-card-menu__content">
+                        <button type="button" onClick={() => editNote(note)}><span className="material-symbols-outlined">edit</span>Edit</button>
+                        <button className="file-card-menu__danger" type="button" onClick={() => removeNote(note.noteId)}><span className="material-symbols-outlined">delete</span>Remove</button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                  </article>
+                ))}
+              </div>
+            ) : renderEmptyState({
+              icon: "note_add",
+              title: "No notes yet",
+              description: "Create a note for summaries, formulas, reminders, or study prompts.",
+              action: <NotesActionButton icon="note_add" label="New Note" onClick={() => setModalType('note')} />,
+            })}
           </div>
         </>
       )}
     </>
   );
-
   return (
     <main className="p-gutter md:p-margin-desktop space-y-xl notes-page">
       <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search your knowledge base..." />
@@ -466,12 +503,18 @@ function NotePage({ profile, currentUser }) {
         <section>
           <NotesBreadcrumb items={[{ label: 'My Notes' }]} />
           <NotesSectionHeader title="My Notes" description="Your personal knowledge base" action={<NotesActionButton icon="create_new_folder" label="New Semester" onClick={() => setModalType('semester')} />} />
-          <div className="folder-vault-grid">
-            {semesters.map((semester, index) => {
-              const semesterCard = mapSemesterForCard(semester, index);
-              return <FolderVaultCard key={semester.semesterId} folder={semesterCard} kicker={`S${(index + 1).toString().padStart(2, '0')} NODE`} onClick={() => setActiveSemester(semester.semesterId)} onEdit={() => openEditSemester(semester)} onDelete={() => removeSemester(semester)} />;
-            })}
-          </div>
+          {semesters.length ? (
+            <div className="folder-vault-grid">
+              {semesters.map((semester, index) => {
+                const semesterCard = mapSemesterForCard(semester, index);
+                return <FolderVaultCard key={semester.semesterId} folder={semesterCard} kicker={`S${(index + 1).toString().padStart(2, '0')} NODE`} onClick={() => setActiveSemester(semester.semesterId)} onEdit={() => openEditSemester(semester)} onDelete={() => removeSemester(semester)} />;
+              })}
+            </div>
+          ) : renderEmptyState({
+            icon: "auto_stories",
+            title: "Your notes space is ready",
+            description: "Create a semester to begin building your study vault.",
+          })}
         </section>
       ))}
 

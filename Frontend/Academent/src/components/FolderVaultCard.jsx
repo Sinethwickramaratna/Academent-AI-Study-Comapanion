@@ -1,5 +1,17 @@
+const PRESET_ACCENTS = new Set(["cyan", "violet", "emerald", "amber", "rose"]);
+const isCustomColor = (accent) => /^#[0-9a-f]{6}$/i.test(accent || "");
+
 function FolderVaultCard({ folder, kicker, onClick, onEdit, onDelete }) {
   const hasActions = Boolean(onEdit || onDelete);
+  const accent = folder.accent || "cyan";
+  const customAccent = isCustomColor(accent);
+  const accentClass = PRESET_ACCENTS.has(accent) ? `folder-vault-card--${accent}` : "folder-vault-card--cyan";
+  const accentStyle = customAccent
+    ? {
+        "--folder-accent": accent,
+        "--folder-accent-soft": `color-mix(in srgb, ${accent} 16%, transparent)`,
+      }
+    : undefined;
 
   const handleKeyDown = (event) => {
     if ((event.key === "Enter" || event.key === " ") && onClick) {
@@ -10,7 +22,8 @@ function FolderVaultCard({ folder, kicker, onClick, onEdit, onDelete }) {
 
   return (
     <article
-      className={`folder-vault-card folder-vault-card--${folder.accent}`}
+      className={`folder-vault-card ${accentClass}`}
+      style={accentStyle}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       aria-label={onClick ? `Open ${folder.title}` : undefined}

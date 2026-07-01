@@ -1,10 +1,12 @@
 const ACCENT_OPTIONS = [
-  { value: "cyan", label: "Cyan" },
-  { value: "violet", label: "Violet" },
-  { value: "emerald", label: "Emerald" },
-  { value: "amber", label: "Amber" },
-  { value: "rose", label: "Rose" },
+  { value: "cyan", label: "Cyan", color: "#12c4c4" },
+  { value: "violet", label: "Violet", color: "#7c4dff" },
+  { value: "emerald", label: "Emerald", color: "#24b47e" },
+  { value: "amber", label: "Amber", color: "#f2a51a" },
+  { value: "rose", label: "Rose", color: "#e15b8f" },
 ];
+
+const isHexColor = (value) => /^#[0-9a-f]{6}$/i.test(value || "");
 
 function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "create" }) {
   const copy = {
@@ -45,6 +47,8 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
 
   const isModule = type === "module";
   const isEdit = mode === "edit";
+  const selectedPreset = ACCENT_OPTIONS.some((accent) => accent.value === values.accent);
+  const customAccent = isHexColor(values.accent) ? values.accent : "#12c4c4";
 
   return (
     <div className="notes-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -106,7 +110,7 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
             <legend>Accent Color</legend>
             <div className="notes-accent-picker__options">
               {ACCENT_OPTIONS.map((accent) => (
-                <label key={accent.value} className={`notes-accent-choice notes-accent-choice--${accent.value}`}>
+                <label key={accent.value} className="notes-accent-choice" style={{ "--choice-accent": accent.color }}>
                   <input
                     type="radio"
                     name="accent"
@@ -118,6 +122,23 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
                   <span>{accent.label}</span>
                 </label>
               ))}
+              <label className="notes-accent-choice notes-accent-choice--custom" style={{ "--choice-accent": customAccent }}>
+                <input
+                  type="radio"
+                  name="accent"
+                  value={customAccent}
+                  checked={!selectedPreset}
+                  onChange={() => onChange("accent", customAccent)}
+                />
+                <input
+                  className="notes-accent-choice__color"
+                  type="color"
+                  value={customAccent}
+                  aria-label="Custom accent color"
+                  onChange={(event) => onChange("accent", event.target.value)}
+                />
+                <span>Custom</span>
+              </label>
             </div>
           </fieldset>
 

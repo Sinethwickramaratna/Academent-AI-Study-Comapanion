@@ -325,6 +325,7 @@
 
 .notes-modal-backdrop {
   position: fixed;
+  margin: 0 !important;
   inset: 0;
   z-index: 80;
   display: grid;
@@ -341,9 +342,10 @@
   border: 1px solid rgba(77, 43, 140, 0.16);
   border-radius: 20px;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.9)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 255, 0.78)),
     radial-gradient(circle at 8% 0%, rgba(18, 196, 196, 0.14), transparent 32%),
     radial-gradient(circle at 92% 10%, rgba(124, 77, 255, 0.14), transparent 30%);
+  backdrop-filter: blur(22px) saturate(135%);
   box-shadow: 0 28px 80px rgba(28, 18, 52, 0.24);
 }
 
@@ -362,6 +364,7 @@
 .notes-create-modal__header,
 .notes-create-form {
   position: relative;
+  z-index: 1;
 }
 
 .notes-create-modal__header {
@@ -369,11 +372,14 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.25rem 1.25rem 1rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid rgba(77, 43, 140, 0.1);
+  background: rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(14px);
 }
 
 .notes-create-modal__eyebrow {
+  margin: 0;
   color: #4d2b8c;
   font-size: 0.7rem;
   font-weight: 900;
@@ -390,7 +396,7 @@
 }
 
 .notes-create-modal__header p:last-child {
-  margin-top: 0.25rem;
+  margin: 0.25rem 0 0;
   color: rgba(32, 23, 47, 0.64);
   font-size: 0.875rem;
   font-weight: 650;
@@ -554,7 +560,7 @@
 
 .notes-create-modal__primary {
   border: 1px solid rgba(77, 43, 140, 0.18);
-  background: linear-gradient(135deg, #4d2b8c, #12c4c4);
+  background: linear-gradient(135deg, #4d2b8c, #85409d);
   color: #fff;
   box-shadow: 0 14px 32px rgba(77, 43, 140, 0.18);
 }
@@ -590,6 +596,56 @@
   gap: 0.75rem;
 }
 
+
+.notes-empty-state {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 150px;
+  margin-top: 1rem;
+  border: 1px dashed rgba(77, 43, 140, 0.22);
+  border-radius: 18px;
+  padding: 1.1rem;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(248, 250, 255, 0.66)),
+    radial-gradient(circle at 8% 0%, rgba(18, 196, 196, 0.12), transparent 32%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68), 0 14px 34px rgba(35, 22, 65, 0.05);
+}
+
+.notes-empty-state__icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(77, 43, 140, 0.12);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(18, 196, 196, 0.14));
+  color: #4d2b8c;
+  font-size: 1.75rem;
+  font-variation-settings: 'FILL' 1;
+}
+
+.notes-empty-state h4 {
+  margin: 0;
+  color: #20172f;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.notes-empty-state p {
+  max-width: 520px;
+  margin-top: 0.25rem;
+  color: rgba(32, 23, 47, 0.62);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.notes-empty-state .notes-add-folder-btn {
+  margin-left: auto;
+  white-space: nowrap;
+}
 .module-workspace-panel {
   margin-top: 1.5rem;
   border: 1px solid rgba(77, 43, 140, 0.12);
@@ -623,9 +679,9 @@
 }
 
 .module-note-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: 1rem;
 }
 
@@ -721,6 +777,16 @@
   .module-workspace-panel {
     padding: 0.85rem;
   }
+
+  .notes-empty-state {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .notes-empty-state .notes-add-folder-btn {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 
 .module-pdf-input {
@@ -728,9 +794,9 @@
 }
 
 .module-file-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: 1rem;
 }
 
@@ -800,39 +866,6 @@
 }
 
 
-.module-file-grid--list,
-.module-note-grid--list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.module-file-grid--list .module-pdf-card,
-.module-note-grid--list .module-note-card {
-  min-height: 72px;
-  align-items: center;
-  border-radius: 12px;
-  padding: 0.8rem 0.9rem;
-}
-
-.module-file-grid--list .module-pdf-card__icon,
-.module-note-grid--list .module-note-card__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-}
-
-.module-file-grid--list .module-pdf-card h4,
-.module-note-grid--list .module-note-card h4 {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.module-note-grid--list .module-note-card p {
-  margin-top: 0.2rem;
-  -webkit-line-clamp: 1;
-}
 
 .folder-card-menu,
 .file-card-menu,
