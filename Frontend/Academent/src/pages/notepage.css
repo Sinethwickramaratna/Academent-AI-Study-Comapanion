@@ -469,114 +469,141 @@
 
 .notes-accent-picker__options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  grid-template-columns: repeat(5, minmax(42px, 1fr));
   gap: 0.65rem;
+  padding: 0.65rem;
+  border: 1px solid rgba(77, 43, 140, 0.1);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(248, 250, 255, 0.56)),
+    radial-gradient(circle at 8% 8%, rgba(18, 196, 196, 0.1), transparent 32%);
 }
 
-.notes-accent-choice {
+.notes-accent-choice,
+.notes-accent-custom {
   --choice-accent: #12c4c4;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-height: 42px;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid rgba(77, 43, 140, 0.12);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.6);
-  color: rgba(32, 23, 47, 0.72);
-  font-size: 0.82rem;
-  font-weight: 850;
+  position: relative;
   cursor: pointer;
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
-.notes-accent-choice:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--choice-accent) 46%, white);
-}
-
-.notes-accent-choice input[type="radio"] {
+.notes-accent-choice input[type="radio"],
+.notes-accent-custom input[type="radio"] {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
-
-.notes-accent-choice--custom {
-  position: relative;
-  grid-column: 1 / -1;
-  min-height: 58px;
-  overflow: hidden;
-  padding: 0.7rem 0.8rem;
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--choice-accent) 14%, white), rgba(255, 255, 255, 0.68)),
-    radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--choice-accent) 28%, transparent), transparent 38%);
+.notes-accent-choice {
+  display: grid;
+  place-items: center;
+  min-height: 54px;
+  border: 1px solid rgba(77, 43, 140, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.58);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
-.notes-accent-choice--custom::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(77, 43, 140, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(77, 43, 140, 0.045) 1px, transparent 1px);
-  background-size: 18px 18px;
-  opacity: 0.8;
-  mask-image: linear-gradient(90deg, black, transparent 82%);
+.notes-accent-choice:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--choice-accent) 42%, white);
+  background: color-mix(in srgb, var(--choice-accent) 8%, white);
 }
 
-.notes-accent-choice__custom-orb {
-  position: relative;
-  z-index: 1;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  border-radius: 12px;
+.notes-accent-choice:has(input:checked) {
+  border-color: color-mix(in srgb, var(--choice-accent) 64%, white);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--choice-accent) 14%, transparent), 0 12px 26px color-mix(in srgb, var(--choice-accent) 16%, transparent);
+}
+
+.notes-accent-choice__swatch {
+  width: 26px;
+  height: 26px;
+  border: 2px solid rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.34), transparent),
     var(--choice-accent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--choice-accent) 42%, white), 0 0 24px color-mix(in srgb, var(--choice-accent) 46%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--choice-accent) 34%, white), 0 0 18px color-mix(in srgb, var(--choice-accent) 38%, transparent);
 }
 
-.notes-accent-choice__custom-copy {
-  position: relative;
-  z-index: 1;
+.notes-accent-choice__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.notes-accent-custom {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 64px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--choice-accent) 28%, rgba(77, 43, 140, 0.12));
+  border-radius: 16px;
+  padding: 0.72rem 0.78rem;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--choice-accent) 12%, white), rgba(255, 255, 255, 0.68)),
+    linear-gradient(90deg, color-mix(in srgb, var(--choice-accent) 18%, transparent), transparent 56%);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.notes-accent-custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--choice-accent) 16%, transparent);
+}
+
+.notes-accent-custom:has(input[type="radio"]:checked) {
+  border-color: color-mix(in srgb, var(--choice-accent) 62%, white);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--choice-accent) 14%, transparent);
+}
+
+.notes-accent-custom__preview {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(255, 255, 255, 0.86);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.34), transparent),
+    var(--choice-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--choice-accent) 36%, white), 0 0 26px color-mix(in srgb, var(--choice-accent) 42%, transparent);
+}
+
+.notes-accent-custom__text {
   display: grid;
   gap: 0.1rem;
   min-width: 0;
 }
 
-.notes-accent-choice__custom-copy span:first-child {
+.notes-accent-custom__text span:first-child {
   color: #20172f;
-  font-size: 0.85rem;
-  font-weight: 900;
-}
-
-.notes-accent-choice__custom-copy span:last-child {
-  color: color-mix(in srgb, var(--choice-accent) 68%, #4d2b8c);
-  font-size: 0.72rem;
-  font-weight: 900;
-}
-
-.notes-accent-choice__custom-action {
-  position: relative;
-  z-index: 1;
-  margin-left: auto;
-  border: 1px solid color-mix(in srgb, var(--choice-accent) 34%, white);
-  border-radius: 999px;
-  padding: 0.38rem 0.65rem;
-  background: rgba(255, 255, 255, 0.72);
-  color: color-mix(in srgb, var(--choice-accent) 72%, #20172f);
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 950;
 }
 
-.notes-accent-choice__color {
+.notes-accent-custom__text span:last-child {
+  color: color-mix(in srgb, var(--choice-accent) 70%, #4d2b8c);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.notes-accent-custom__button {
+  margin-left: auto;
+  border: 1px solid color-mix(in srgb, var(--choice-accent) 34%, white);
+  border-radius: 999px;
+  padding: 0.42rem 0.68rem;
+  background: rgba(255, 255, 255, 0.76);
+  color: color-mix(in srgb, var(--choice-accent) 74%, #20172f);
+  font-size: 0.74rem;
+  font-weight: 950;
+}
+
+.notes-accent-custom__input {
   position: absolute;
   inset: 0;
-  z-index: 2;
   width: 100%;
   height: 100%;
   border: 0;
@@ -584,36 +611,27 @@
   opacity: 0;
   cursor: pointer;
 }
-.notes-accent-choice:has(input:checked) {
-  border-color: color-mix(in srgb, var(--choice-accent) 58%, white);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--choice-accent) 16%, transparent);
-}
 
-.notes-accent-choice__swatch {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: var(--choice-accent);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--choice-accent) 34%, transparent);
-}
+@media (max-width: 420px) {
+  .notes-accent-picker__options {
+    grid-template-columns: repeat(5, minmax(34px, 1fr));
+    gap: 0.45rem;
+    padding: 0.5rem;
+  }
 
-.notes-accent-choice--violet {
-  --choice-accent: #7c4dff;
-}
+  .notes-accent-choice {
+    min-height: 46px;
+  }
 
-.notes-accent-choice--emerald {
-  --choice-accent: #24b47e;
-}
+  .notes-accent-choice__swatch {
+    width: 22px;
+    height: 22px;
+  }
 
-.notes-accent-choice--amber {
-  --choice-accent: #f2a51a;
+  .notes-accent-custom {
+    gap: 0.6rem;
+  }
 }
-
-.notes-accent-choice--rose {
-  --choice-accent: #e15b8f;
-}
-
 .notes-create-modal__actions {
   display: flex;
   justify-content: flex-end;
@@ -663,7 +681,28 @@
     border-radius: 18px;
   }
 
-  .notes-create-modal__actions {
+  
+@media (max-width: 420px) {
+  .notes-accent-picker__options {
+    grid-template-columns: repeat(5, minmax(34px, 1fr));
+    gap: 0.45rem;
+    padding: 0.5rem;
+  }
+
+  .notes-accent-choice {
+    min-height: 46px;
+  }
+
+  .notes-accent-choice__swatch {
+    width: 22px;
+    height: 22px;
+  }
+
+  .notes-accent-custom {
+    gap: 0.6rem;
+  }
+}
+.notes-create-modal__actions {
     flex-direction: column-reverse;
   }
 

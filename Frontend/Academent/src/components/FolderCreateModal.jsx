@@ -110,7 +110,7 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
             <legend>Accent Color</legend>
             <div className="notes-accent-picker__options">
               {ACCENT_OPTIONS.map((accent) => (
-                <label key={accent.value} className="notes-accent-choice" style={{ "--choice-accent": accent.color }}>
+                <label key={accent.value} className="notes-accent-choice" style={{ "--choice-accent": accent.color }} title={accent.label}>
                   <input
                     type="radio"
                     name="accent"
@@ -119,10 +119,10 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
                     onChange={(event) => onChange("accent", event.target.value)}
                   />
                   <span className="notes-accent-choice__swatch" />
-                  <span>{accent.label}</span>
+                  <span className="notes-accent-choice__label">{accent.label}</span>
                 </label>
               ))}
-              <label className="notes-accent-choice notes-accent-choice--custom" style={{ "--choice-accent": customAccent }}>
+              <label className="notes-accent-custom" style={{ "--choice-accent": customAccent }}>
                 <input
                   type="radio"
                   name="accent"
@@ -130,14 +130,14 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
                   checked={!selectedPreset}
                   onChange={() => onChange("accent", customAccent)}
                 />
-                <span className="notes-accent-choice__custom-orb" aria-hidden="true" />
-                <span className="notes-accent-choice__custom-copy">
-                  <span>Custom Color</span>
+                <span className="notes-accent-custom__preview" aria-hidden="true" />
+                <span className="notes-accent-custom__text">
+                  <span>Custom</span>
                   <span>{customAccent.toUpperCase()}</span>
                 </span>
-                <span className="notes-accent-choice__custom-action">Pick</span>
+                <span className="notes-accent-custom__button">Change</span>
                 <input
-                  className="notes-accent-choice__color"
+                  className="notes-accent-custom__input"
                   type="color"
                   value={customAccent}
                   aria-label="Custom accent color"
