@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { logoutUser, getUserProfileData } from '../Services/authService';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/Logo/Logo.png';
+import NotePage from './notepage';
+import TopBar from '../components/TopBar';
 
 /**
  * DashboardPage component represents the study companion central control panel.
@@ -19,6 +21,7 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   
   // Task list state (Interactive)
   const [tasks, setTasks] = useState([
@@ -432,31 +435,7 @@ function DashboardPage() {
         {activeTab === 'home' ? (
           <main className="p-gutter md:p-margin-desktop space-y-xl">
             {/* Top Navigation Row */}
-            <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-md">
-              <div className="relative flex-1 max-w-md">
-                <span className="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">search</span>
-                <input 
-                  className="w-full pl-xxl pr-md py-md bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all font-body-md text-body-md" 
-                  placeholder="Search notes, topics, or AI chat..." 
-                  type="text" 
-                />
-              </div>
-              <div className="flex items-center justify-between sm:justify-end gap-md">
-                <button className="p-md bg-surface-container-low rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors flex items-center justify-center">
-                  <span className="material-symbols-outlined">notifications</span>
-                </button>
-                <div className="flex items-center gap-md p-xs pl-md bg-surface-container-low rounded-full">
-                  <span className="font-label-md text-label-md text-primary font-bold">{fullName}</span>
-                  {photoURL ? (
-                    <img alt="Student Profile" className="w-8 h-8 rounded-full object-cover" src={photoURL} />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs">
-                      {fullName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </header>
+            <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search notes, topics, or AI chat..." />
 
             {/* Welcome Hero Section */}
             <section className="ai-gradient rounded-xl p-xl relative overflow-hidden text-white flex flex-col md:flex-row justify-between items-stretch md:items-center min-h-[220px] gap-lg">
@@ -987,6 +966,8 @@ function DashboardPage() {
               </div>
             </section>
           </main>
+        ) : activeTab === 'my-notes' ? (
+          <NotePage profile={profile} currentUser={currentUser} />
         ) : (
           /* Under Construction Panel for other Tabs */
           <main className="flex-1 flex items-center justify-center p-gutter md:p-margin-desktop min-h-[400px]">
