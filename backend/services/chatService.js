@@ -1,4 +1,4 @@
-// import { GoogleGenAI } from '@google/genai';
+﻿// import { GoogleGenAI } from '@google/genai';
 import { Ollama } from 'ollama';
 // import OpenAI from 'openai';
 import dotenv from 'dotenv';
@@ -165,7 +165,8 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
 
   Return ONLY valid JSON.
 
-  Every question object MUST include an "explanation" field that explains why the correct answer is correct using the supplied knowledge.
+  Every question object MUST include an "explanation" field with a short, direct explanation using the supplied knowledge.
+  Do not start explanations with phrases like "Why the correct answer is correct:" or similar lead-ins.
   Knowledge:
   ${JSON.stringify(knowledge)
     }
