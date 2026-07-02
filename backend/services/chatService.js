@@ -210,6 +210,9 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
       Rules:
       - MCQs must have 4 options with only 1 correct answer.
       - Fill in the Blank questions should have a clear blank and a single correct answer.
+      - Every FILL_BLANK question MUST include exactly 4 non-empty options.
+      - FILL_BLANK options MUST include the correct answer and 3 plausible incorrect distractors.
+      - Do not return empty strings in FILL_BLANK options.
       - True/False questions must be clear and unambiguous.
       - Cloze questions should have 2-3 blanks with clear correct answers.
       - CLOZE question text must show every blank visibly using exactly eight underscores: ________.
@@ -233,9 +236,9 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
           {
             "question_number": 2,
             "type": "FILL_BLANK",
-            "question": "",
-            "options": ["","","",""],
-            "answer": ""
+            "question": "A database table column is also called a ________.",
+            "options": ["field", "record", "tuple", "schema"],
+            "answer": "field"
           },
           {
             "question_number": 3,
@@ -271,6 +274,10 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
       Rules:
       - Focus on application and analysis of concepts.
       - Include real-world scenarios
+      - Fill in the Blank questions should have a clear blank and a single correct answer.
+      - Every FILL_BLANK question MUST include exactly 4 non-empty options.
+      - FILL_BLANK options MUST include the correct answer and 3 plausible incorrect distractors.
+      - Do not return empty strings in FILL_BLANK options.
       - Cloze questions should have 3-10 blanks with clear correct answers.
       - CLOZE question text must show every blank visibly using exactly eight underscores: ________.
       - For CLOZE, replace each missing answer in the paragraph with ________; do not write the full answer in the question text.
@@ -290,9 +297,9 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
           {
             "question_number": 2,
             "type": "FILL_BLANK",
-            "question": "",
-            "options": ["","","",""],
-            "answer": ""
+            "question": "A database table column is also called a ________.",
+            "options": ["field", "record", "tuple", "schema"],
+            "answer": "field"
           },
           {
             "question_number": 3,
@@ -402,6 +409,8 @@ export const generateResponse = async (message) => {
 
   return createTextResponse(message);
 }
+
+
 
 
 

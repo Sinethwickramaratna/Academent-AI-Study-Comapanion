@@ -378,9 +378,6 @@ function QuizAttempt({ quiz, attempt, onBack, onSubmit, onSaveProgress, isSubmit
 
   const currentAnswer = answers[question.questionId]?.answer;
   const renderQuestionBody = () => {
-    if (question.type === 'FILL_BLANK' && !(question.options || []).length) {
-      return <input className="quiz-fill-blank-input" value={currentAnswer || ''} placeholder="Type the missing answer..." onChange={(event) => setAnswer(event.target.value)} />;
-    }
 
     if (question.type === 'MCQ' || question.type === 'FILL_BLANK' || question.type === 'SCENARIO') {
       return (
@@ -554,8 +551,8 @@ function QuizGeneratorPage({ profile, currentUser }) {
   };
 
   const handleGenerate = async (payload) => {
-    const quiz = await quizStore.generateQuiz(payload);
     setIsCreateOpen(false);
+    const quiz = await quizStore.generateQuiz(payload);
     const attempt = await quizStore.startOrContinueQuiz(quiz);
     setActiveSession({ quiz, attempt });
   };
@@ -663,6 +660,8 @@ function QuizGeneratorPage({ profile, currentUser }) {
 }
 
 export default QuizGeneratorPage;
+
+
 
 
 

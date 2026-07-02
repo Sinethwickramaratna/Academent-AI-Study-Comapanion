@@ -32,6 +32,52 @@ const normalizeType = (type) => {
 
 const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const normalizeOptions = (options) => (
+  Array.isArray(options)
+    ? options.map((option) => String(option || "").trim()).filter(Boolean)
+    : []
+);
+
+const uniqueByLowercase = (items) => {
+  const seen = new Set();
+  return items.filter((item) => {
+    const normalized = String(item || "").trim();
+    const key = normalized.toLowerCase();
+    if (!normalized || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+const buildFillBlankOptions = (question, answerBank = [], index = 0) => {
+  const correctAnswer = String(question.answer || "").trim();
+  const existingOptions = normalizeOptions(question.options);
+  const candidates = uniqueByLowercase([
+    correctAnswer,
+    ...existingOptions,
+    ...answerBank,
+    "None of the above",
+    "All of the above",
+    "Cannot be determined",
+  ]).filter(Boolean);
+
+  const selected = [correctAnswer, ...candidates.filter((option) => option.toLowerCase() !== correctAnswer.toLowerCase())]
+    .filter(Boolean)
+    .slice(0, 4);
+
+  while (selected.length < 4) selected.push(`Option ${selected.length + 1}`);
+
+  const offset = index % selected.length;
+  return [...selected.slice(offset), ...selected.slice(0, offset)];
+};
+
+const getAnswerBank = (questions = []) => uniqueByLowercase(
+  questions.flatMap((question) => [
+    question.answer,
+    ...(Array.isArray(question.answers) ? question.answers : []),
+    ...(Array.isArray(question.options) ? question.options : []),
+  ]),
+);
 const normalizeClozeText = (question, answers = []) => {
   const text = String(question || "");
   if (text.includes("________")) return text;
@@ -53,13 +99,11 @@ const normalizeClozeText = (question, answers = []) => {
 
   return `${nextText.trim()} ${Array.from({ length: missingBlanks }, () => "________").join(" ")}`.trim();
 };
-export const normalizeQuestion = (question, index) => {
+export const normalizeQuestion = (question, index, answerBank = []) => {
   const questionNumber = Number(question.question_number || question.questionNumber || index + 1);
   const type = normalizeType(question.type);
   const answers = Array.isArray(question.answers) ? question.answers : [];
-  const options = Array.isArray(question.options)
-    ? question.options.map((option) => String(option || "").trim()).filter(Boolean)
-    : [];
+  const options = type === "FILL_BLANK" ? buildFillBlankOptions(question, answerBank, index) : normalizeOptions(question.options);
 
   return {
     ...question,
@@ -83,7 +127,8 @@ export const normalizeGeneratedQuestions = (payload) => {
         ? payload
         : [];
 
-  return questions.map(normalizeQuestion);
+  const answerBank = getAnswerBank(questions);
+  return questions.map((question, index) => normalizeQuestion(question, index, answerBank));
 };
 
 const quizCollection = (uid) => collection(db, "users", uid, "quizzes");
@@ -396,6 +441,7 @@ export const completeQuizAttempt = async (uid, quiz, attempt, userAnswers) => {
     partiallyCorrectCount,
   };
 };
+
 
 
 
