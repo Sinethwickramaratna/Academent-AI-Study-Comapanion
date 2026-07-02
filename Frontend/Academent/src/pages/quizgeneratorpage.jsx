@@ -491,6 +491,7 @@ function QuizResults({ quiz, result, onRetake, onBack, isWorking }) {
       correctAnswer: answerToText(correctAnswer),
       status,
       feedback: evaluation.feedback || '',
+      correctExplanation: evaluation.correctExplanation || '',
     };
   });
 
@@ -518,7 +519,8 @@ function QuizResults({ quiz, result, onRetake, onBack, isWorking }) {
             </div>
             <p><strong>Your answer:</strong> {review.userAnswer}</p>
             <p><strong>Correct answer:</strong> {review.correctAnswer}</p>
-            {review.feedback && <p><strong>Feedback:</strong> {review.feedback}</p>}
+            {review.feedback && <p><strong>Why your answer is {review.status.toLowerCase()}:</strong> {review.feedback}</p>}
+            {review.correctExplanation && <p><strong>Why the correct answer is correct:</strong> {review.correctExplanation}</p>}
           </article>
         ))}
       </section>
@@ -660,6 +662,7 @@ function QuizGeneratorPage({ profile, currentUser }) {
 }
 
 export default QuizGeneratorPage;
+
 
 
 

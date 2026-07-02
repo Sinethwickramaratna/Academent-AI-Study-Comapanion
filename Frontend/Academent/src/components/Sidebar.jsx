@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import logo from '../assets/Logo/Logo.png';
 
 /**
@@ -40,7 +41,12 @@ function Sidebar({
 
   const fullName = profile?.fullName || currentUser?.displayName || "Student";
   const photoURL = currentUser?.photoURL || profile?.photoURL || "";
+  const [imageFailed, setImageFailed] = useState(false);
+  const showPhoto = Boolean(photoURL) && !imageFailed;
 
+  useEffect(() => {
+    setImageFailed(false);
+  }, [photoURL]);
   return (
     <aside className={`fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/20 flex flex-col p-md z-50 transition-transform duration-300 ${
       isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
@@ -80,8 +86,8 @@ function Sidebar({
       {/* User Profile and Sign Out at the Bottom */}
       <div className="mt-auto pt-md border-t border-outline-variant/20 mb-sm">
         <div className="flex items-center gap-md px-sm py-xs mb-md">
-          {photoURL ? (
-            <img alt="Student Profile" className="w-9 h-9 rounded-full object-cover shrink-0" src={photoURL} />
+          {showPhoto ? (
+            <img alt="Student Profile" className="w-9 h-9 rounded-full object-cover shrink-0" src={photoURL} onError={() => setImageFailed(true)} />
           ) : (
             <div className="w-9 h-9 rounded-xl bg-primary-fixed text-primary flex items-center justify-center font-bold text-sm shrink-0">
               {fullName.charAt(0).toUpperCase()}
@@ -114,3 +120,4 @@ function Sidebar({
 }
 
 export default Sidebar;
+

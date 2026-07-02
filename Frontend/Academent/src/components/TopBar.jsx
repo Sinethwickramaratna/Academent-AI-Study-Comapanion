@@ -1,4 +1,12 @@
+import { useEffect, useState } from 'react';
+
 function TopBar({ fullName, photoURL, searchPlaceholder }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showPhoto = Boolean(photoURL) && !imageFailed;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [photoURL]);
   return (
     <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-md">
       <div className="relative flex-1 max-w-md">
@@ -15,8 +23,8 @@ function TopBar({ fullName, photoURL, searchPlaceholder }) {
         </button>
         <div className="flex items-center gap-md p-xs pl-md bg-surface-container-low rounded-full">
           <span className="font-label-md text-label-md text-primary font-bold">{fullName}</span>
-          {photoURL ? (
-            <img alt="Student Profile" className="w-8 h-8 rounded-full object-cover" src={photoURL} />
+          {showPhoto ? (
+            <img alt="Student Profile" className="w-8 h-8 rounded-full object-cover" src={photoURL} onError={() => setImageFailed(true)} />
           ) : (
             <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs">
               {fullName.charAt(0).toUpperCase()}
@@ -29,3 +37,4 @@ function TopBar({ fullName, photoURL, searchPlaceholder }) {
 }
 
 export default TopBar;
+

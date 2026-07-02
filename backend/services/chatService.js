@@ -25,6 +25,15 @@ const ollama = new Ollama({
 
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b';
 
+function getOllamaErrorMessage(error) {
+  const message = String(error?.message || error || '');
+  if (/model .* not found/i.test(message)) {
+    return `Ollama model "${OLLAMA_MODEL}" was not found. Update OLLAMA_MODEL in backend/.env to an available model, then restart the backend.`;
+  }
+  return message;
+}
+
+
 function parseJsonResponse(text) {
   const trimmed = text.trim();
   const fencedJson = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
@@ -32,25 +41,29 @@ function parseJsonResponse(text) {
 }
 
 async function createTextResponse(input, options = {}) {
-  const response = await ollama.chat({
-    model: OLLAMA_MODEL,
-    messages: [{ role: 'user', content: input }],
-    stream: true,
-    format: options.json ? 'json' : undefined,
-    options: {
-      temperature: options.temperature ?? 1,
-      top_p: options.top_p ?? 0.95,
-      num_predict: options.max_tokens ?? 3000,
-    },
-  });
+  try {
+    const response = await ollama.chat({
+      model: OLLAMA_MODEL,
+      messages: [{ role: 'user', content: input }],
+      stream: true,
+      format: options.json ? 'json' : undefined,
+      options: {
+        temperature: options.temperature ?? 1,
+        top_p: options.top_p ?? 0.95,
+        num_predict: options.max_tokens ?? 3000,
+      },
+    });
 
-  let text = '';
+    let text = '';
 
-  for await (const part of response) {
-    text += part.message?.content || '';
+    for await (const part of response) {
+      text += part.message?.content || '';
+    }
+
+    return text;
+  } catch (error) {
+    throw new Error(getOllamaErrorMessage(error));
   }
-
-  return text;
 }
 
 async function createJsonResponse(input) {
@@ -152,6 +165,7 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
 
   Return ONLY valid JSON.
 
+  Every question object MUST include an "explanation" field that explains why the correct answer is correct using the supplied knowledge.
   Knowledge:
   ${JSON.stringify(knowledge)
     }
@@ -182,13 +196,15 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
           "type": "MCQ",
           "question": "",
           "options":["", "", "", ""],
-          "answer": ""
+          "answer": "",
+          "explanation": ""
         },
         {
           "question_number": 2,
           "type": "True/False",
           "question": "",
-          "answer": ""
+          "answer": "",
+          "explanation": ""
         }
       ]
     }
@@ -231,26 +247,30 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
             "type": "MCQ",
             "question": "",
             "options": ["", "", "", ""],
-            "answer": ""
+            "answer": "",
+            "explanation": ""
           },
           {
             "question_number": 2,
             "type": "FILL_BLANK",
             "question": "A database table column is also called a ________.",
             "options": ["field", "record", "tuple", "schema"],
-            "answer": "field"
+            "answer": "field",
+            "explanation": "A field is a column in a database table, while records or tuples are rows."
           },
           {
             "question_number": 3,
             "type": "True/False",
             "question": "",
-            "answer": ""
+            "answer": "",
+            "explanation": ""
           },
           {
             "question_number": 4,
             "type": "CLOZE",
             "question": "Data quality includes ________, ________, and ________.",
-            "answers": ["accuracy", "completeness", "timeliness"]
+            "answers": ["accuracy", "completeness", "timeliness"],
+            "explanation": "Accuracy, completeness, and timeliness are common dimensions used to evaluate data quality."
           }
         ]
       }
@@ -291,40 +311,46 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
             "question_number": 1,
             "type": "MCQ",
             "question": "",
-            "options": ["", "", "", ""],  
-            "answer": ""     
+            "options": ["", "", "", ""],
+            "answer": "",
+            "explanation": ""
           },
           {
             "question_number": 2,
             "type": "FILL_BLANK",
             "question": "A database table column is also called a ________.",
             "options": ["field", "record", "tuple", "schema"],
-            "answer": "field"
+            "answer": "field",
+            "explanation": "A field is a column in a database table, while records or tuples are rows."
           },
           {
             "question_number": 3,
             "type": "True/False",
             "question": "",
-            "answer": ""
+            "answer": "",
+            "explanation": ""
           },
           {
             "question_number": 4,
             "type": "CLOZE",
             "question": "Data quality includes ________, ________, and ________.",
-            "answers": ["accuracy", "completeness", "timeliness"]
+            "answers": ["accuracy", "completeness", "timeliness"],
+            "explanation": "Accuracy, completeness, and timeliness are common dimensions used to evaluate data quality."
           },
           {
             "question_number": 5,
             "type": "SCENARIO",
             "question": "",
             "options": ["","","",""],
-            "answer": ""
+            "answer": "",
+            "explanation": ""
           },
           {
             "question_number": 6,
             "type": "SHORT_ANSWER",
             "question": "",
-            "answer": ""
+            "answer": "",
+            "explanation": ""
           }
         ]
       }
@@ -409,6 +435,8 @@ export const generateResponse = async (message) => {
 
   return createTextResponse(message);
 }
+
+
 
 
 

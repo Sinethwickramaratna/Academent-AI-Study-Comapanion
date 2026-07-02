@@ -114,6 +114,7 @@ export const normalizeQuestion = (question, index, answerBank = []) => {
     options,
     answer: question.answer ?? "",
     answers,
+    explanation: question.explanation || question.reason || "",
     marks: 1,
   };
 };
@@ -366,15 +367,43 @@ const normalizeAnswerValue = (answer) => (
     : String(answer || "").trim().toLowerCase()
 );
 
+const answerToDisplayText = (answer) => (
+  Array.isArray(answer)
+    ? answer.filter(Boolean).join(", ")
+    : String(answer || "").trim()
+);
+
+const getQuestionConcept = (question) => String(question.question || "this question").replace(/_{3,}/g, "the missing term");
+
+const buildAnswerExplanation = (question, answer, correctAnswer, isCorrect) => {
+  const selectedText = answerToDisplayText(answer) || "No answer selected";
+  const correctText = answerToDisplayText(correctAnswer) || "the expected answer";
+  const concept = getQuestionConcept(question);
+
+  if (isCorrect) {
+    return {
+      feedback: `Correct. You selected "${selectedText}", which matches the expected answer for: ${concept}`,
+      correctExplanation: question.explanation || `"${correctText}" is correct because it is the answer required by the concept tested in this question.`,
+    };
+  }
+
+  return {
+    feedback: `Incorrect. You selected "${selectedText}", but that does not match the expected answer for: ${concept}`,
+    correctExplanation: question.explanation || `The correct answer is "${correctText}" because it completes or answers the question accurately based on the quiz knowledge.`,
+  };
+};
+
 const evaluateLocalQuestion = (question, answer) => {
   const correctAnswer = question.type === "CLOZE" ? question.answers : question.answer;
   const isCorrect = normalizeAnswerValue(answer) === normalizeAnswerValue(correctAnswer);
+  const explanation = buildAnswerExplanation(question, answer, correctAnswer, isCorrect);
 
   return {
     answer: answer ?? "",
     isCorrect,
     marks: isCorrect ? 1 : 0,
-    feedback: isCorrect ? "Correct answer." : "Review the correct answer and try this concept again.",
+    status: isCorrect ? "correct" : "incorrect",
+    ...explanation,
   };
 };
 
@@ -395,7 +424,8 @@ export const completeQuizAttempt = async (uid, quiz, attempt, userAnswers) => {
         answer,
         isCorrect: result.status === "correct",
         marks: Number(result.marks || 0),
-        feedback: result.feedback || "",
+        feedback: result.feedback || `Your answer was marked ${result.status || "incorrect"}.`,
+        correctExplanation: question.explanation || `The expected answer is "${answerToDisplayText(question.answer)}" because it is the rubric answer for this short-answer question.`,
         status: result.status || "incorrect",
       };
     } else {
@@ -441,6 +471,8 @@ export const completeQuizAttempt = async (uid, quiz, attempt, userAnswers) => {
     partiallyCorrectCount,
   };
 };
+
+
 
 
 
