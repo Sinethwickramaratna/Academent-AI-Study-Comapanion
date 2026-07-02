@@ -1,7 +1,7 @@
-import rateLimit from "express-rate-limit";
+﻿import rateLimit from "express-rate-limit";
 
 export const quizLimiter = rateLimit({
-  windowsMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000, // 1 hour
   max: 5, // Limit each IP to 5 requests per windowMs
   message: {
     success: false,
@@ -10,7 +10,7 @@ export const quizLimiter = rateLimit({
 });
 
 export const chatLimiter = rateLimit({
-  windowsMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000,
   max: 50,
   message: {
     success: false,

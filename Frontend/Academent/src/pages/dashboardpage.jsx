@@ -6,6 +6,7 @@ import { logoutUser, getUserProfileData } from '../Services/authService';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/Logo/Logo.png';
 import NotePage from './notepage';
+import QuizGeneratorPage from './quizgeneratorpage';
 import TopBar from '../components/TopBar';
 
 /**
@@ -968,6 +969,8 @@ function DashboardPage() {
           </main>
         ) : activeTab === 'my-notes' ? (
           <NotePage profile={profile} currentUser={currentUser} />
+        ) : activeTab === 'quiz-generator' ? (
+          <QuizGeneratorPage profile={profile} currentUser={currentUser} />
         ) : (
           /* Under Construction Panel for other Tabs */
           <main className="flex-1 flex items-center justify-center p-gutter md:p-margin-desktop min-h-[400px]">

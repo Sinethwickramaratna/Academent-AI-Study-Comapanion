@@ -1,5 +1,5 @@
 import express from 'express';
-import { extractKnowledge, generateQuiz } from '../services/geminiService.js';
+import { extractKnowledge, generateQuiz } from '../services/chatService.js';
 import rateLimit from 'express-rate-limit';
 
 const router = express.Router();

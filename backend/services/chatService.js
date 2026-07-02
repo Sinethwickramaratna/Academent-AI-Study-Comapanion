@@ -1,11 +1,60 @@
-import {GoogleGenAI} from '@google/genai';
+// import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const gemini = new GoogleGenAI({
+/*const gemini = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
+});*/
+
+const openai = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: process.env.DEEPSEEK_API_BASE_URL
 });
+
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL;
+
+function getResponseText(response) {
+  if (response.output_text) {
+    return response.output_text;
+  }
+
+  const text = response.output
+    ?.flatMap((item) => item.content || [])
+    ?.find((content) => content.type === 'output_text' && content.text)
+    ?.text;
+
+  if (!text) {
+    throw new Error('OpenAI response did not include any text output');
+  }
+
+  return text;
+}
+
+async function createTextResponse(input, options = {}) {
+  const response = await openai.responses.create({
+    model: DEEPSEEK_MODEL,
+    input,
+    temperature: options.temperature ?? 0.2,
+    text: options.text,
+  });
+
+  return getResponseText(response);
+}
+
+async function createJsonResponse(input) {
+  const text = await createTextResponse(input, {
+    temperature: 0.1,
+    text: {
+      format: {
+        type: 'json_object',
+      },
+    },
+  });
+
+  return JSON.parse(text);
+}
 
 export async function extractKnowledge(content) {
   const prompt = `
@@ -29,15 +78,15 @@ export async function extractKnowledge(content) {
   ${content}
   `;
 
-  const result = await gemini.models.generateContent({
+  /*const result = await gemini.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: prompt,
     config: {
       responseMimeType: 'application/json',
     },
-  });
+  });*/
 
-  return JSON.parse(result.text);
+  return createJsonResponse(prompt);
 }
 
 export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
@@ -52,13 +101,12 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
   Return ONLY valid JSON.
 
   Knowledge:
-  ${
-    JSON.stringify(knowledge)
-  }
+  ${JSON.stringify(knowledge)
+    }
   `
 
   if (difficulty === 'easy') {
-  return `
+    return `
     ${baseRules}
 
     DIFFICULTY: EASY
@@ -105,13 +153,16 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
       - MCQ
       - Fill in the Blank
       - True/False
-      - Cloze (pharagraph with blanks)
+      - Cloze (paragraph with visible blanks)
 
       Rules:
       - MCQs must have 4 options with only 1 correct answer.
       - Fill in the Blank questions should have a clear blank and a single correct answer.
       - True/False questions must be clear and unambiguous.
       - Cloze questions should have 2-3 blanks with clear correct answers.
+      - CLOZE question text must show every blank visibly using exactly eight underscores: ________.
+      - For CLOZE, replace each missing answer in the paragraph with ________; do not write the full answer in the question text.
+      - The number of ________ blanks in a CLOZE question must exactly match the number of items in answers.
       - Focus on understanding and application of concepts.
       - Mix question types to create a balanced quiz.
       - No scenario or short answer questions.
@@ -122,7 +173,7 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
         "quiz": [
           {
             "question_number": 1,
-            "type": "MCQ"
+            "type": "MCQ",
             "question": "",
             "options": ["", "", "", ""],
             "answer": ""
@@ -132,7 +183,7 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
             "type": "FILL_BLANK",
             "question": "",
             "options": ["","","",""],
-            "answer": "",
+            "answer": ""
           },
           {
             "question_number": 3,
@@ -143,8 +194,8 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
           {
             "question_number": 4,
             "type": "CLOZE",
-            "question": "",
-            "answers": []
+            "question": "Data quality includes ________, ________, and ________.",
+            "answers": ["accuracy", "completeness", "timeliness"]
           }
         ]
       }
@@ -161,7 +212,7 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
       - MCQ
       - Fill in the Blank
       - True/False
-      - Cloze (pharagraph with blanks)
+      - Cloze (paragraph with visible blanks)
       - Scenario-based questions
       - Short answer questions
 
@@ -169,6 +220,9 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
       - Focus on application and analysis of concepts.
       - Include real-world scenarios
       - Cloze questions should have 3-10 blanks with clear correct answers.
+      - CLOZE question text must show every blank visibly using exactly eight underscores: ________.
+      - For CLOZE, replace each missing answer in the paragraph with ________; do not write the full answer in the question text.
+      - The number of ________ blanks in a CLOZE question must exactly match the number of items in answers.
       - Avoid repetition
 
       Return format:
@@ -197,8 +251,8 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
           {
             "question_number": 4,
             "type": "CLOZE",
-            "question": "",
-            "answers": []
+            "question": "Data quality includes ________, ________, and ________.",
+            "answers": ["accuracy", "completeness", "timeliness"]
           },
           {
             "question_number": 5,
@@ -219,28 +273,31 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
   }
 
 
-    
+
 }
 
 export async function generateQuiz(knowledge, numQuestions = 10, difficulty = 'easy') {
   const prompt = buildQuizPrompt(knowledge, numQuestions, difficulty);
 
-  const result = await gemini.models.generateContent({
+  /*const result = await gemini.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: prompt,
     config: {
       responseMimeType: 'application/json',
     },
-  });
+  });*/
 
-  return JSON.parse(result.text);
+  return createJsonResponse(prompt);
 }
 
 export const generateResponse = async (message) => {
-  const response = await gemini.models.generateContent({
+  /*const response = await gemini.models.generateContent({
     model: "gemini-2.5-flash",
     contents: message,
-  });
+  });*/
 
-  return response.text;
+  return createTextResponse(message);
 }
+
+
+

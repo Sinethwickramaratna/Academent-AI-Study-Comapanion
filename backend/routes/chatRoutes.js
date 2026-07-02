@@ -1,4 +1,4 @@
-import {generateResponse} from '../services/geminiService.js';
+import {generateResponse} from '../services/chatService.js';
 
 import express from "express";
 
