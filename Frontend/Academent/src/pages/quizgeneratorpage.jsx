@@ -28,6 +28,17 @@ const toDateLabel = (value) => {
 
 const answerToText = (answer) => Array.isArray(answer) ? answer.join(', ') : answer || 'No answer';
 
+const shuffleAnswers = (answers = []) => {
+  const items = [...answers];
+
+  for (let index = items.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [items[index], items[randomIndex]] = [items[randomIndex], items[index]];
+  }
+
+  return items;
+};
+
 const flattenStudyMaterials = (semesters = []) => {
   const materials = [];
 
@@ -327,6 +338,9 @@ function QuizAttempt({ quiz, attempt, onBack, onSubmit, onSaveProgress, isSubmit
   const questions = quiz.questions || [];
   const question = questions[index] || questions[0];
   const progress = questions.length ? Math.round(((index + 1) / questions.length) * 100) : 0;
+  const clozeAnswerChoices = useMemo(() => (
+    question?.type === 'CLOZE' ? shuffleAnswers(question.answers || []) : []
+  ), [question?.answers, question?.questionId, question?.type]);
 
   useEffect(() => {
     if (!attempt?.attemptId || !question) return undefined;
@@ -434,7 +448,7 @@ function QuizAttempt({ quiz, attempt, onBack, onSubmit, onSaveProgress, isSubmit
             ))}
           </p>
           <div className="quiz-chip-bank">
-            {(question.answers || []).map((answer) => (
+            {clozeAnswerChoices.map((answer) => (
               <button key={answer} type="button" draggable onDragStart={(event) => event.dataTransfer.setData('text/plain', answer)}>{answer}</button>
             ))}
           </div>
