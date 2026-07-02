@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
+import { PDFParse } from "pdf-parse";
 import cloudinary from "../config/cloudinary.js";
 
 const router = express.Router();
@@ -32,6 +33,18 @@ const sanitizeFileBaseName = (fileName) => {
     .replace(/^-+|-+$/g, "") || "academent-pdf";
 };
 
+const extractPdfText = async (filePath) => {
+  const buffer = fs.readFileSync(filePath);
+  const parser = new PDFParse({ data: buffer });
+
+  try {
+    const result = await parser.getText();
+    return String(result.text || "").replace(/\s+/g, " ").trim();
+  } finally {
+    await parser.destroy();
+  }
+};
+
 router.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
   const file = req.file;
 
@@ -44,6 +57,14 @@ router.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
     if (!isPdf) {
       removeTempFile(file.path);
       return res.status(400).json({ message: "Only PDF files are allowed" });
+    }
+
+    const extractedText = await extractPdfText(file.path);
+    if (!extractedText) {
+      removeTempFile(file.path);
+      return res.status(422).json({
+        message: "No selectable text could be extracted from this PDF",
+      });
     }
 
     const publicId = `${sanitizeFileBaseName(file.originalname)}-${Date.now()}.pdf`;
@@ -65,6 +86,7 @@ router.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
       size: result.bytes,
       format: result.format || "pdf",
       originalName: file.originalname,
+      extractedText,
       storageProvider: "cloudinary",
       fileType: "application/pdf",
       resourceType: result.resource_type,

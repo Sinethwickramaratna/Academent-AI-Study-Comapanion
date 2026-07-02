@@ -20,6 +20,7 @@ export const uploadPdfToCloudinary = async (file) => {
     url: result.pdfUrl,
     size: result.size,
     publicId: result.publicId,
+    extractedText: result.extractedText || "",
     storageProvider: result.storageProvider || "cloudinary",
     fileType: result.fileType || "application/pdf",
   };

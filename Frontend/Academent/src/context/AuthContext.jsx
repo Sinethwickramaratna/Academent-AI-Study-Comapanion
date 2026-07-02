@@ -11,6 +11,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 // Import user profile retrieval service
 import { getUserProfileData } from "../Services/authService";
+import LoadingEffect from "../components/LoadingEffect";
 
 // Create a React context for authentication state
 const AuthContext = createContext();
@@ -119,7 +120,14 @@ export const AuthProvider = ({ children }) => {
       }}
     >
       {/* Do not render children until the initial Firebase authentication status is loaded */}
-      {!loading && children}
+      {loading ? (
+        <LoadingEffect
+          variant="full"
+          icon="school"
+          title="Opening Academent AI"
+          message="Checking your session and preparing your workspace."
+        />
+      ) : children}
     </AuthContext.Provider>
   );
-};
+};

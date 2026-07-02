@@ -9,6 +9,7 @@ import {
 import { auth } from '../firebase/firebase';
 import image from '../assets/Images/screen.png';
 import WebGLBackground from '../components/WebGLBackground';
+import LoadingEffect from '../components/LoadingEffect';
 
 /**
  * VerifyEmailPage component checks if the user has verified their email address.
@@ -218,7 +219,7 @@ function VerifyEmailPage({ email, onBackToLogin, onVerifyComplete }) {
               className="w-full py-md rounded-xl bg-surface-container-low text-on-surface font-label-md text-label-md font-bold disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isResending
-                ? 'Sending...'
+                ? <LoadingEffect variant="inline" title="Sending" />
                 : resendCountdown > 0
                   ? `Resend Email in ${resendCountdown}s`
                   : 'Resend Verification Email'}

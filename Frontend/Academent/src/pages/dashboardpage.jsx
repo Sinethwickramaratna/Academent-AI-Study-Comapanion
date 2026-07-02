@@ -1,13 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import './dashboardpage.css';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { logoutUser, getUserProfileData } from '../Services/authService';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/Logo/Logo.png';
-import NotePage from './notepage';
-import QuizGeneratorPage from './quizgeneratorpage';
+import LoadingEffect from '../components/LoadingEffect';
 import TopBar from '../components/TopBar';
+
+const NotePage = lazy(() => import('./notepage'));
+const QuizGeneratorPage = lazy(() => import('./quizgeneratorpage'));
 
 /**
  * DashboardPage component represents the study companion central control panel.
@@ -74,7 +76,7 @@ function DashboardPage() {
       sender: 'ai',
       text: "Newton's Second Law (F = ma) basically states that the force acting on an object is equal to its mass times its acceleration.",
       details: {
-        title: "🚗 The Car Example:",
+        title: "???? The Car Example:",
         content: "Imagine pushing a toy car vs. a real car. If you apply the same strength (force), the toy car accelerates much faster because it has less mass. To make the real car move at the same speed, you'd need a massive amount of force."
       },
       actions: ["Generate Quiz", "Save to Notes"]
@@ -89,7 +91,7 @@ function DashboardPage() {
     { 
       id: 1, 
       name: "Lecture_04_Kinematics.pdf", 
-      info: "Last opened 2h ago • 12 pages", 
+      info: "Last opened 2h ago ??? 12 pages", 
       icon: "picture_as_pdf", 
       iconColor: "bg-blue-100 text-blue-600", 
       btn1: "Summarize", 
@@ -98,7 +100,7 @@ function DashboardPage() {
     { 
       id: 2, 
       name: "Chemistry Lab Notes (Week 6)", 
-      info: "Edited Yesterday • 2,400 words", 
+      info: "Edited Yesterday ??? 2,400 words", 
       icon: "edit_note", 
       iconColor: "bg-purple-100 text-purple-600", 
       btn1: "Summarize", 
@@ -107,7 +109,7 @@ function DashboardPage() {
     { 
       id: 3, 
       name: "Organic_Chem_Full_Lecture.mp4", 
-      info: "AI Transcribed • 54 mins", 
+      info: "AI Transcribed ??? 54 mins", 
       icon: "slideshow", 
       iconColor: "bg-orange-100 text-orange-600", 
       btn1: "Review Outline", 
@@ -230,38 +232,38 @@ function DashboardPage() {
       if (lower.includes('newton') || lower.includes('law')) {
         replyText = "Newton's Second Law (F = ma) states that force equals mass times acceleration. Let's look at another example:";
         details = {
-          title: "☄️ The Baseball Example:",
+          title: "?????? The Baseball Example:",
           content: "A professional pitcher throws a baseball with huge force, giving it high acceleration. Throwing a heavy bowling ball with the same force would result in much lower acceleration due to its massive weight."
         };
       } else if (lower.includes('kinematics') || lower.includes('lecture')) {
         replyText = "I see you're studying Kinematics! This branch of mechanics describes the motion of points, bodies, and systems without reference to the forces that cause the motion.";
         details = {
-          title: "📐 Key Concepts in Kinematics:",
+          title: "???? Key Concepts in Kinematics:",
           content: "Focus on the big four equations of motion. They link Displacement (d), Initial Velocity (vi), Final Velocity (vf), Acceleration (a), and Time (t). Make sure you understand how to solve for one unknown when given three known values."
         };
         actions = ["Generate Flashcards", "Practice Problems"];
       } else if (lower.includes('chemistry') || lower.includes('organic')) {
         replyText = "Organic chemistry is all about understanding carbon compounds and functional groups. Let's break it down:";
         details = {
-          title: "🧪 Study Tip for Organic Chem:",
+          title: "???? Study Tip for Organic Chem:",
           content: "Do not just memorize reactions. Focus on nucleophiles and electrophiles (mechanisms). Once you know where the electrons want to go, you can predict almost any reaction."
         };
         actions = ["Flashcard Quiz", "Reaction Guide"];
       } else if (lower.includes('gpa') || lower.includes('grade')) {
         replyText = "Your GPA progress is looking great this term! To raise your GPA further, consistency is key. Keep maintaining your 12-day study streak.";
         details = {
-          title: "📈 GPA Goal Booster:",
+          title: "???? GPA Goal Booster:",
           content: "Spend just 15 minutes reviewing active flashcards every morning. Spaced repetition has been shown to raise average quiz scores by up to 15%."
         };
       } else if (lower.includes('essay') || lower.includes('ethics') || lower.includes('bioethics')) {
         replyText = "Writing a bioethics outline can be challenging. I recommend organizing it around the four main principles of biomedical ethics:";
         details = {
-          title: "📝 The Four Bioethics Pillars:",
+          title: "???? The Four Bioethics Pillars:",
           content: "1. Autonomy (respecting decision making)\n2. Beneficence (acting in the patient's best interest)\n3. Non-maleficence (doing no harm)\n4. Justice (fair distribution of resources)"
         };
         actions = ["Generate Outline", "Cite Sources"];
       } else if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-        replyText = `Hello ${fullName}! 👋 I'm your Academent AI Tutor. I can help explain difficult concepts, summarize lectures, or generate study guides and quizzes for you. What are we studying today?`;
+        replyText = `Hello ${fullName}! ???? I'm your Academent AI Tutor. I can help explain difficult concepts, summarize lectures, or generate study guides and quizzes for you. What are we studying today?`;
       }
       
       const aiMsg = {
@@ -314,7 +316,7 @@ function DashboardPage() {
         const newMaterial = {
           id: Date.now(),
           name: file.name,
-          info: `Uploaded just now • ${(file.size / 1024 / 1024).toFixed(1)} MB`,
+          info: `Uploaded just now ??? ${(file.size / 1024 / 1024).toFixed(1)} MB`,
           icon,
           iconColor,
           btn1,
@@ -335,7 +337,7 @@ function DashboardPage() {
       const newMaterial = {
         id: Date.now(),
         name: finalName,
-        info: "Created just now • 0 words",
+        info: "Created just now ??? 0 words",
         icon: "edit_note",
         iconColor: "bg-purple-100 text-purple-600",
         btn1: "Summarize",
@@ -347,10 +349,12 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-md">
-        <span className="material-symbols-outlined animate-spin text-primary text-5xl">sync</span>
-        <p className="font-label-md text-on-surface-variant animate-pulse font-bold">Loading dashboard...</p>
-      </div>
+      <LoadingEffect
+        variant="full"
+        icon="dashboard"
+        title="Loading dashboard"
+        message="Gathering your study stats, materials, and daily plan."
+      />
     );
   }
 
@@ -441,7 +445,7 @@ function DashboardPage() {
             {/* Welcome Hero Section */}
             <section className="ai-gradient rounded-xl p-xl relative overflow-hidden text-white flex flex-col md:flex-row justify-between items-stretch md:items-center min-h-[220px] gap-lg">
               <div className="z-10 max-w-lg space-y-md flex-1">
-                <h2 className="font-display-lg text-headline-lg md:text-display-lg">Good Morning, {fullName.split(' ')[0]} 👋</h2>
+                <h2 className="font-display-lg text-headline-lg md:text-display-lg">Good Morning, {fullName.split(' ')[0]} ????</h2>
                 <p className="font-body-lg text-body-lg opacity-90">
                   You're on a <span className="font-bold text-tertiary-fixed">12-day study streak</span>. You're just 4 sessions away from your weekly goal.
                 </p>
@@ -799,7 +803,7 @@ function DashboardPage() {
                         </div>
                         <div className="overflow-hidden">
                           <h6 className="font-label-md text-label-md truncate">Midterm: Calculus II</h6>
-                          <p className="text-xs text-outline truncate">Section 4A • 10:00 AM</p>
+                          <p className="text-xs text-outline truncate">Section 4A ??? 10:00 AM</p>
                         </div>
                       </div>
                       <span className="material-symbols-outlined text-outline group-hover:text-primary shrink-0">chevron_right</span>
@@ -813,7 +817,7 @@ function DashboardPage() {
                         </div>
                         <div className="overflow-hidden">
                           <h6 className="font-label-md text-label-md truncate">Biology Final Exam</h6>
-                          <p className="text-xs text-outline truncate">Hall C • 02:30 PM</p>
+                          <p className="text-xs text-outline truncate">Hall C ??? 02:30 PM</p>
                         </div>
                       </div>
                       <span className="material-symbols-outlined text-outline group-hover:text-primary shrink-0">chevron_right</span>
@@ -968,9 +972,13 @@ function DashboardPage() {
             </section>
           </main>
         ) : activeTab === 'my-notes' ? (
-          <NotePage profile={profile} currentUser={currentUser} />
+          <Suspense fallback={<LoadingEffect icon="folder_open" title="Loading notes" message="Opening your notes workspace." />}>
+            <NotePage profile={profile} currentUser={currentUser} />
+          </Suspense>
         ) : activeTab === 'quiz-generator' ? (
-          <QuizGeneratorPage profile={profile} currentUser={currentUser} />
+          <Suspense fallback={<LoadingEffect icon="quiz" title="Loading quiz generator" message="Preparing quizzes and saved progress." />}>
+            <QuizGeneratorPage profile={profile} currentUser={currentUser} />
+          </Suspense>
         ) : (
           /* Under Construction Panel for other Tabs */
           <main className="flex-1 flex items-center justify-center p-gutter md:p-margin-desktop min-h-[400px]">
@@ -997,3 +1005,4 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
+

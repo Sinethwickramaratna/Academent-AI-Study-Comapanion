@@ -1,5 +1,6 @@
 // import { GoogleGenAI } from '@google/genai';
-import OpenAI from 'openai';
+import { Ollama } from 'ollama';
+// import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -8,14 +9,60 @@ dotenv.config();
   apiKey: process.env.GEMINI_API_KEY,
 });*/
 
-const openai = new OpenAI({
+/*const openai = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
   baseURL: process.env.DEEPSEEK_API_BASE_URL
 });
 
-const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL;
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL;*/
 
-function getResponseText(response) {
+const ollama = new Ollama({
+  host: process.env.OLLAMA_HOST || 'https://ollama.com',
+  headers: process.env.OLLAMA_API_KEY
+    ? { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` }
+    : undefined,
+});
+
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b';
+
+function parseJsonResponse(text) {
+  const trimmed = text.trim();
+  const fencedJson = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return JSON.parse(fencedJson ? fencedJson[1] : trimmed);
+}
+
+async function createTextResponse(input, options = {}) {
+  const response = await ollama.chat({
+    model: OLLAMA_MODEL,
+    messages: [{ role: 'user', content: input }],
+    stream: true,
+    format: options.json ? 'json' : undefined,
+    options: {
+      temperature: options.temperature ?? 1,
+      top_p: options.top_p ?? 0.95,
+      num_predict: options.max_tokens ?? 3000,
+    },
+  });
+
+  let text = '';
+
+  for await (const part of response) {
+    text += part.message?.content || '';
+  }
+
+  return text;
+}
+
+async function createJsonResponse(input) {
+  const text = await createTextResponse(input, {
+    temperature: 1,
+    json: true,
+  });
+
+  return parseJsonResponse(text);
+}
+
+/*function getResponseText(response) {
   if (response.output_text) {
     return response.output_text;
   }
@@ -36,8 +83,11 @@ async function createTextResponse(input, options = {}) {
   const response = await openai.responses.create({
     model: DEEPSEEK_MODEL,
     input,
-    temperature: options.temperature ?? 0.2,
+    temperature: options.temperature ?? 1,
+    top_p: options.top_p ?? 0.95,
+    max_tokens: options.max_tokens ?? 3000,
     text: options.text,
+    speed: 100,
   });
 
   return getResponseText(response);
@@ -45,7 +95,7 @@ async function createTextResponse(input, options = {}) {
 
 async function createJsonResponse(input) {
   const text = await createTextResponse(input, {
-    temperature: 0.1,
+    temperature: 1,
     text: {
       format: {
         type: 'json_object',
@@ -55,6 +105,8 @@ async function createJsonResponse(input) {
 
   return JSON.parse(text);
 }
+
+*/
 
 export async function extractKnowledge(content) {
   const prompt = `
@@ -290,6 +342,58 @@ export async function generateQuiz(knowledge, numQuestions = 10, difficulty = 'e
   return createJsonResponse(prompt);
 }
 
+
+export async function evaluateShortAnswer({ question, correctAnswer, userAnswer }) {
+  const prompt = `
+  You are an expert examiner. Evaluate the student's short answer.
+
+  Return ONLY valid JSON with:
+  {
+    "marks": 0 to 1,
+    "feedback": "brief helpful feedback",
+    "status": "correct" | "partially_correct" | "incorrect"
+  }
+
+  Marking rules:
+  - 1 means fully correct.
+  - 0.5 means partially correct.
+  - 0 means incorrect or missing.
+  - Be fair to equivalent wording.
+
+  Question: ${question}
+  Correct answer / rubric: ${correctAnswer}
+  Student answer: ${userAnswer || ''}
+  `;
+
+  const result = await createJsonResponse(prompt);
+
+  /*const response = await openai.responses.create({
+    model: DEEPSEEK_MODEL,
+    input: prompt,
+    temperature: 0.2,
+    text: {
+      format: {
+        type: 'json_object',
+      },
+    },
+  });
+
+  const result = JSON.parse(getResponseText(response));*/
+  const marks = Math.max(0, Math.min(1, Number(result.marks || 0)));
+
+  return {
+    marks,
+    feedback: result.feedback || '',
+    status: ['correct', 'partially_correct', 'incorrect'].includes(result.status)
+      ? result.status
+      : marks >= 1
+        ? 'correct'
+        : marks > 0
+          ? 'partially_correct'
+          : 'incorrect',
+  };
+}
+
 export const generateResponse = async (message) => {
   /*const response = await gemini.models.generateContent({
     model: "gemini-2.5-flash",
@@ -298,6 +402,7 @@ export const generateResponse = async (message) => {
 
   return createTextResponse(message);
 }
+
 
 
 

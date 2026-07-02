@@ -1,6 +1,10 @@
 .quiz-page {
   position: relative;
 }
+.quiz-page > .quiz-modal-backdrop,
+.quiz-page > .loading-effect {
+  margin-top: 0 !important;
+}
 
 .quiz-eyebrow {
   margin: 0;
@@ -126,6 +130,22 @@
   margin-top: auto;
 }
 
+.quiz-card__actions {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+}
+
+.quiz-card__actions .quiz-button {
+  width: 100%;
+}
+
+.quiz-icon-button--danger {
+  border-color: rgba(201, 45, 92, 0.18);
+  background: rgba(201, 45, 92, 0.08);
+  color: #b32652;
+}
 .quiz-card__meta span {
   display: inline-flex;
   align-items: center;
@@ -212,6 +232,12 @@
   color: #4d2b8c;
 }
 
+.quiz-button--danger {
+  border: 1px solid rgba(201, 45, 92, 0.18);
+  background: linear-gradient(135deg, #b32652, #d44d73);
+  color: #fff;
+  box-shadow: 0 14px 32px rgba(201, 45, 92, 0.18);
+}
 .quiz-empty-state {
   display: grid;
   min-height: 320px;
@@ -345,8 +371,8 @@
 }
 
 .quiz-form-field input,
-.quiz-short-answer,
-.quiz-cloze select {
+.quiz-fill-blank-input,
+.quiz-short-answer {
   width: 100%;
   border: 1px solid rgba(77, 43, 140, 0.14);
   border-radius: 12px;
@@ -651,22 +677,45 @@
   line-height: 2.4;
 }
 
-.quiz-cloze select {
-  display: inline-block;
-  width: auto;
-  min-width: 145px;
-  margin: 0 0.35rem;
+.quiz-inline-blank {
+  display: inline-flex;
+  min-width: 132px;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0.28rem;
+  border: 1px dashed rgba(77, 43, 140, 0.36);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: rgba(77, 43, 140, 0.72);
+  padding: 0.34rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 900;
+  vertical-align: middle;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
 
-.quiz-chip-bank,
-.quiz-drop-row {
+.quiz-inline-blank:hover,
+.quiz-inline-blank:focus-visible {
+  border-color: rgba(77, 43, 140, 0.58);
+  background: rgba(77, 43, 140, 0.09);
+  color: #4d2b8c;
+  transform: translateY(-1px);
+}
+
+.quiz-inline-blank--filled {
+  border-style: solid;
+  border-color: rgba(77, 43, 140, 0.28);
+  background: rgba(255, 239, 95, 0.34);
+  color: #4d2b8c;
+}
+.quiz-chip-bank {
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem;
 }
 
-.quiz-chip-bank button,
-.quiz-drop-zone {
+.quiz-chip-bank button {
   min-height: 42px;
   border: 1px solid rgba(77, 43, 140, 0.14);
   border-radius: 999px;
@@ -676,12 +725,12 @@
   font-weight: 900;
 }
 
-.quiz-drop-zone {
-  min-width: 140px;
-  background: rgba(255, 255, 255, 0.76);
-}
 
-.quiz-short-answer {
+.quiz-fill-blank-input {
+  max-width: 520px;
+  min-height: 56px;
+  font-size: 1rem;
+}.quiz-short-answer {
   min-height: 180px;
   resize: vertical;
   line-height: 1.55;
@@ -825,3 +874,71 @@
     margin-left: 0;
   }
 }
+
+.quiz-error-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid rgba(201, 45, 92, 0.18);
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  background: rgba(201, 45, 92, 0.07);
+  color: #b32652;
+  font-weight: 800;
+}
+
+.quiz-error-panel p {
+  margin: 0;
+}
+
+
+.quiz-delete-modal {
+  width: min(430px, 100%);
+  overflow: hidden;
+  border: 1px solid rgba(201, 45, 92, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 248, 250, 0.92)),
+    radial-gradient(circle at 8% 0%, rgba(201, 45, 92, 0.12), transparent 34%);
+  box-shadow: 0 28px 80px rgba(28, 18, 52, 0.24);
+}
+
+.quiz-delete-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1.1rem 1.25rem 0.55rem;
+}
+
+.quiz-delete-modal__header > .material-symbols-outlined {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(201, 45, 92, 0.1);
+  color: #b32652;
+  font-size: 1.6rem;
+}
+
+.quiz-delete-modal__header h3 {
+  margin: 0.1rem 0 0;
+  color: #20172f;
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.quiz-delete-modal > p {
+  margin: 0;
+  padding: 0 1.25rem 1rem;
+  color: rgba(32, 23, 47, 0.64);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.quiz-delete-modal__actions {
+  justify-content: flex-end;
+}
+
+

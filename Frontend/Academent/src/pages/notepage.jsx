@@ -5,6 +5,7 @@ import NoteCreateModal from '../components/NoteCreateModal';
 import NoteViewModal from '../components/NoteViewModal';
 import PdfViewModal from '../components/PdfViewModal';
 import NotesActionButton from '../components/NotesActionButton';
+import LoadingEffect from '../components/LoadingEffect';
 import NotesBreadcrumb from '../components/NotesBreadcrumb';
 import NotesSectionHeader from '../components/NotesSectionHeader';
 import TopBar from '../components/TopBar';
@@ -295,6 +296,7 @@ function NotePage({ profile, currentUser }) {
           title: uploadedPdf.title,
           url: uploadedPdf.url,
           publicId: uploadedPdf.publicId,
+          extractedText: uploadedPdf.extractedText,
           size: uploadedPdf.size,
           storageProvider: uploadedPdf.storageProvider,
           fileType: uploadedPdf.fileType,
@@ -338,7 +340,7 @@ function NotePage({ profile, currentUser }) {
       ) : (
         <>
           <NotesActionButton icon="create_new_folder" label="New Folder" onClick={() => setModalType('folder')} />
-          <NotesActionButton icon="upload_file" label={isUploadingPdf ? "Uploading..." : "Upload PDF"} onClick={() => !isUploadingPdf && pdfInputRef.current?.click()} />
+          <NotesActionButton icon={isUploadingPdf ? "sync" : "upload_file"} label={isUploadingPdf ? "Extracting PDF..." : "Upload PDF"} onClick={() => !isUploadingPdf && pdfInputRef.current?.click()} />
           <NotesActionButton icon="note_add" label="New Note" onClick={() => setModalType('note')} />
         </>
       )}
@@ -475,9 +477,22 @@ function NotePage({ profile, currentUser }) {
   return (
     <main className="p-gutter md:p-margin-desktop space-y-xl notes-page">
       <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search your knowledge base..." />
-      {notes.loading && <p>Loading notes...</p>}
+      {notes.loading && (
+        <LoadingEffect
+          icon="folder_open"
+          title="Loading notes"
+          message="Opening your semesters, modules, notes, and PDFs."
+        />
+      )}
       {notes.error && <p>{notes.error.message}</p>}
       {uploadError && <p>{uploadError}</p>}
+      {isUploadingPdf && !notes.loading && (
+        <LoadingEffect
+          icon="picture_as_pdf"
+          title="Uploading and extracting PDF"
+          message="Reading the PDF text, extracting knowledge, and saving it to your quiz knowledge base."
+        />
+      )}
 
       {!notes.loading && (activeSemester ? (
         <section>

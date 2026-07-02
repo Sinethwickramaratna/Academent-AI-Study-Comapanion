@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import './learninggoalspage.css';
+import './learninggoalspage.css'
+import LoadingEffect from '../components/LoadingEffect';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError } from '../Services/authService';
 import WebGLBackground from '../components/WebGLBackground';
@@ -269,7 +270,7 @@ function LearningGoalsPage({ onBack, onComplete, initialData }) {
                 disabled={isSaving}
                 className="flex items-center gap-2 text-label-md text-white shadow-lg hover:shadow-primary/30 hover:opacity-90 transition-all active:scale-95 group primary-button px-xxl py-3 rounded-xl font-bold"
               >
-                {isSaving ? 'Saving...' : 'Continue'}
+                {isSaving ? <LoadingEffect variant="inline" title="Saving" /> : 'Continue'}
                 <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">
                   arrow_forward
                 </span>

@@ -1,14 +1,14 @@
-import { useState } from 'react'
+﻿import { lazy, Suspense, useState } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
-// Import the onboarding, dashboard and authentication pages
-import LoginPage from './pages/loginpage.jsx'
-import SignupPage from './pages/signuppage.jsx'
-import VerifyEmailPage from './pages/verifyemailpage.jsx'
-import AcademicProfilePage from './pages/academicprofilepage.jsx'
-import LearningGoalsPage from './pages/learninggoalspage.jsx'
-import FinalOnboardingPage from './pages/finalonboardingpage.jsx'
-import DashboardPage from './pages/dashboardpage.jsx'
-import ResetPasswordPage from './pages/resetpasswordpage.jsx'
+// Lazy-load route pages so the initial app shell stays small.
+const LoginPage = lazy(() => import('./pages/loginpage.jsx'))
+const SignupPage = lazy(() => import('./pages/signuppage.jsx'))
+const VerifyEmailPage = lazy(() => import('./pages/verifyemailpage.jsx'))
+const AcademicProfilePage = lazy(() => import('./pages/academicprofilepage.jsx'))
+const LearningGoalsPage = lazy(() => import('./pages/learninggoalspage.jsx'))
+const FinalOnboardingPage = lazy(() => import('./pages/finalonboardingpage.jsx'))
+const DashboardPage = lazy(() => import('./pages/dashboardpage.jsx'))
+const ResetPasswordPage = lazy(() => import('./pages/resetpasswordpage.jsx'))
 // Import ProtectedRoute component to shield authenticated-only routes
 import ProtectedRoute from './routes/ProtectedRoutes.jsx'
 // Import PublicRoute component to shield public-only routes
@@ -17,6 +17,7 @@ import PublicRoute from './routes/PublicRoute.jsx'
 import { useAuth } from './context/AuthContext'
 // Import service logic to check Firestore onboarding status
 import { logoutUser } from './Services/authService'
+import LoadingEffect from './components/LoadingEffect'
 
 
 /**
@@ -65,7 +66,8 @@ function App() {
   }
 
   return (
-    <Routes>
+    <Suspense fallback={<LoadingEffect variant="full" title="Loading page" message="Preparing the next study screen." />}>
+      <Routes>
       {/* Root path displays the Login Page */}
       <Route
         path="/"
@@ -199,10 +201,10 @@ function App() {
         path="/reset-password"
         element={<ResetPasswordPage />}
       />
-    </Routes>
+      </Routes>
+    </Suspense>
   )
 }
 
 export default App
-
 

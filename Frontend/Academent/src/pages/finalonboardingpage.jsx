@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import './finalonboardingpage.css';
+import './finalonboardingpage.css'
+import LoadingEffect from '../components/LoadingEffect';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError, updateUserProfileData } from '../Services/authService';
 import { useAuth } from '../context/AuthContext';
@@ -302,7 +303,7 @@ function FinalOnboardingPage({ onBack, onComplete, academicProfileData, learning
                 >
                   auto_awesome
                 </span>
-                {isSaving ? 'Saving...' : 'Generate My Learning Dashboard'}
+                {isSaving ? <LoadingEffect variant="inline" title="Building dashboard" /> : 'Generate My Learning Dashboard'}
                 <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">
                   arrow_forward
                 </span>

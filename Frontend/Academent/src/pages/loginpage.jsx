@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './loginpage.css'
+import LoadingEffect from '../components/LoadingEffect'
 import logo from '../assets/Logo/Logo.png'
 import { getFriendlyAuthError, signInWithGoogle, loginUser } from '../Services/authService'
 import { useAuth } from '../context/AuthContext'
@@ -102,7 +103,7 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 						<div>
 							<p className="login-page__proofTitle">Trusted by 10k+ students</p>
 							<div className="login-page__stars" aria-label="Five star rating">
-								★★★★★
+								???????????????
 							</div>
 						</div>
 					</div>
@@ -150,12 +151,12 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 							</div>
 
 							<div className="login-page__inputWrap">
-								<span className="login-page__icon" aria-hidden="true">⌁</span>
+								<span className="login-page__icon" aria-hidden="true">???</span>
 								<input
 									autoComplete="current-password"
 									id="password"
 									name="password"
-									placeholder="••••••••"
+									placeholder="????????????????????????"
 									type={showPassword ? 'text' : 'password'}
 								/>
 								<button
@@ -182,8 +183,8 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 
 						<div className="login-page__actions">
 							<button className="login-page__primary" type="submit" disabled={isSubmitting}>
-								Sign In
-								<span aria-hidden="true">→</span>
+								{isSubmitting ? <LoadingEffect variant="inline" title="Signing in" /> : 'Sign In'}
+								<span aria-hidden="true">-&gt;</span>
 							</button>
 
 							<div className="login-page__divider">
@@ -202,7 +203,7 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 									<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
 									<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
 								</svg>
-								Continue with Google
+								{isSubmitting ? <LoadingEffect variant="inline" title="Connecting" /> : 'Continue with Google'}
 							</button>
 						</div>
 					</form>

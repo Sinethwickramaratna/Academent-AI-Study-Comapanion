@@ -14,6 +14,7 @@ import {
   updateItemInFolders,
   updateModuleTree,
 } from "./noteManagementUtils";
+import { extractAndSaveKnowledge } from "./quizService";
 
 const noteManagementRef = (uid) => doc(db, "users", uid, "noteManagement", "structure");
 
@@ -162,6 +163,10 @@ export const deleteFolder = async (uid, semesterId, moduleId, folderId) => {
 export const addPdf = async (uid, semesterId, moduleId, folderId, pdfData) => {
   const data = await getExistingData(uid);
   const pdf = createPdf(pdfData);
+  const pdfText = String(pdfData.extractedText || "").trim();
+  if (!pdfText) {
+    throw new Error("No extractable text was found in this PDF.");
+  }
   const nextData = updateModuleTree(data, semesterId, moduleId, (module) => {
     if (!folderId) {
       return { ...module, pdfs: [...(module.pdfs || []), pdf] };
@@ -173,7 +178,18 @@ export const addPdf = async (uid, semesterId, moduleId, folderId, pdfData) => {
     };
   });
 
-  return saveNoteManagement(uid, nextData);
+  const savedData = await saveNoteManagement(uid, nextData);
+
+  await extractAndSaveKnowledge(uid, {
+    id: pdf.pdfId,
+    type: "pdf",
+    title: pdf.title,
+    path: "",
+    content: pdfText,
+    url: pdf.url,
+  });
+
+  return savedData;
 };
 
 export const deletePdf = async (uid, semesterId, moduleId, pdfId) => {
@@ -190,6 +206,9 @@ export const deletePdf = async (uid, semesterId, moduleId, pdfId) => {
 export const addNote = async (uid, semesterId, moduleId, folderId, noteData) => {
   const data = await getExistingData(uid);
   const note = createNote(noteData);
+  if (!note.content.trim()) {
+    throw new Error("Note content is required to extract knowledge.");
+  }
   const nextData = updateModuleTree(data, semesterId, moduleId, (module) => {
     if (!folderId) {
       return { ...module, notes: [...(module.notes || []), note] };
@@ -201,7 +220,17 @@ export const addNote = async (uid, semesterId, moduleId, folderId, noteData) => 
     };
   });
 
-  return saveNoteManagement(uid, nextData);
+  const savedData = await saveNoteManagement(uid, nextData);
+
+  await extractAndSaveKnowledge(uid, {
+    id: note.noteId,
+    type: "note",
+    title: note.title,
+    path: "",
+    content: note.content,
+  });
+
+  return savedData;
 };
 
 export const updateNote = async (uid, semesterId, moduleId, noteId, updatedData) => {

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import './academicprofilepage.css';
+import './academicprofilepage.css'
+import LoadingEffect from '../components/LoadingEffect';
 import logo from '../assets/Logo/Logo.png';
 import { getFriendlyAuthError } from '../Services/authService';
 import image from "../assets/Images/screen_1.png"
@@ -324,7 +325,7 @@ function AcademicProfilePage({ onBack, onComplete, initialData }) {
                 disabled={isSaving}
                 className="primary-button px-xxl py-3 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg"
               >
-                {isSaving ? 'Saving...' : 'Continue'} <span className="material-symbols-outlined">arrow_forward</span>
+                {isSaving ? <LoadingEffect variant="inline" title="Saving" /> : 'Continue'} <span className="material-symbols-outlined">arrow_forward</span>
               </button>
             </footer>
           </form>

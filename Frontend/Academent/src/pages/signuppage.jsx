@@ -5,6 +5,7 @@ import { getFriendlyAuthError, registerUser, signInWithGoogle } from '../Service
 import { useAuth } from '../context/AuthContext';
 import WebGLBackground from '../components/WebGLBackground';
 import FormInput from '../components/FormInput';
+import LoadingEffect from '../components/LoadingEffect';
 
 /**
  * SignupPage handles user registration via email/password or Google OAuth.
@@ -254,7 +255,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
 
         {/* Bottom Text */}
         <p className="relative z-10 text-white/60 font-label-sm text-label-sm">
-          © {new Date().getFullYear()} Academent AI. Empowering students with enlightened intelligence.
+          ?? {new Date().getFullYear()} Academent AI. Empowering students with enlightened intelligence.
         </p>
       </section>
 
@@ -315,7 +316,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-12 bg-surface-container-low rounded-2xl"
-                placeholder="••••••••"
+                placeholder="????????????????????????"
               />
 
               {/* Password Strength */}
@@ -348,7 +349,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
               }`}
             >
               {isSubmitting ? (
-                <span className="material-symbols-outlined animate-spin text-[24px]">sync</span>
+                <LoadingEffect variant="inline" title="Creating account" />
               ) : isSubmitted ? (
                 'Account Created! Welcome'
               ) : (
@@ -367,7 +368,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
                 className="h-6 w-6"
                 src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
               />
-              Continue with Google
+              {isSubmitting ? <LoadingEffect variant="inline" title="Connecting" /> : 'Continue with Google'}
             </button>
           </div>
 
