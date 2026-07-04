@@ -972,11 +972,17 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingConversationId, setGeneratingConversationId] = useState(null);
   const [statusText, setStatusText] = useState('Thinking...');
   const [conversationSearch, setConversationSearch] = useState('');
   const [chatSidebarWidth, setChatSidebarWidth] = useState(300);
   const [contextPanelWidth, setContextPanelWidth] = useState(300);
   const bottomRef = useRef(null);
+  const activeConversationIdRef = useRef(activeConversationId);
+
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
 
   useEffect(() => {
     if (!uid) {
@@ -1039,6 +1045,8 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
       `${conversation.title || ''} ${conversation.preview || ''}`.toLowerCase().includes(query)
     ));
   }, [conversationSearch, conversations]);
+  const isActiveConversationGenerating = isGenerating && generatingConversationId === (activeConversationId || 'new');
+
   const toggleSelected = (item) => {
     setSelectedItems((current) => {
       if (current.some((selected) => selected.id === item.id)) return current.filter((selected) => selected.id !== item.id);
@@ -1070,17 +1078,21 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
     }));
     const userMessage = { id: crypto.randomUUID?.() || `msg-${Date.now()}`, sender: 'user', text };
     let conversationId = activeConversationId;
+    const pendingConversationId = conversationId || 'new';
 
     setMessages((current) => [...current, userMessage]);
     setInput('');
     setIsGenerating(true);
+    setGeneratingConversationId(pendingConversationId);
     setStatusText(selectedItems.length ? 'Loading selected study context...' : 'Thinking...');
 
     try {
       if (!conversationId) {
         const conversation = await createTutorConversation(uid, { firstMessage: text, selectedItems });
         conversationId = conversation.conversationId || conversation.id;
+        activeConversationIdRef.current = conversationId;
         setActiveConversationId(conversationId);
+        setGeneratingConversationId(conversationId);
       }
 
       await saveTutorMessage(uid, conversationId, {
@@ -1099,7 +1111,9 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
             text: 'Select one or more notes or PDFs with the + button first, then ask me to generate a quiz. I will save it to the Quiz Generator window automatically.',
           };
 
-          setMessages((current) => [...current, aiMessage]);
+          if (activeConversationIdRef.current === conversationId) {
+            setMessages((current) => [...current, aiMessage]);
+          }
           await saveTutorMessage(uid, conversationId, aiMessage);
           return;
         }
@@ -1126,7 +1140,9 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
           },
         };
 
-        setMessages((current) => [...current, aiMessage]);
+        if (activeConversationIdRef.current === conversationId) {
+          setMessages((current) => [...current, aiMessage]);
+        }
         await saveTutorMessage(uid, conversationId, aiMessage);
         await updateTutorConversationAfterMessage(uid, conversationId, {
           generatedQuizId: quiz.quizId,
@@ -1149,7 +1165,9 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
         citations: contextMaterials.slice(0, 4).map((item) => item.title).filter(Boolean),
       };
 
-      setMessages((current) => [...current, aiMessage]);
+      if (activeConversationIdRef.current === conversationId) {
+        setMessages((current) => [...current, aiMessage]);
+      }
       await saveTutorMessage(uid, conversationId, aiMessage);
       await updateTutorConversationAfterMessage(uid, conversationId, {
         selectedMaterials: selectedItems.map((item) => ({
@@ -1167,7 +1185,9 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
         citations: selectedItems.slice(0, 3).map((item) => item.title),
       };
 
-      setMessages((current) => [...current, errorMessage]);
+      if (!conversationId || activeConversationIdRef.current === conversationId) {
+        setMessages((current) => [...current, errorMessage]);
+      }
       if (conversationId) {
         await saveTutorMessage(uid, conversationId, errorMessage).catch((saveError) => {
           console.error('Failed to save AI Tutor error message:', saveError);
@@ -1175,23 +1195,28 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
       }
     } finally {
       setIsGenerating(false);
+      setGeneratingConversationId(null);
     }
   };
 
   const handleConversationSelect = (conversation) => {
-    setActiveConversationId(conversation.conversationId || conversation.id);
+    const conversationId = conversation.conversationId || conversation.id;
+    activeConversationIdRef.current = conversationId;
+    setActiveConversationId(conversationId);
   };
 
   const handleDeleteConversation = async (conversationId) => {
     if (!uid || !conversationId) return;
     await deleteTutorConversation(uid, conversationId);
     if (activeConversationId === conversationId) {
+      activeConversationIdRef.current = null;
       setActiveConversationId(null);
       setMessages([]);
     }
   };
 
   const handleNewChat = () => {
+    activeConversationIdRef.current = null;
     setActiveConversationId(null);
     setMessages([]);
     setInput('');
@@ -1414,7 +1439,7 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
                   </article>
                 ))}
 
-                {isGenerating && (
+                {isActiveConversationGenerating && (
                   <article className="ai-message ai-message--ai ai-message--loading">
                     <Avatar name={fullName} photoURL={photoURL} variant="ai" />
                     <div className="ai-message-body">
