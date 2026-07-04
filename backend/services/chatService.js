@@ -232,6 +232,8 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
       - Do not return empty strings in FILL_BLANK options.
       - True/False questions must be clear and unambiguous.
       - Cloze questions should have 2-3 blanks with clear correct answers.
+      - Each CLOZE blank must assess one independently inferable key concept, term, formula, value, or meaningful phrase.
+      - Do NOT generate CLOZE blanks that require multiple related items joined by conjunctions such as "and", "or", or "as well as"; avoid patterns like "________ and ________" or a single blank whose answer contains joined items.
       - CLOZE question text must show every blank visibly using exactly eight underscores: ________.
       - For CLOZE, replace each missing answer in the paragraph with ________; do not write the full answer in the question text.
       - The number of ________ blanks in a CLOZE question must exactly match the number of items in answers.
@@ -269,9 +271,9 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
           {
             "question_number": 4,
             "type": "CLOZE",
-            "question": "Data quality includes ________, ________, and ________.",
-            "answers": ["accuracy", "completeness", "timeliness"],
-            "explanation": "Accuracy, completeness, and timeliness are common dimensions used to evaluate data quality."
+            "question": "A data quality check verifies that each record is ________ before it is used for analysis.",
+            "answers": ["accurate"],
+            "explanation": "Accuracy is a common dimension used to evaluate whether data correctly represents the real-world value."
           }
         ]
       }
@@ -300,6 +302,8 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
       - FILL_BLANK options MUST include the correct answer and 3 plausible incorrect distractors.
       - Do not return empty strings in FILL_BLANK options.
       - Cloze questions should have 3-10 blanks with clear correct answers.
+      - Each CLOZE blank must assess one independently inferable key concept, term, formula, value, or meaningful phrase.
+      - Do NOT generate CLOZE blanks that require multiple related items joined by conjunctions such as "and", "or", or "as well as"; avoid patterns like "________ and ________" or a single blank whose answer contains joined items.
       - CLOZE question text must show every blank visibly using exactly eight underscores: ________.
       - For CLOZE, replace each missing answer in the paragraph with ________; do not write the full answer in the question text.
       - The number of ________ blanks in a CLOZE question must exactly match the number of items in answers.
@@ -334,9 +338,9 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
           {
             "question_number": 4,
             "type": "CLOZE",
-            "question": "Data quality includes ________, ________, and ________.",
-            "answers": ["accuracy", "completeness", "timeliness"],
-            "explanation": "Accuracy, completeness, and timeliness are common dimensions used to evaluate data quality."
+            "question": "A data quality check verifies that each record is ________ before it is used for analysis.",
+            "answers": ["accurate"],
+            "explanation": "Accuracy is a common dimension used to evaluate whether data correctly represents the real-world value."
           },
           {
             "question_number": 5,
