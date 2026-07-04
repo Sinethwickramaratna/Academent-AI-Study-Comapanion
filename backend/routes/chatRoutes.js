@@ -1,4 +1,4 @@
-import {generateResponse} from '../services/chatService.js';
+﻿import {generateResponse} from '../services/chatService.js';
 
 import express from "express";
 
@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   try {
 
-    const {message} = req.body;
+    const { message, contextMaterials = [], history = [] } = req.body;
 
     if(!message){
       return res.status(400).json({
@@ -16,7 +16,7 @@ router.post("/", async (req, res) => {
       });
     }
 
-    const reply = await generateResponse(message);
+    const reply = await generateResponse(message, { contextMaterials, history });
 
     res.status(200).json({
       success: true,

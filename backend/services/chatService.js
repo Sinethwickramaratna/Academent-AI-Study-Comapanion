@@ -428,19 +428,90 @@ export async function evaluateShortAnswer({ question, correctAnswer, userAnswer 
   };
 }
 
-export const generateResponse = async (message) => {
+const MAX_CONTEXT_MATERIALS = 8;
+const MAX_CONTEXT_CHARS = 18000;
+
+function stringifyKnowledge(knowledge) {
+  if (knowledge === null || knowledge === undefined) return "";
+  if (typeof knowledge === "string") return knowledge;
+  return JSON.stringify(knowledge, null, 2);
+}
+
+function truncateText(value, maxLength) {
+  const text = String(value || "").trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength)}\n[Context truncated for length]`;
+}
+
+function normalizeTutorContext(contextMaterials = []) {
+  let remaining = MAX_CONTEXT_CHARS;
+
+  return (Array.isArray(contextMaterials) ? contextMaterials : [])
+    .slice(0, MAX_CONTEXT_MATERIALS)
+    .map((material, index) => {
+      const knowledge = stringifyKnowledge(material?.knowledge);
+      if (!knowledge.trim() || remaining <= 0) return null;
+
+      const text = truncateText(knowledge, Math.min(remaining, 4000));
+      remaining -= text.length;
+
+      return {
+        index: index + 1,
+        id: material?.id || "",
+        type: material?.type || "material",
+        title: material?.title || `Study material ${index + 1}`,
+        path: material?.path || "",
+        knowledge: text,
+      };
+    })
+    .filter(Boolean);
+}
+
+function buildTutorPrompt(message, { contextMaterials = [], history = [] } = {}) {
+  const context = normalizeTutorContext(contextMaterials);
+  const recentHistory = (Array.isArray(history) ? history : [])
+    .slice(-8)
+    .map((item) => `${item.sender === "ai" ? "AI Tutor" : "Student"}: ${String(item.text || "").slice(0, 1200)}`)
+    .join("\n");
+
+  const contextBlock = context.length
+    ? context.map((item) => `Source ${item.index}: ${item.title}\nType: ${item.type}\nPath: ${item.path}\nExtracted knowledge:\n${item.knowledge}`).join("\n\n---\n\n")
+    : "No selected study material context was provided.";
+
+  return `
+You are Academent AI Tutor, a warm, precise academic study assistant.
+
+Response rules:
+- Answer the student's latest message directly.
+- If selected study material context is provided, use it as the primary source of truth.
+- If the context does not contain enough information, say what is missing and then answer from general knowledge only if helpful.
+- Mention relevant source titles naturally when using selected notes or PDFs.
+- Be clear, structured, and student-friendly.
+- Use Markdown for bullets, tables, formulas, and code where useful.
+- Do not invent citations or claim a source says something not present in the context.
+
+Recent conversation:
+${recentHistory || "No previous messages."}
+
+Selected study material context:
+${contextBlock}
+
+Student message:
+${message}
+  `.trim();
+}
+
+export const generateResponse = async (message, options = {}) => {
   /*const response = await gemini.models.generateContent({
     model: "gemini-2.5-flash",
     contents: message,
   });*/
 
-  return createTextResponse(message);
+  const prompt = buildTutorPrompt(message, options);
+  return createTextResponse(prompt, {
+    temperature: 0.7,
+    top_p: 0.9,
+    max_tokens: 2500,
+  });
 }
-
-
-
-
-
-
-
 

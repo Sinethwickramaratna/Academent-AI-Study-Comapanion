@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import useNoteManagement from '../Services/useNoteManagement';
+import { createTutorConversation, deleteTutorConversation, loadTutorContextMaterials, saveTutorMessage, sendTutorMessage, subscribeTutorConversations, subscribeTutorMessages, updateTutorConversationAfterMessage } from '../Services/aiTutorService';
 import './aitutorpage.css';
 
 const conversationGroups = [
@@ -127,7 +128,7 @@ const sampleHierarchy = [
         moduleId: 'demo-biology',
         title: 'Biology 101',
         notes: [{ noteId: 'demo-bio-note', title: 'Biology Notes', content: 'Photosynthesis, cells, respiration.' }],
-        pdfs: [{ pdfId: 'demo-bio-pdf', title: 'Chapter 4.pdf', url: '' }],
+        pdfs: [{ pdfId: 'demo-bio-pdf', title: 'Chapter 4.pdf', url: '', content: 'Photosynthesis converts light energy into chemical energy. Chlorophyll absorbs light in chloroplasts.' }],
         folders: [
           {
             folderId: 'demo-bio-folder',
@@ -139,7 +140,7 @@ const sampleHierarchy = [
                 folderId: 'demo-bio-nested',
                 title: 'Exam Prep',
                 notes: [{ noteId: 'demo-exam-guide', title: 'Midterm Guide', content: 'Likely biology exam topics.' }],
-                pdfs: [{ pdfId: 'demo-review-pdf', title: 'Review Sheet.pdf', url: '' }],
+                pdfs: [{ pdfId: 'demo-review-pdf', title: 'Review Sheet.pdf', url: '', content: 'Review photosynthesis, respiration, cell organelles, and plant transport systems.' }],
                 folders: [],
               },
             ],
@@ -150,7 +151,7 @@ const sampleHierarchy = [
         moduleId: 'demo-physics',
         title: 'Physics Fundamentals',
         notes: [{ noteId: 'demo-motion-note', title: 'Motion Notes', content: 'Velocity, acceleration, force.' }],
-        pdfs: [{ pdfId: 'demo-newton-pdf', title: 'Newton Laws.pdf', url: '' }],
+        pdfs: [{ pdfId: 'demo-newton-pdf', title: 'Newton Laws.pdf', url: '', content: 'Newton second law: force equals mass times acceleration. F = ma.' }],
         folders: [],
       },
     ],
@@ -165,21 +166,26 @@ const flattenMaterials = (semesters = []) => {
 
     (folder.notes || []).forEach((note) => materials.push({
       id: note.noteId,
+      sourceId: note.noteId,
       type: 'note',
       title: note.title,
       path: folderPath,
       semesterId,
       moduleId,
+      content: note.content,
       icon: 'description',
     }));
 
     (folder.pdfs || []).forEach((pdf) => materials.push({
       id: pdf.pdfId,
+      sourceId: pdf.pdfId,
       type: 'pdf',
       title: pdf.title,
       path: folderPath,
       semesterId,
       moduleId,
+      content: pdf.extractedText || pdf.content || '',
+      url: pdf.url,
       icon: 'picture_as_pdf',
     }));
 
@@ -192,21 +198,26 @@ const flattenMaterials = (semesters = []) => {
 
       (module.notes || []).forEach((note) => materials.push({
         id: note.noteId,
+        sourceId: note.noteId,
         type: 'note',
         title: note.title,
         path: modulePath,
         semesterId: semester.semesterId,
         moduleId: module.moduleId,
+        content: note.content,
         icon: 'description',
       }));
 
       (module.pdfs || []).forEach((pdf) => materials.push({
         id: pdf.pdfId,
+        sourceId: pdf.pdfId,
         type: 'pdf',
         title: pdf.title,
         path: modulePath,
         semesterId: semester.semesterId,
         moduleId: module.moduleId,
+        content: pdf.extractedText || pdf.content || '',
+        url: pdf.url,
         icon: 'picture_as_pdf',
       }));
 
@@ -247,53 +258,214 @@ function Avatar({ name, photoURL, variant = 'user' }) {
   );
 }
 
+const renderInlineMarkdown = (value, keyPrefix = 'inline') => {
+  const parts = String(value || '').split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g).filter((part) => part !== '');
+
+  return parts.map((part, index) => {
+    const key = `${keyPrefix}-${index}`;
+
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={key} className="ai-inline-code">{part.slice(1, -1)}</code>;
+    }
+
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={key}>{part.slice(2, -2)}</strong>;
+    }
+
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={key}>{part.slice(1, -1)}</em>;
+    }
+
+    return part;
+  });
+};
+
+const isSeparatorLine = (line = '') => /^[\s|:\-\t]+$/.test(line.trim()) && /-{2,}/.test(line);
+
+const splitTableRow = (line = '') => {
+  if (line.includes('\t')) return line.split('\t').map((cell) => cell.trim()).filter(Boolean);
+  return line.split('|').map((cell) => cell.trim()).filter(Boolean);
+};
+
+const looksLikeTableRow = (line = '') => splitTableRow(line).length >= 2;
+
+const renderTable = (lines, keyPrefix) => {
+  const rows = lines
+    .filter((line) => !isSeparatorLine(line))
+    .map(splitTableRow)
+    .filter((row) => row.length >= 2);
+
+  if (!rows.length) return null;
+
+  const [head, ...body] = rows;
+
+  return (
+    <div key={keyPrefix} className="ai-message-table-wrap">
+      <table>
+        <thead>
+          <tr>{head.map((cell, index) => <th key={`${keyPrefix}-h-${index}`}>{renderInlineMarkdown(cell, `${keyPrefix}-h-${index}`)}</th>)}</tr>
+        </thead>
+        <tbody>
+          {body.map((row, rowIndex) => (
+            <tr key={`${keyPrefix}-r-${rowIndex}`}>
+              {row.map((cell, cellIndex) => <td key={`${keyPrefix}-c-${rowIndex}-${cellIndex}`}>{renderInlineMarkdown(cell, `${keyPrefix}-c-${rowIndex}-${cellIndex}`)}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 function MessageContent({ text }) {
-  const blocks = String(text).split(/```/g);
+  const normalizedText = String(text || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/([^\n])\s+(\d+\.\s+)/g, '$1\n$2');
+  const blocks = normalizedText.split(/```/g);
+
+  const renderMarkdownLines = (rawBlock, blockIndex) => {
+    const lines = rawBlock.split('\n');
+    const elements = [];
+    let index = 0;
+
+    while (index < lines.length) {
+      const line = lines[index];
+      const trimmed = line.trim();
+
+      if (!trimmed) {
+        index += 1;
+        continue;
+      }
+
+      const headingMatch = trimmed.match(/^(#{1,4})\s+(.+)$/);
+      if (headingMatch) {
+        const level = Math.min(headingMatch[1].length + 1, 5);
+        const HeadingTag = `h${level}`;
+        elements.push(<HeadingTag key={`${blockIndex}-heading-${index}`}>{renderInlineMarkdown(headingMatch[2], `${blockIndex}-heading-${index}`)}</HeadingTag>);
+        index += 1;
+        continue;
+      }
+
+      if (/^---+$/.test(trimmed)) {
+        elements.push(<hr key={`${blockIndex}-hr-${index}`} />);
+        index += 1;
+        continue;
+      }
+
+      if (trimmed.startsWith('>')) {
+        const quoteLines = [];
+        while (index < lines.length && lines[index].trim().startsWith('>')) {
+          quoteLines.push(lines[index].trim().replace(/^>\s?/, ''));
+          index += 1;
+        }
+        elements.push(<blockquote key={`${blockIndex}-quote-${index}`}>{renderInlineMarkdown(quoteLines.join(' '), `${blockIndex}-quote-${index}`)}</blockquote>);
+        continue;
+      }
+
+      if (/^[-*]\s+/.test(trimmed)) {
+        const items = [];
+        while (index < lines.length && /^[-*]\s+/.test(lines[index].trim())) {
+          items.push(lines[index].trim().replace(/^[-*]\s+/, ''));
+          index += 1;
+        }
+        elements.push(<ul key={`${blockIndex}-ul-${index}`}>{items.map((item, itemIndex) => <li key={`${blockIndex}-ul-${index}-${itemIndex}`}>{renderInlineMarkdown(item, `${blockIndex}-ul-${index}-${itemIndex}`)}</li>)}</ul>);
+        continue;
+      }
+
+      if (/^\d+\.\s+/.test(trimmed)) {
+        const items = [];
+        while (index < lines.length && /^\d+\.\s+/.test(lines[index].trim())) {
+          items.push(lines[index].trim().replace(/^\d+\.\s+/, ''));
+          index += 1;
+        }
+        elements.push(<ol key={`${blockIndex}-ol-${index}`}>{items.map((item, itemIndex) => <li key={`${blockIndex}-ol-${index}-${itemIndex}`}>{renderInlineMarkdown(item, `${blockIndex}-ol-${index}-${itemIndex}`)}</li>)}</ol>);
+        continue;
+      }
+
+      if (looksLikeTableRow(trimmed)) {
+        const tableLines = [];
+        while (index < lines.length && (looksLikeTableRow(lines[index]) || isSeparatorLine(lines[index]))) {
+          tableLines.push(lines[index]);
+          index += 1;
+        }
+        const table = renderTable(tableLines, `${blockIndex}-table-${index}`);
+        if (table) elements.push(table);
+        continue;
+      }
+
+      const paragraph = [];
+      while (index < lines.length) {
+        const current = lines[index].trim();
+        if (!current || /^(#{1,4})\s+/.test(current) || /^---+$/.test(current) || current.startsWith('>') || /^[-*]\s+/.test(current) || /^\d+\.\s+/.test(current) || looksLikeTableRow(current)) break;
+        paragraph.push(current);
+        index += 1;
+      }
+      elements.push(<p key={`${blockIndex}-p-${index}`}>{renderInlineMarkdown(paragraph.join(' '), `${blockIndex}-p-${index}`)}</p>);
+    }
+
+    return elements;
+  };
 
   return (
     <div className="ai-message-richtext">
-      {blocks.map((block, index) => {
+      {blocks.flatMap((block, index) => {
         if (index % 2 === 1) {
-          return <pre key={index}><code>{block.replace(/^txt\n/, '')}</code></pre>;
+          return [<pre key={`code-${index}`}><code>{block.replace(/^\w+\n/, '')}</code></pre>];
         }
 
-        return block.split('\n\n').map((section, sectionIndex) => {
-          const lines = section.split('\n');
-          const isList = lines.every((line) => line.trim().startsWith('- '));
-          const isTable = lines.every((line) => line.includes('|')) && lines.length > 1;
-
-          if (isList) {
-            return (
-              <ul key={`${index}-${sectionIndex}`}>
-                {lines.map((line) => <li key={line}>{line.replace(/^- /, '')}</li>)}
-              </ul>
-            );
-          }
-
-          if (isTable) {
-            return (
-              <div key={`${index}-${sectionIndex}`} className="ai-message-table-wrap">
-                <table>
-                  <tbody>
-                    {lines.map((line) => (
-                      <tr key={line}>
-                        {line.split('|').filter(Boolean).map((cell) => <td key={cell}>{cell.trim()}</td>)}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          }
-
-          return <p key={`${index}-${sectionIndex}`}>{section}</p>;
-        });
+        return renderMarkdownLines(block, index);
       })}
     </div>
   );
 }
+const formatConversationTime = (dateValue) => {
+  const date = dateValue instanceof Date ? dateValue : new Date();
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
 
-function ConversationSidebar({ activeId, onSelect, onNewChat, userName, photoURL, email }) {
+  if (sameDay) {
+    return new Intl.DateTimeFormat('en', { hour: 'numeric', minute: '2-digit' }).format(date);
+  }
+
+  return new Intl.DateTimeFormat('en', { month: 'short', day: '2-digit' }).format(date);
+};
+
+const getConversationGroupLabel = (dateValue) => {
+  if (!(dateValue instanceof Date)) return 'Older';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateValue);
+  target.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((today - target) / 86400000);
+
+  if (diffDays <= 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays <= 7) return 'Last 7 Days';
+  if (diffDays <= 30) return 'Last 30 Days';
+  return 'Older';
+};
+
+const groupConversations = (conversations = []) => {
+  const order = ['Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'Older'];
+  const groups = conversations.reduce((result, conversation) => {
+    const label = getConversationGroupLabel(conversation.updatedAtDate);
+    if (!result[label]) result[label] = [];
+    result[label].push({
+      ...conversation,
+      time: formatConversationTime(conversation.updatedAtDate),
+    });
+    return result;
+  }, {});
+
+  return order
+    .filter((label) => groups[label]?.length)
+    .map((label) => ({ label, items: groups[label] }));
+};
+
+function ConversationSidebar({ activeId, conversations, loading, onSelect, onNewChat, onDelete, userName, photoURL, email }) {
+  const groups = groupConversations(conversations);
+
   return (
     <aside className="ai-chat-sidebar">
       <button className="ai-new-chat-button" type="button" onClick={onNewChat}>
@@ -302,13 +474,15 @@ function ConversationSidebar({ activeId, onSelect, onNewChat, userName, photoURL
       </button>
 
       <div className="ai-chat-history custom-scrollbar">
-        {conversationGroups.map((group) => (
+        {loading ? (
+          <div className="ai-history-empty">Loading saved chats...</div>
+        ) : groups.length ? groups.map((group) => (
           <section key={group.label} className="ai-history-group">
             <h3>{group.label}</h3>
             {group.items.map((item) => (
               <article
-                key={item.id}
-                className={`ai-history-item ${activeId === item.id ? 'ai-history-item--active' : ''}`}
+                key={item.conversationId || item.id}
+                className={`ai-history-item ${activeId === (item.conversationId || item.id) ? 'ai-history-item--active' : ''}`}
                 onClick={() => onSelect(item)}
                 role="button"
                 tabIndex={0}
@@ -318,20 +492,29 @@ function ConversationSidebar({ activeId, onSelect, onNewChat, userName, photoURL
               >
                 <div>
                   <div className="ai-history-title-row">
-                    <strong>{item.title}</strong>
+                    <strong>{item.title || 'New AI Tutor Chat'}</strong>
                     <span>{item.time}</span>
                   </div>
-                  <p>{item.preview}</p>
+                  <p>{item.preview || 'No messages yet'}</p>
                 </div>
                 <div className="ai-history-actions" aria-label="Conversation actions">
                   <IconButton icon="edit" label="Rename conversation" />
-                  <IconButton icon="delete" label="Delete conversation" />
+                  <IconButton
+                    icon="delete"
+                    label="Delete conversation"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDelete(item.conversationId || item.id);
+                    }}
+                  />
                   <IconButton icon="more_horiz" label="More conversation actions" />
                 </div>
               </article>
             ))}
           </section>
-        ))}
+        )) : (
+          <div className="ai-history-empty">Start a new chat to save it here.</div>
+        )}
       </div>
 
       <footer className="ai-sidebar-profile">
@@ -346,7 +529,6 @@ function ConversationSidebar({ activeId, onSelect, onNewChat, userName, photoURL
     </aside>
   );
 }
-
 function StudyMaterialTree({
   semesters,
   selectedIds,
@@ -365,11 +547,14 @@ function StudyMaterialTree({
     const title = item.title || 'Untitled material';
     const material = {
       id,
+      sourceId: id,
       type,
       title,
       path,
       semesterId,
       moduleId,
+      content: item.content || item.extractedText || '',
+      url: item.url,
       icon: type === 'pdf' ? 'picture_as_pdf' : 'description',
     };
     const matchesSearch = !normalizedSearch || `${title} ${path}`.toLowerCase().includes(normalizedSearch);
@@ -746,7 +931,7 @@ function RightContextPanel({ collapsed, onToggle, selectedItems, onQuickAction }
 }
 
 function AITutorPage({ currentUser, profile }) {
-  const { data: noteData } = useNoteManagement();
+  const { data: noteData, uid } = useNoteManagement();
   const fullName = profile?.fullName || currentUser?.displayName || 'Student';
   const photoURL = currentUser?.photoURL || profile?.photoURL || '';
   const email = currentUser?.email || '';
@@ -755,15 +940,51 @@ function AITutorPage({ currentUser, profile }) {
   const allMaterials = useMemo(() => flattenMaterials(semesters), [semesters]);
 
   const [activeConversationId, setActiveConversationId] = useState(null);
+  const [conversations, setConversations] = useState([]);
+  const [conversationsLoading, setConversationsLoading] = useState(Boolean(uid));
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [selectedItems, setSelectedItems] = useState(() => allMaterials.slice(0, 2));
+  const [selectedItems, setSelectedItems] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusText, setStatusText] = useState('Thinking...');
   const bottomRef = useRef(null);
 
+  useEffect(() => {
+    if (!uid) {
+      setConversations([]);
+      setConversationsLoading(false);
+      return undefined;
+    }
+
+    setConversationsLoading(true);
+    return subscribeTutorConversations(
+      uid,
+      (items) => {
+        setConversations(items);
+        setConversationsLoading(false);
+      },
+      (error) => {
+        console.error('Failed to load AI Tutor conversations:', error);
+        setConversationsLoading(false);
+      },
+    );
+  }, [uid]);
+
+  useEffect(() => {
+    if (!uid || !activeConversationId) {
+      setMessages([]);
+      return undefined;
+    }
+
+    return subscribeTutorMessages(
+      uid,
+      activeConversationId,
+      setMessages,
+      (error) => console.error('Failed to load AI Tutor messages:', error),
+    );
+  }, [activeConversationId, uid]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -792,58 +1013,102 @@ function AITutorPage({ currentUser, profile }) {
 
   const removeSelected = (id) => setSelectedItems((current) => current.filter((item) => item.id !== id));
 
-  const generateReply = (text) => {
-    const lower = text.toLowerCase();
-
-    if (lower.includes('quiz')) {
-      return 'Here is a compact quiz based on your current study context:\n\n- What is the main purpose of ATP in photosynthesis?\n- Which stage releases oxygen?\n- How does chlorophyll help convert light energy?\n- Why does the Calvin cycle need NADPH?\n\nI can turn this into MCQs with answers if you want a test-ready version.';
-    }
-
-    if (lower.includes('flashcard')) {
-      return 'I created a flashcard-style study set:\n\n- Front: What is photosynthesis?\n  Back: The process plants use to convert light energy into chemical energy.\n- Front: Where do light-dependent reactions occur?\n  Back: In the thylakoid membranes.\n- Front: What are ATP and NADPH used for?\n  Back: They power the Calvin cycle.';
-    }
-
-    if (lower.includes('formula')) {
-      return 'A good way to learn a formula is to separate meaning from calculation:\n\n```txt\nF = m x a\nForce = mass x acceleration\n```\n\nIf mass increases and acceleration stays the same, force must increase. If force is fixed, a heavier object accelerates less.';
-    }
-
-    return `Here is a study-focused answer using ${noteCount} selected notes and ${pdfCount} selected PDFs.\n\n${text.trim()}\n\nStart with the core idea, then connect it to an example. For exam revision, I would remember it in three layers:\n\n- Definition: the precise meaning.\n- Mechanism: how or why it happens.\n- Application: how to solve or explain it in a question.\n\n| Study move | What to do |\n| Active recall | Close the notes and explain it aloud. |\n| Practice | Solve one fresh question. |\n| Review | Check gaps against the source material. |`;
-  };
-
-  const sendMessage = (textOverride) => {
+  const sendMessage = async (textOverride) => {
     const text = (textOverride || input).trim();
     if (!text || isGenerating) return;
 
-    setMessages((current) => [...current, { id: Date.now(), sender: 'user', text }]);
-    setInput('');
-    setIsGenerating(true);
-    setStatusText('Thinking...');
-
-    window.setTimeout(() => {
+    if (!uid) {
       setMessages((current) => [
         ...current,
         {
-          id: Date.now() + 1,
+          id: crypto.randomUUID?.() || `msg-${Date.now()}`,
           sender: 'ai',
-          text: generateReply(text),
-          citations: selectedItems.slice(0, 3).map((item) => item.title),
+          text: 'Please sign in again before using AI Tutor conversations.',
         },
       ]);
+      return;
+    }
+
+    const previousMessages = messages.slice(-8).map((message) => ({
+      sender: message.sender,
+      text: message.text,
+    }));
+    const userMessage = { id: crypto.randomUUID?.() || `msg-${Date.now()}`, sender: 'user', text };
+    let conversationId = activeConversationId;
+
+    setMessages((current) => [...current, userMessage]);
+    setInput('');
+    setIsGenerating(true);
+    setStatusText(selectedItems.length ? 'Loading selected study context...' : 'Thinking...');
+
+    try {
+      if (!conversationId) {
+        const conversation = await createTutorConversation(uid, { firstMessage: text, selectedItems });
+        conversationId = conversation.conversationId || conversation.id;
+        setActiveConversationId(conversationId);
+      }
+
+      await saveTutorMessage(uid, conversationId, {
+        sender: 'user',
+        text,
+        contextMaterialIds: selectedItems.map((item) => item.id),
+      });
+
+      const contextMaterials = await loadTutorContextMaterials(uid, selectedItems);
+      setStatusText(contextMaterials.length ? 'Sending notes and PDFs to AI...' : 'Generating explanation...');
+
+      const reply = await sendTutorMessage({
+        message: text,
+        contextMaterials,
+        history: previousMessages,
+      });
+      const aiMessage = {
+        id: crypto.randomUUID?.() || `msg-${Date.now() + 1}`,
+        sender: 'ai',
+        text: reply,
+        citations: contextMaterials.slice(0, 4).map((item) => item.title).filter(Boolean),
+      };
+
+      setMessages((current) => [...current, aiMessage]);
+      await saveTutorMessage(uid, conversationId, aiMessage);
+      await updateTutorConversationAfterMessage(uid, conversationId, {
+        selectedMaterials: selectedItems.map((item) => ({
+          id: item.id,
+          type: item.type,
+          title: item.title,
+          path: item.path,
+        })),
+      });
+    } catch (error) {
+      const errorMessage = {
+        id: crypto.randomUUID?.() || `msg-${Date.now() + 1}`,
+        sender: 'ai',
+        text: `I couldn't generate a response yet. ${error.message || 'Please check the backend and try again.'}`,
+        citations: selectedItems.slice(0, 3).map((item) => item.title),
+      };
+
+      setMessages((current) => [...current, errorMessage]);
+      if (conversationId) {
+        await saveTutorMessage(uid, conversationId, errorMessage).catch((saveError) => {
+          console.error('Failed to save AI Tutor error message:', saveError);
+        });
+      }
+    } finally {
       setIsGenerating(false);
-    }, 1100);
+    }
   };
 
   const handleConversationSelect = (conversation) => {
-    setActiveConversationId(conversation.id);
-    setMessages(sampleMessages[conversation.id] || [
-      { id: Date.now(), sender: 'user', text: conversation.preview },
-      {
-        id: Date.now() + 1,
-        sender: 'ai',
-        text: 'I can continue from here. Share what level of detail you need, and I will shape the explanation for revision, assignments, or exam practice.',
-        citations: selectedItems.slice(0, 2).map((item) => item.title),
-      },
-    ]);
+    setActiveConversationId(conversation.conversationId || conversation.id);
+  };
+
+  const handleDeleteConversation = async (conversationId) => {
+    if (!uid || !conversationId) return;
+    await deleteTutorConversation(uid, conversationId);
+    if (activeConversationId === conversationId) {
+      setActiveConversationId(null);
+      setMessages([]);
+    }
   };
 
   const handleNewChat = () => {
@@ -856,12 +1121,14 @@ function AITutorPage({ currentUser, profile }) {
     setInput(`${label} from my selected study materials.`);
   };
 
-  return (
-    <main className="ai-tutor-page">
+  return (    <main className="ai-tutor-page">
       <ConversationSidebar
         activeId={activeConversationId}
+        conversations={conversations}
+        loading={conversationsLoading}
         onSelect={handleConversationSelect}
         onNewChat={handleNewChat}
+        onDelete={handleDeleteConversation}
         userName={fullName}
         photoURL={photoURL}
         email={email}
@@ -997,5 +1264,16 @@ function AITutorPage({ currentUser, profile }) {
 }
 
 export default AITutorPage;
+
+
+
+
+
+
+
+
+
+
+
 
 
