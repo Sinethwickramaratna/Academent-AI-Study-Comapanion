@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import useNoteManagement from '../Services/useNoteManagement';
 import { createTutorConversation, deleteTutorConversation, loadTutorContextMaterials, saveTutorMessage, sendTutorMessage, subscribeTutorConversations, subscribeTutorMessages, updateTutorConversationAfterMessage } from '../Services/aiTutorService';
+import { createGeneratedQuizFromKnowledge } from '../Services/quizService';
 import './aitutorpage.css';
 
 const conversationGroups = [
@@ -91,6 +92,26 @@ const quickActions = [
 ];
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const isQuizGenerationRequest = (value = '') => /\b(generate|create|make|build)\b[\s\S]{0,40}\bquiz\b/i.test(value) || /\bquiz\b[\s\S]{0,30}\b(from|using|on|about)\b/i.test(value);
+
+const getQuizQuestionCount = (value = '') => {
+  const match = String(value).match(/(\d+)\s*(?:question|questions|q\b|-question)/i);
+  return clamp(match ? Number(match[1]) : 6, 1, 20);
+};
+
+const getQuizDifficulty = (value = '') => {
+  const normalized = String(value).toLowerCase();
+  if (/\bhard|advanced|difficult\b/.test(normalized)) return 'hard';
+  if (/\beasy|simple|basic\b/.test(normalized)) return 'easy';
+  return 'medium';
+};
+
+const getQuizTitle = (value = '', selectedItems = []) => {
+  const materialTitle = selectedItems[0]?.title;
+  const trimmed = String(value).replace(/\s+/g, ' ').trim();
+  if (materialTitle) return `AI Tutor Quiz - ${materialTitle}`;
+  return trimmed ? `AI Tutor Quiz - ${trimmed.slice(0, 42)}` : 'AI Tutor Quiz';
+};
 
 const sampleMessages = {
   photosynthesis: [
@@ -1069,6 +1090,46 @@ function AITutorPage({ currentUser, profile }) {
       });
 
       const contextMaterials = await loadTutorContextMaterials(uid, selectedItems);
+
+      if (isQuizGenerationRequest(text)) {
+        if (!selectedItems.length) {
+          const aiMessage = {
+            id: crypto.randomUUID?.() || `msg-${Date.now() + 1}`,
+            sender: 'ai',
+            text: 'Select one or more notes or PDFs with the + button first, then ask me to generate a quiz. I will save it to the Quiz Generator window automatically.',
+          };
+
+          setMessages((current) => [...current, aiMessage]);
+          await saveTutorMessage(uid, conversationId, aiMessage);
+          return;
+        }
+
+        setStatusText('Generating and saving quiz...');
+        const quiz = await createGeneratedQuizFromKnowledge(uid, {
+          title: getQuizTitle(text, selectedItems),
+          difficulty: getQuizDifficulty(text),
+          questionCount: getQuizQuestionCount(text),
+          selectedItems,
+          knowledgeRecords: contextMaterials,
+          source: 'ai-tutor',
+          conversationId,
+        });
+        const aiMessage = {
+          id: crypto.randomUUID?.() || `msg-${Date.now() + 1}`,
+          sender: 'ai',
+          text: `Done. I generated "${quiz.title}" with ${quiz.totalQuestions} questions and saved it in Firestore. Open the Quiz Generator window to attempt it.`,
+          citations: quiz.selectedMaterials?.slice(0, 4).map((item) => item.title).filter(Boolean) || [],
+        };
+
+        setMessages((current) => [...current, aiMessage]);
+        await saveTutorMessage(uid, conversationId, aiMessage);
+        await updateTutorConversationAfterMessage(uid, conversationId, {
+          generatedQuizId: quiz.quizId,
+          selectedMaterials: quiz.selectedMaterials,
+        });
+        return;
+      }
+
       setStatusText(contextMaterials.length ? 'Sending notes and PDFs to AI...' : 'Generating explanation...');
 
       const reply = await sendTutorMessage({

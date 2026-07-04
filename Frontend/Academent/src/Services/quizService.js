@@ -240,22 +240,31 @@ export const getKnowledgeForMaterial = async (uid, material) => {
   return record;
 };
 
-export const createGeneratedQuiz = async (uid, payload) => {
+export const createGeneratedQuizFromKnowledge = async (uid, payload) => {
   ensureUid(uid);
-  const selectedMaterials = payload.selectedItems.map((item) => ({
+  const selectedItems = payload.selectedItems || [];
+  const selectedMaterials = selectedItems.map((item) => ({
     id: getMaterialId(item),
     type: item.type,
     title: item.title,
     path: item.path,
-  }));
+  })).filter((item) => item.id);
 
-  const knowledgeRecords = await Promise.all(
-    payload.selectedItems.map((item) => getKnowledgeForMaterial(uid, item)),
-  );
+  const difficulty = normalizeDifficulty(payload.difficulty);
+  const knowledgeRecords = payload.knowledgeRecords?.length
+    ? payload.knowledgeRecords
+    : await Promise.all(selectedItems.map((item) => getKnowledgeForMaterial(uid, item)));
+
+  const knowledge = knowledgeRecords
+    .map((record) => record?.knowledge ?? record)
+    .filter((item) => hasExtractedKnowledge(item));
+
+  if (!knowledge.length) throw new Error("No extracted knowledge was available to generate the quiz.");
+
   const generated = await generateQuizFromApi({
-    knowledge: knowledgeRecords.map((record) => record.knowledge),
+    knowledge,
     numQuestions: payload.questionCount,
-    difficulty: payload.difficulty,
+    difficulty,
   });
   const questions = normalizeGeneratedQuestions(generated);
   if (!questions.length) throw new Error("The AI did not return any quiz questions.");
@@ -263,8 +272,8 @@ export const createGeneratedQuiz = async (uid, payload) => {
   const quizDoc = doc(quizCollection(uid));
   const quiz = {
     quizId: quizDoc.id,
-    title: payload.title?.trim() || `${payload.difficulty} AI Study Quiz`,
-    difficulty: normalizeDifficulty(payload.difficulty),
+    title: payload.title?.trim() || `${difficulty} AI Study Quiz`,
+    difficulty,
     status: "not_attempted",
     selectedMaterialIds: selectedMaterials.map((item) => item.id),
     selectedMaterials,
@@ -275,6 +284,8 @@ export const createGeneratedQuiz = async (uid, payload) => {
     correctCount: 0,
     incorrectCount: 0,
     partiallyCorrectCount: 0,
+    source: payload.source || "quiz-generator",
+    sourceConversationId: payload.conversationId || null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     completedAt: null,
@@ -288,6 +299,12 @@ export const createGeneratedQuiz = async (uid, payload) => {
   };
 };
 
+export const createGeneratedQuiz = async (uid, payload) => (
+  createGeneratedQuizFromKnowledge(uid, {
+    ...payload,
+    source: payload.source || "quiz-generator",
+  })
+);
 export const deleteQuiz = async (uid, quizId) => {
   ensureUid(uid);
   if (!quizId) throw new Error("A quiz id is required to delete a quiz.");
@@ -471,12 +488,3 @@ export const completeQuizAttempt = async (uid, quiz, attempt, userAnswers) => {
     partiallyCorrectCount,
   };
 };
-
-
-
-
-
-
-
-
-
