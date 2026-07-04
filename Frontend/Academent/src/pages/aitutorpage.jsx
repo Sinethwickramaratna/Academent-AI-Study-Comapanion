@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import useNoteManagement from '../Services/useNoteManagement';
 import { createTutorConversation, deleteTutorConversation, loadTutorContextMaterials, saveTutorMessage, sendTutorMessage, subscribeTutorConversations, subscribeTutorMessages, updateTutorConversationAfterMessage } from '../Services/aiTutorService';
 import './aitutorpage.css';
@@ -89,6 +89,8 @@ const quickActions = [
   { label: 'Explain Simply', icon: 'psychology' },
   { label: 'Practice Questions', icon: 'rule' },
 ];
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const sampleMessages = {
   photosynthesis: [
@@ -243,6 +245,19 @@ function IconButton({ icon, label, onClick, active = false, disabled = false, ty
   );
 }
 
+function ResizeHandle({ side, onPointerDown }) {
+  return (
+    <button
+      type="button"
+      className={`ai-panel-resize-handle ai-panel-resize-handle--${side}`}
+      onPointerDown={(event) => onPointerDown(side, event)}
+      aria-label={`Resize ${side === 'left' ? 'chat history' : 'study context'} panel`}
+      title={`Resize ${side === 'left' ? 'chat history' : 'study context'} panel`}
+    >
+      <span />
+    </button>
+  );
+}
 function Avatar({ name, photoURL, variant = 'user' }) {
   const [failed, setFailed] = useState(false);
   const showPhoto = Boolean(photoURL) && !failed && variant === 'user';
@@ -498,7 +513,6 @@ function ConversationSidebar({ activeId, conversations, loading, onSelect, onNew
                   <p>{item.preview || 'No messages yet'}</p>
                 </div>
                 <div className="ai-history-actions" aria-label="Conversation actions">
-                  <IconButton icon="edit" label="Rename conversation" />
                   <IconButton
                     icon="delete"
                     label="Delete conversation"
@@ -507,7 +521,6 @@ function ConversationSidebar({ activeId, conversations, loading, onSelect, onNew
                       onDelete(item.conversationId || item.id);
                     }}
                   />
-                  <IconButton icon="more_horiz" label="More conversation actions" />
                 </div>
               </article>
             ))}
@@ -523,8 +536,6 @@ function ConversationSidebar({ activeId, conversations, loading, onSelect, onNew
           <strong>{userName}</strong>
           <span>{email || 'student@academent.ai'}</span>
         </div>
-        <IconButton icon="settings" label="Settings" />
-        <IconButton icon="logout" label="Logout" />
       </footer>
     </aside>
   );
@@ -780,8 +791,8 @@ function Composer({
     <footer className="ai-composer-shell">
       <div className="ai-context-indicator">
         <span>AI is using</span>
-        <button type="button">Selected Notes ({noteCount})</button>
-        <button type="button">Selected PDFs ({pdfCount})</button>
+        <button type="button" onClick={onOpenDrawer}>Selected Notes ({noteCount})</button>
+        <button type="button" onClick={onOpenDrawer}>Selected PDFs ({pdfCount})</button>
         <div className="ai-context-chips">
           {selectedItems.slice(0, 4).map((item) => (
             <span key={item.id} className="ai-context-chip">
@@ -882,12 +893,9 @@ function RightContextPanel({ collapsed, onToggle, selectedItems, onQuickAction }
           </section>
 
           <section>
-            <p className="ai-panel-eyebrow">Recent uploads</p>
+            <p className="ai-panel-eyebrow">Recently attached</p>
             <div className="ai-panel-list">
-              {(recentItems.length ? recentItems : [
-                { id: 'recent-1', title: 'Chapter 4.pdf', type: 'pdf', icon: 'picture_as_pdf' },
-                { id: 'recent-2', title: 'Lecture 02', type: 'note', icon: 'description' },
-              ]).map((item) => (
+              {recentItems.length ? recentItems.map((item) => (
                 <article key={item.id}>
                   <span className="material-symbols-outlined">{item.icon}</span>
                   <div>
@@ -895,22 +903,17 @@ function RightContextPanel({ collapsed, onToggle, selectedItems, onQuickAction }
                     <small>{item.type.toUpperCase()}</small>
                   </div>
                 </article>
-              ))}
+              )) : <p className="ai-panel-muted">Attach notes or PDFs to see them here.</p>}
             </div>
-          </section>
-
-          <section>
-            <p className="ai-panel-eyebrow">Conversation summary</p>
-            <p className="ai-panel-muted">Focused on exam-ready explanations, source-backed summaries, and active recall.</p>
           </section>
 
           <section>
             <p className="ai-panel-eyebrow">Referenced sources</p>
-            <div className="ai-source-pills">
-              <span>Biology Notes</span>
-              <span>Chapter 4.pdf</span>
-              <span>Lecture 02</span>
-            </div>
+            {selectedItems.length ? (
+              <div className="ai-source-pills">
+                {selectedItems.slice(0, 6).map((item) => <span key={item.id}>{item.title}</span>)}
+              </div>
+            ) : <p className="ai-panel-muted">No sources selected yet.</p>}
           </section>
 
           <section>
@@ -949,6 +952,9 @@ function AITutorPage({ currentUser, profile }) {
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusText, setStatusText] = useState('Thinking...');
+  const [conversationSearch, setConversationSearch] = useState('');
+  const [chatSidebarWidth, setChatSidebarWidth] = useState(300);
+  const [contextPanelWidth, setContextPanelWidth] = useState(300);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -1004,6 +1010,14 @@ function AITutorPage({ currentUser, profile }) {
   const noteCount = selectedItems.filter((item) => item.type === 'note').length;
   const pdfCount = selectedItems.filter((item) => item.type === 'pdf').length;
 
+  const filteredConversations = useMemo(() => {
+    const query = conversationSearch.trim().toLowerCase();
+    if (!query) return conversations;
+
+    return conversations.filter((conversation) => (
+      `${conversation.title || ''} ${conversation.preview || ''}`.toLowerCase().includes(query)
+    ));
+  }, [conversationSearch, conversations]);
   const toggleSelected = (item) => {
     setSelectedItems((current) => {
       if (current.some((selected) => selected.id === item.id)) return current.filter((selected) => selected.id !== item.id);
@@ -1121,10 +1135,115 @@ function AITutorPage({ currentUser, profile }) {
     setInput(`${label} from my selected study materials.`);
   };
 
-  return (    <main className="ai-tutor-page">
+  const startPanelResize = (side, event) => {
+    event.preventDefault();
+
+    const startX = event.clientX;
+    const startWidth = side === 'left' ? chatSidebarWidth : contextPanelWidth;
+
+    const handlePointerMove = (moveEvent) => {
+      const delta = moveEvent.clientX - startX;
+      if (side === 'left') {
+        setChatSidebarWidth(clamp(startWidth + delta, 240, 430));
+        return;
+      }
+
+      setContextPanelWidth(clamp(startWidth - delta, 240, 440));
+    };
+
+    const stopResize = () => {
+      document.body.classList.remove('ai-resizing-panels');
+      window.removeEventListener('pointermove', handlePointerMove);
+    };
+
+    document.body.classList.add('ai-resizing-panels');
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', stopResize, { once: true });
+  };
+
+  const copyText = async (text) => {
+    if (!text) return;
+
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+  };
+
+  const readAloud = (text) => {
+    if (!text || !window.speechSynthesis) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const shareText = async (text) => {
+    if (!text) return;
+
+    if (navigator.share) {
+      await navigator.share({ title: 'Academent AI Tutor response', text });
+      return;
+    }
+
+    await copyText(text);
+  };
+
+  const exportConversation = () => {
+    if (!messages.length) return;
+
+    const activeConversation = conversations.find((conversation) => conversation.conversationId === activeConversationId || conversation.id === activeConversationId);
+    const title = activeConversation?.title || 'AI Tutor Conversation';
+    const content = messages.map((message) => `${message.sender === 'user' ? 'You' : 'Academent AI'}:\n${message.text}`).join('\n\n---\n\n');
+    const blob = new Blob([`# ${title}\n\n${content}`], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.replace(/[^a-z0-9-]+/gi, '-').replace(/^-|-$/g, '') || 'ai-tutor-conversation'}.md`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearCurrentConversation = async () => {
+    if (!messages.length && !activeConversationId) return;
+
+    if (!activeConversationId) {
+      setMessages([]);
+      setInput('');
+      return;
+    }
+
+    const confirmed = window.confirm('Delete this AI Tutor conversation? This will remove it from saved chats.');
+    if (!confirmed) return;
+
+    await handleDeleteConversation(activeConversationId);
+    setInput('');
+  };
+
+  return (
+    <main
+      className="ai-tutor-page"
+      style={{
+        '--ai-chat-sidebar-width': `${chatSidebarWidth}px`,
+        '--ai-context-panel-width': `${contextPanelWidth}px`,
+      }}
+    >
       <ConversationSidebar
         activeId={activeConversationId}
-        conversations={conversations}
+        conversations={filteredConversations}
         loading={conversationsLoading}
         onSelect={handleConversationSelect}
         onNewChat={handleNewChat}
@@ -1133,6 +1252,8 @@ function AITutorPage({ currentUser, profile }) {
         photoURL={photoURL}
         email={email}
       />
+
+      <ResizeHandle side="left" onPointerDown={startPanelResize} />
 
       <section className="ai-tutor-main">
         <header className="ai-tutor-header">
@@ -1148,11 +1269,14 @@ function AITutorPage({ currentUser, profile }) {
           <div className="ai-header-actions">
             <label className="ai-header-search">
               <span className="material-symbols-outlined">search</span>
-              <input placeholder="Search conversations" />
+              <input
+                value={conversationSearch}
+                placeholder="Search conversations"
+                onChange={(event) => setConversationSearch(event.target.value)}
+              />
             </label>
-            <IconButton icon="ios_share" label="Export conversation" />
-            <IconButton icon="mop" label="Clear conversation" onClick={() => setMessages([])} />
-            <IconButton icon="settings" label="Tutor settings" />
+            <IconButton icon="ios_share" label="Export conversation" onClick={exportConversation} disabled={!messages.length} />
+            <IconButton icon="mop" label="Clear conversation" onClick={clearCurrentConversation} disabled={!messages.length && !activeConversationId} />
           </div>
         </header>
 
@@ -1200,12 +1324,10 @@ function AITutorPage({ currentUser, profile }) {
                       </div>
                       {message.sender === 'ai' && (
                         <div className="ai-message-actions">
-                          <IconButton icon="content_copy" label="Copy response" onClick={() => navigator.clipboard?.writeText(message.text)} />
-                          <IconButton icon="thumb_up" label="Like response" />
-                          <IconButton icon="thumb_down" label="Dislike response" />
-                          <IconButton icon="autorenew" label="Regenerate response" onClick={() => sendMessage(messages.findLast((item) => item.sender === 'user')?.text || '')} />
-                          <IconButton icon="volume_up" label="Read aloud" />
-                          <IconButton icon="share" label="Share response" />
+                          <IconButton icon="content_copy" label="Copy response" onClick={() => copyText(message.text)} />
+                          <IconButton icon="autorenew" label="Regenerate response" onClick={() => sendMessage(messages.findLast((item) => item.sender === 'user')?.text || '')} disabled={isGenerating} />
+                          <IconButton icon="volume_up" label="Read aloud" onClick={() => readAloud(message.text)} />
+                          <IconButton icon="share" label="Share response" onClick={() => shareText(message.text)} />
                         </div>
                       )}
                     </div>
@@ -1244,6 +1366,8 @@ function AITutorPage({ currentUser, profile }) {
         </div>
       </section>
 
+      <ResizeHandle side="right" onPointerDown={startPanelResize} />
+
       <RightContextPanel
         collapsed={panelCollapsed}
         onToggle={() => setPanelCollapsed((current) => !current)}
@@ -1264,16 +1388,3 @@ function AITutorPage({ currentUser, profile }) {
 }
 
 export default AITutorPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
