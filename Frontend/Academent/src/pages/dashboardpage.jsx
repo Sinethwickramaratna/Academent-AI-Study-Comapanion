@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import './dashboardpage.css';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +25,7 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarHidden, setIsSidebarHidden] = useState(false);
   
   
   // Task list state (Interactive)
@@ -417,10 +418,24 @@ function DashboardPage() {
         onLogout={handleLogout}
         onNewNote={handleNewNote}
         items={sidebarItems}
+        isHidden={isSidebarHidden}
+        onToggleHidden={() => setIsSidebarHidden(true)}
       />
 
+      {isSidebarHidden && (
+        <button
+          type="button"
+          onClick={() => setIsSidebarHidden(false)}
+          className="hidden md:flex fixed left-4 top-4 z-[60] w-11 h-11 items-center justify-center rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-primary shadow-lg hover:bg-surface-container-high transition-colors"
+          aria-label="Show sidebar"
+          title="Show sidebar"
+        >
+          <span className="material-symbols-outlined text-[22px]">left_panel_open</span>
+        </button>
+      )}
+
       {/* Main Content Scroll Area */}
-      <div className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar md:pl-64">
+      <div className={`flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar transition-[padding] duration-300 ${isSidebarHidden ? 'md:pl-0' : 'md:pl-64'}`}>
         
         {/* Mobile Top Header */}
         <header className="md:hidden flex items-center justify-between bg-surface-container-lowest border-b border-outline-variant/20 py-md px-gutter z-30 sticky top-0 shadow-sm">
@@ -1010,5 +1025,3 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
-
-

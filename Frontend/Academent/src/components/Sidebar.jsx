@@ -14,6 +14,8 @@ import logo from '../assets/Logo/Logo.png';
  * @param {function} onLogout - Action to log out.
  * @param {function} onNewNote - Callback to trigger a new study session / note creation.
  * @param {array} [items] - Optional list of navigation items overrides.
+ * @param {boolean} [isHidden] - Desktop visibility state.
+ * @param {function} [onToggleHidden] - Callback to hide/show the desktop sidebar.
  */
 function Sidebar({
   activeTab,
@@ -24,7 +26,9 @@ function Sidebar({
   profile,
   onLogout,
   onNewNote,
-  items
+  items,
+  isHidden = false,
+  onToggleHidden
 }) {
   const defaultItems = [
     { id: 'home', label: 'Dashboard', icon: 'dashboard' },
@@ -49,17 +53,28 @@ function Sidebar({
   }, [photoURL]);
   return (
     <aside className={`fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/20 flex flex-col p-md z-50 transition-transform duration-300 ${
-      isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      isMobileMenuOpen ? 'translate-x-0' : isHidden ? '-translate-x-full' : '-translate-x-full md:translate-x-0'
     }`}>
       {/* Logo and Premium Access */}
       <div className="mb-xxl flex items-center gap-sm px-sm mt-sm">
         <div className="w-15 h-15 rounded-xl bg-primary-fixed text-primary flex items-center justify-center font-bold text-sm shrink-0">
           <img alt="Academent AI Logo" className="w-20 object-contain" src={logo} />
         </div>
-        <div className="overflow-hidden">
+        <div className="min-w-0 flex-1 overflow-hidden">
           <h1 className="font-headline-md text-lg font-black text-primary leading-none truncate">Academent AI</h1>
           <p className="font-label-sm text-label-sm text-on-surface-variant opacity-70 mt-[2px]">Premium Access</p>
         </div>
+        {onToggleHidden && (
+          <button
+            type="button"
+            onClick={onToggleHidden}
+            className="hidden md:flex w-9 h-9 shrink-0 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-colors"
+            aria-label="Hide sidebar"
+            title="Hide sidebar"
+          >
+            <span className="material-symbols-outlined text-[20px]">left_panel_close</span>
+          </button>
+        )}
       </div>
 
       {/* Navigation items */}
@@ -120,4 +135,3 @@ function Sidebar({
 }
 
 export default Sidebar;
-
