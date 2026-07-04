@@ -294,8 +294,33 @@ function Avatar({ name, photoURL, variant = 'user' }) {
   );
 }
 
+const normalizeInlineText = (value = '') => String(value)
+  .replace(/\\boxed\{([^{}]+)\}/g, '$1')
+  .replace(/\\text\{([^{}]+)\}/g, '$1')
+  .replace(/\\(?:longrightarrow|rightarrow|to)/g, '->')
+  .replace(/\\(?:Delta|delta)/g, 'Delta')
+  .replace(/\\times/g, 'x')
+  .replace(/\\;/g, ' ')
+  .replace(/\\,/g, ' ')
+  .replace(/_\{([^{}]+)\}/g, '$1')
+  .replace(/_([A-Za-z0-9+-]+)/g, '$1')
+  .replace(/\^\{([^{}]+)\}/g, '^$1')
+  .replace(/\^([A-Za-z0-9+-]+)/g, '^$1')
+  .replace(/\\([A-Za-z]+)/g, '$1')
+  .replace(/\s{2,}/g, ' ')
+  .trim();
+
+const normalizeTutorMarkdown = (value = '') => String(value || '')
+  .replace(/\r\n/g, '\n')
+  .replace(/\\\[([\s\S]*?)\\\]/g, '\n$1\n')
+  .replace(/\\\(([\s\S]*?)\\\)/g, '$1')
+  .replace(/([^\n])\s+(#{1,6})(?=\s+[^\n])/g, '$1\n$2')
+  .replace(/([^\n])\s+(\[[ xX]\]\s+)/g, '$1\n$2')
+  .replace(/([^\n])\s+(\d+\.\s+)/g, '$1\n$2');
+
 const renderInlineMarkdown = (value, keyPrefix = 'inline') => {
-  const parts = String(value || '').split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g).filter((part) => part !== '');
+  const cleanValue = normalizeInlineText(value);
+  const parts = cleanValue.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g).filter((part) => part !== '');
 
   return parts.map((part, index) => {
     const key = `${keyPrefix}-${index}`;
@@ -354,9 +379,7 @@ const renderTable = (lines, keyPrefix) => {
 };
 
 function MessageContent({ text }) {
-  const normalizedText = String(text || '')
-    .replace(/\r\n/g, '\n')
-    .replace(/([^\n])\s+(\d+\.\s+)/g, '$1\n$2');
+  const normalizedText = normalizeTutorMarkdown(text);
   const blocks = normalizedText.split(/```/g);
 
   const renderMarkdownLines = (rawBlock, blockIndex) => {
@@ -373,7 +396,24 @@ function MessageContent({ text }) {
         continue;
       }
 
-      const headingMatch = trimmed.match(/^(#{1,4})\s+(.+)$/);
+      if (/^#{1,6}$/.test(trimmed)) {
+        let nextIndex = index + 1;
+        while (nextIndex < lines.length && !lines[nextIndex].trim()) nextIndex += 1;
+
+        if (nextIndex < lines.length) {
+          const headingText = lines[nextIndex].trim();
+          const level = Math.min(trimmed.length + 1, 5);
+          const HeadingTag = `h${level}`;
+          elements.push(<HeadingTag key={`${blockIndex}-heading-${nextIndex}`}>{renderInlineMarkdown(headingText, `${blockIndex}-heading-${nextIndex}`)}</HeadingTag>);
+          index = nextIndex + 1;
+          continue;
+        }
+
+        index += 1;
+        continue;
+      }
+
+      const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
       if (headingMatch) {
         const level = Math.min(headingMatch[1].length + 1, 5);
         const HeadingTag = `h${level}`;
@@ -408,6 +448,16 @@ function MessageContent({ text }) {
         continue;
       }
 
+      if (/^\[[ xX]\]\s+/.test(trimmed)) {
+        const items = [];
+        while (index < lines.length && /^\[[ xX]\]\s+/.test(lines[index].trim())) {
+          items.push(lines[index].trim().replace(/^\[[ xX]\]\s+/, ''));
+          index += 1;
+        }
+        elements.push(<ul key={`${blockIndex}-checklist-${index}`}>{items.map((item, itemIndex) => <li key={`${blockIndex}-checklist-${index}-${itemIndex}`}>{renderInlineMarkdown(item, `${blockIndex}-checklist-${index}-${itemIndex}`)}</li>)}</ul>);
+        continue;
+      }
+
       if (/^\d+\.\s+/.test(trimmed)) {
         const items = [];
         while (index < lines.length && /^\d+\.\s+/.test(lines[index].trim())) {
@@ -432,7 +482,7 @@ function MessageContent({ text }) {
       const paragraph = [];
       while (index < lines.length) {
         const current = lines[index].trim();
-        if (!current || /^(#{1,4})\s+/.test(current) || /^---+$/.test(current) || current.startsWith('>') || /^[-*]\s+/.test(current) || /^\d+\.\s+/.test(current) || looksLikeTableRow(current)) break;
+        if (!current || /^#{1,6}(?:\s+|$)/.test(current) || /^---+$/.test(current) || current.startsWith('>') || /^[-*]\s+/.test(current) || /^\[[ xX]\]\s+/.test(current) || /^\d+\.\s+/.test(current) || looksLikeTableRow(current)) break;
         paragraph.push(current);
         index += 1;
       }
