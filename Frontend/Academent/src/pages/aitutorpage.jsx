@@ -954,7 +954,7 @@ function RightContextPanel({ collapsed, onToggle, selectedItems, onQuickAction }
   );
 }
 
-function AITutorPage({ currentUser, profile }) {
+function AITutorPage({ currentUser, profile, onOpenQuiz }) {
   const { data: noteData, uid } = useNoteManagement();
   const fullName = profile?.fullName || currentUser?.displayName || 'Student';
   const photoURL = currentUser?.photoURL || profile?.photoURL || '';
@@ -1117,8 +1117,13 @@ function AITutorPage({ currentUser, profile }) {
         const aiMessage = {
           id: crypto.randomUUID?.() || `msg-${Date.now() + 1}`,
           sender: 'ai',
-          text: `Done. I generated "${quiz.title}" with ${quiz.totalQuestions} questions and saved it in Firestore. Open the Quiz Generator window to attempt it.`,
-          citations: quiz.selectedMaterials?.slice(0, 4).map((item) => item.title).filter(Boolean) || [],
+          text: `Your quiz is ready: ${quiz.title}.`,
+          citations: [],
+          quizAction: {
+            quizId: quiz.quizId,
+            title: quiz.title,
+            totalQuestions: quiz.totalQuestions,
+          },
         };
 
         setMessages((current) => [...current, aiMessage]);
@@ -1377,6 +1382,20 @@ function AITutorPage({ currentUser, profile }) {
                     <div className="ai-message-body">
                       <div className="ai-message-bubble">
                         <MessageContent text={message.text} />
+                        {message.sender === 'ai' && message.quizAction && (
+                          <button
+                            type="button"
+                            className="ai-quiz-open-action"
+                            onClick={() => onOpenQuiz?.(message.quizAction.quizId)}
+                          >
+                            <span className="material-symbols-outlined">quiz</span>
+                            <span>
+                              <strong>Open quiz</strong>
+                              <small>{message.quizAction.totalQuestions} questions</small>
+                            </span>
+                            <span className="material-symbols-outlined">arrow_forward</span>
+                          </button>
+                        )}
                         {message.sender === 'ai' && message.citations?.length > 0 && (
                           <div className="ai-citations">
                             {message.citations.map((citation) => <span key={citation}>{citation}</span>)}

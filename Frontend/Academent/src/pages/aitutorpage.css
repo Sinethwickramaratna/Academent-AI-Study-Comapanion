@@ -649,6 +649,54 @@
   font-weight: 900;
 }
 
+
+.ai-quiz-open-action {
+  display: grid;
+  width: min(100%, 360px);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+  border: 1px solid rgba(77, 43, 140, 0.16);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(238, 167, 39, 0.14));
+  color: var(--ai-primary);
+  padding: 0.75rem 0.85rem;
+  text-align: left;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.ai-quiz-open-action:hover {
+  border-color: rgba(77, 43, 140, 0.28);
+  box-shadow: 0 14px 30px rgba(77, 43, 140, 0.12);
+  transform: translateY(-1px);
+}
+
+.ai-quiz-open-action > .material-symbols-outlined:first-child {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--ai-primary);
+  color: #fff;
+}
+
+.ai-quiz-open-action strong,
+.ai-quiz-open-action small {
+  display: block;
+}
+
+.ai-quiz-open-action strong {
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.ai-quiz-open-action small {
+  color: var(--ai-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
 .ai-thinking {
   display: flex;
   align-items: center;

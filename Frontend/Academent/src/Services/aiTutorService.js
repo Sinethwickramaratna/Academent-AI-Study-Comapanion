@@ -1,4 +1,4 @@
-﻿import {
+import {
   addDoc,
   collection,
   deleteDoc,
@@ -131,6 +131,7 @@ export const saveTutorMessage = async (uid, conversationId, message) => {
     text,
     citations: message.citations || [],
     contextMaterialIds: message.contextMaterialIds || [],
+    quizAction: message.quizAction || null,
     createdAt: serverTimestamp(),
   };
 
@@ -205,4 +206,3 @@ export const sendTutorMessage = async ({ message, contextMaterials = [], history
 
   return result.response || "";
 };
-

@@ -547,13 +547,14 @@ function QuizResults({ quiz, result, onRetake, onBack, isWorking }) {
   );
 }
 
-function QuizGeneratorPage({ profile, currentUser }) {
+function QuizGeneratorPage({ profile, currentUser, initialQuizId, onInitialQuizOpened }) {
   const notes = useNoteManagement();
   const quizStore = useQuizGenerator();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [resultState, setResultState] = useState(null);
   const [quizPendingDelete, setQuizPendingDelete] = useState(null);
+  const [openedInitialQuizId, setOpenedInitialQuizId] = useState(null);
   const fullName = profile?.fullName || currentUser?.displayName || 'Student';
   const photoURL = currentUser?.photoURL || profile?.photoURL || '';
   useMemo(() => flattenStudyMaterials(notes.data.semesters || []), [notes.data.semesters]);
@@ -565,6 +566,17 @@ function QuizGeneratorPage({ profile, currentUser }) {
     setResultState(null);
     setActiveSession({ quiz, attempt });
   };
+
+  useEffect(() => {
+    if (!initialQuizId || openedInitialQuizId === initialQuizId || quizStore.loading || quizStore.working || activeSession) return;
+
+    const quiz = quizStore.quizzes.find((item) => item.quizId === initialQuizId);
+    if (!quiz) return;
+
+    setOpenedInitialQuizId(initialQuizId);
+    onInitialQuizOpened?.();
+    openQuiz(quiz);
+  }, [activeSession, initialQuizId, onInitialQuizOpened, openedInitialQuizId, quizStore.loading, quizStore.quizzes, quizStore.working]);
 
   const handleGenerate = async (payload) => {
     setIsCreateOpen(false);
@@ -676,10 +688,3 @@ function QuizGeneratorPage({ profile, currentUser }) {
 }
 
 export default QuizGeneratorPage;
-
-
-
-
-
-
-

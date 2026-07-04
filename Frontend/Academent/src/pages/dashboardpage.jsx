@@ -26,6 +26,7 @@ function DashboardPage() {
   const [activeTab, setActiveTab] = useState('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
+  const [quizToOpenId, setQuizToOpenId] = useState(null);
   
   
   // Task list state (Interactive)
@@ -993,11 +994,23 @@ function DashboardPage() {
           </Suspense>
         ) : activeTab === 'ai-tutor' ? (
           <Suspense fallback={<LoadingEffect icon="psychology" title="Loading AI Tutor" message="Preparing your study companion." />}>
-            <AITutorPage profile={profile} currentUser={currentUser} />
+            <AITutorPage
+              profile={profile}
+              currentUser={currentUser}
+              onOpenQuiz={(quizId) => {
+                setQuizToOpenId(quizId);
+                setActiveTab('quiz-generator');
+              }}
+            />
           </Suspense>
         ) : activeTab === 'quiz-generator' ? (
           <Suspense fallback={<LoadingEffect icon="quiz" title="Loading quiz generator" message="Preparing quizzes and saved progress." />}>
-            <QuizGeneratorPage profile={profile} currentUser={currentUser} />
+            <QuizGeneratorPage
+              profile={profile}
+              currentUser={currentUser}
+              initialQuizId={quizToOpenId}
+              onInitialQuizOpened={() => setQuizToOpenId(null)}
+            />
           </Suspense>
         ) : (
           /* Under Construction Panel for other Tabs */
