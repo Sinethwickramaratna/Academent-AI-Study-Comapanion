@@ -28,15 +28,10 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   // Profile state loaded from Firestore
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(routeActiveTab);
+  const activeTab = routeActiveTab;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
   const [quizToOpenId, setQuizToOpenId] = useState(null);
-
-  useEffect(() => {
-    setActiveTab(routeActiveTab);
-    setIsMobileMenuOpen(false);
-  }, [routeActiveTab]);
   
   
   // Task list state (Interactive)
@@ -167,7 +162,6 @@ function DashboardPage({ initialActiveTab = 'home' }) {
 
   const switchToTab = (tabId) => {
     const nextRoute = getDashboardRouteForTab(tabId);
-    setActiveTab(tabId);
     setIsMobileMenuOpen(false);
 
     if (location.pathname !== nextRoute) {
