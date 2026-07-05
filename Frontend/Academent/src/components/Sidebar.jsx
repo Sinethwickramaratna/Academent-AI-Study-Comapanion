@@ -32,13 +32,13 @@ function Sidebar({
 }) {
   const defaultItems = [
     { id: 'home', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'ai-tutor', label: 'AI Tutor', icon: 'psychology' },
-    { id: 'study-planner', label: 'Study Planner', icon: 'calendar_today' },
     { id: 'my-notes', label: 'My Notes', icon: 'description' },
-    { id: 'flashcards', label: 'Flashcards', icon: 'style' },
+    { id: 'ai-tutor', label: 'AI Tutor', icon: 'psychology' },
     { id: 'quiz-generator', label: 'Quiz Generator', icon: 'quiz' },
+    { id: 'flashcards', label: 'Flashcards', icon: 'style' },
+    { id: 'study-planner', label: 'Study Planner', icon: 'calendar_today' },
     { id: 'analytics', label: 'Analytics', icon: 'leaderboard' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'profile', label: 'Profile', icon: 'account_circle' },
   ];
 
   const sidebarItems = items || defaultItems;

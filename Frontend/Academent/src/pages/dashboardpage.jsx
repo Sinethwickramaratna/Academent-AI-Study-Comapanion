@@ -13,19 +13,20 @@ const QuizGeneratorPage = lazy(() => import('./quizgeneratorpage'));
 const AITutorPage = lazy(() => import('./aitutorpage'));
 const StudyPlannerPage = lazy(() => import('./studyplannerpage'));
 const FlashCardsPage = lazy(() => import('./flashcardspage'));
+const AnalyticsPage = lazy(() => import('./analyticspage'));
 
 /**
  * DashboardPage component represents the study companion central control panel.
  * Displays student's custom courses, goals progress, and study tools.
  */
-function DashboardPage() {
+function DashboardPage({ initialActiveTab = 'home' }) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   
   // Profile state loaded from Firestore
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(initialActiveTab);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
   const [quizToOpenId, setQuizToOpenId] = useState(null);
@@ -390,13 +391,13 @@ function DashboardPage() {
   // Sidebar items to map
   const sidebarItems = [
     { id: 'home', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'ai-tutor', label: 'AI Tutor', icon: 'psychology' },
-    { id: 'study-planner', label: 'Study Planner', icon: 'calendar_today' },
     { id: 'my-notes', label: 'My Notes', icon: 'description' },
-    { id: 'flashcards', label: 'Flashcards', icon: 'style' },
+    { id: 'ai-tutor', label: 'AI Tutor', icon: 'psychology' },
     { id: 'quiz-generator', label: 'Quiz Generator', icon: 'quiz' },
+    { id: 'flashcards', label: 'Flashcards', icon: 'style' },
+    { id: 'study-planner', label: 'Study Planner', icon: 'calendar_today' },
     { id: 'analytics', label: 'Analytics', icon: 'leaderboard' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'profile', label: 'Profile', icon: 'account_circle' },
   ];
 
   return (
@@ -1021,6 +1022,10 @@ function DashboardPage() {
               initialQuizId={quizToOpenId}
               onInitialQuizOpened={() => setQuizToOpenId(null)}
             />
+          </Suspense>
+        ) : activeTab === 'analytics' ? (
+          <Suspense fallback={<LoadingEffect icon="leaderboard" title="Loading analytics" message="Preparing your learning progress report." />}>
+            <AnalyticsPage profile={profile} currentUser={currentUser} />
           </Suspense>
         ) : (
           /* Under Construction Panel for other Tabs */
