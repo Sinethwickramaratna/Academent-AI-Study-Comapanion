@@ -11,6 +11,7 @@ import TopBar from '../components/TopBar';
 const NotePage = lazy(() => import('./notepage'));
 const QuizGeneratorPage = lazy(() => import('./quizgeneratorpage'));
 const AITutorPage = lazy(() => import('./aitutorpage'));
+const StudyPlannerPage = lazy(() => import('./studyplannerpage'));
 
 /**
  * DashboardPage component represents the study companion central control panel.
@@ -1003,6 +1004,10 @@ function DashboardPage() {
               }}
             />
           </Suspense>
+        ) : activeTab === 'study-planner' ? (
+          <Suspense fallback={<LoadingEffect icon="calendar_today" title="Loading planner" message="Opening your academic calendar." />}>
+            <StudyPlannerPage profile={profile} currentUser={currentUser} />
+          </Suspense>
         ) : activeTab === 'quiz-generator' ? (
           <Suspense fallback={<LoadingEffect icon="quiz" title="Loading quiz generator" message="Preparing quizzes and saved progress." />}>
             <QuizGeneratorPage
@@ -1038,3 +1043,4 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
+
