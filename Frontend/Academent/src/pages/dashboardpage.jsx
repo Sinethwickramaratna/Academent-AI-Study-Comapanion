@@ -3,10 +3,10 @@ import './dashboardpage.css';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { logoutUser, getUserProfileData } from '../Services/authService';
-import { useNavigate } from 'react-router-dom';
-import logo from '../assets/Logo/Logo.png';
+import { useLocation, useNavigate } from 'react-router-dom';
 import LoadingEffect from '../components/LoadingEffect';
 import TopBar from '../components/TopBar';
+import { dashboardWindowItems, getDashboardRouteForTab, getDashboardTabForPath } from '../routes/windowRoutes';
 
 const NotePage = lazy(() => import('./notepage'));
 const QuizGeneratorPage = lazy(() => import('./quizgeneratorpage'));
@@ -22,14 +22,21 @@ const AnalyticsPage = lazy(() => import('./analyticspage'));
 function DashboardPage({ initialActiveTab = 'home' }) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const routeActiveTab = getDashboardTabForPath(location.pathname) || initialActiveTab || 'home';
   
   // Profile state loaded from Firestore
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(initialActiveTab);
+  const [activeTab, setActiveTab] = useState(routeActiveTab);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
   const [quizToOpenId, setQuizToOpenId] = useState(null);
+
+  useEffect(() => {
+    setActiveTab(routeActiveTab);
+    setIsMobileMenuOpen(false);
+  }, [routeActiveTab]);
   
   
   // Task list state (Interactive)
@@ -155,6 +162,16 @@ function DashboardPage({ initialActiveTab = 'home' }) {
       navigate('/login');
     } catch (error) {
       console.error("Logout failed:", error);
+    }
+  };
+
+  const switchToTab = (tabId) => {
+    const nextRoute = getDashboardRouteForTab(tabId);
+    setActiveTab(tabId);
+    setIsMobileMenuOpen(false);
+
+    if (location.pathname !== nextRoute) {
+      navigate(nextRoute);
     }
   };
 
@@ -287,7 +304,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
 
   // Click handler for study material action buttons
   const handleMaterialAction = (materialName, action) => {
-    setActiveTab('ai-tutor');
+    switchToTab('ai-tutor');
     setIsMobileMenuOpen(false);
     setTimeout(() => {
       handleSendMessage(`${action} my study material: "${materialName}"`);
@@ -388,17 +405,8 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   const quizAccuracy = "88%";
   const completedWork = "24/30";
 
-  // Sidebar items to map
-  const sidebarItems = [
-    { id: 'home', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'my-notes', label: 'My Notes', icon: 'description' },
-    { id: 'ai-tutor', label: 'AI Tutor', icon: 'psychology' },
-    { id: 'quiz-generator', label: 'Quiz Generator', icon: 'quiz' },
-    { id: 'flashcards', label: 'Flashcards', icon: 'style' },
-    { id: 'study-planner', label: 'Study Planner', icon: 'calendar_today' },
-    { id: 'analytics', label: 'Analytics', icon: 'leaderboard' },
-    { id: 'profile', label: 'Profile', icon: 'account_circle' },
-  ];
+  const sidebarItems = dashboardWindowItems;
+
 
   return (
     <div className="bg-background text-on-surface font-body-md min-h-screen flex relative overflow-hidden h-screen">
@@ -414,7 +422,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
       {/* Left Sidebar (SideNavBar) */}
       <Sidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={switchToTab}
         isMobileMenuOpen={isMobileMenuOpen}
         onMobileMenuClose={() => setIsMobileMenuOpen(false)}
         currentUser={currentUser}
@@ -479,7 +487,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                     Continue Learning
                   </button>
                   <button 
-                    onClick={() => setActiveTab('ai-tutor')}
+                    onClick={() => switchToTab('ai-tutor')}
                     className="px-xl py-md bg-white/20 backdrop-blur-md border border-white/20 font-label-md text-label-md rounded-xl hover:bg-white/30 active:scale-95 transition-all"
                   >
                     Ask AI Tutor
@@ -1002,7 +1010,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
               currentUser={currentUser}
               onOpenQuiz={(quizId) => {
                 setQuizToOpenId(quizId);
-                setActiveTab('quiz-generator');
+                switchToTab('quiz-generator');
               }}
             />
           </Suspense>
@@ -1039,7 +1047,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                 </span> tab are coming soon.
               </p>
               <button
-                onClick={() => setActiveTab('home')}
+                onClick={() => switchToTab('home')}
                 className="px-lg py-md bg-primary text-white rounded-xl font-bold hover:shadow-lg active:scale-95 transition-all"
               >
                 Back to Home

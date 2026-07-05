@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import logo from '../assets/Logo/Logo.png';
+import { dashboardWindowItems } from '../routes/windowRoutes';
 
 /**
  * Sidebar component represents the navigation drawer and user profile status panel.
@@ -30,18 +31,8 @@ function Sidebar({
   isHidden = false,
   onToggleHidden
 }) {
-  const defaultItems = [
-    { id: 'home', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'my-notes', label: 'My Notes', icon: 'description' },
-    { id: 'ai-tutor', label: 'AI Tutor', icon: 'psychology' },
-    { id: 'quiz-generator', label: 'Quiz Generator', icon: 'quiz' },
-    { id: 'flashcards', label: 'Flashcards', icon: 'style' },
-    { id: 'study-planner', label: 'Study Planner', icon: 'calendar_today' },
-    { id: 'analytics', label: 'Analytics', icon: 'leaderboard' },
-    { id: 'profile', label: 'Profile', icon: 'account_circle' },
-  ];
+  const sidebarItems = items || dashboardWindowItems;
 
-  const sidebarItems = items || defaultItems;
 
   const fullName = profile?.fullName || currentUser?.displayName || "Student";
   const photoURL = currentUser?.photoURL || profile?.photoURL || "";

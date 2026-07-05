@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 // Lazy-load route pages so the initial app shell stays small.
 const LoginPage = lazy(() => import('./pages/loginpage.jsx'))
@@ -18,6 +18,7 @@ import { useAuth } from './context/AuthContext'
 // Import service logic to check Firestore onboarding status
 import { logoutUser } from './Services/authService'
 import LoadingEffect from './components/LoadingEffect'
+import { dashboardWindowItems } from './routes/windowRoutes'
 
 
 /**
@@ -186,24 +187,18 @@ function App() {
           </ProtectedRoute>
         }
       />
-      {/* Protected Dashboard Route: Users must be logged in */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      {/* Protected Analytics Route: opens the dashboard shell with Analytics selected */}
-      <Route
-        path="/analytics"
-        element={
-          <ProtectedRoute>
-            <DashboardPage initialActiveTab="analytics" />
-          </ProtectedRoute>
-        }
-      />
+      {/* Protected app window routes: users must be logged in */}
+      {dashboardWindowItems.map((item) => (
+        <Route
+          key={item.id}
+          path={item.route}
+          element={
+            <ProtectedRoute>
+              <DashboardPage initialActiveTab={item.id} />
+            </ProtectedRoute>
+          }
+        />
+      ))}
       {/* Reset Password: User to reset their password */}
       <Route
         path="/reset-password"
@@ -215,4 +210,3 @@ function App() {
 }
 
 export default App
-
