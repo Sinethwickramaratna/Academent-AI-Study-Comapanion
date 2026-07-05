@@ -195,7 +195,15 @@ function App() {
           </ProtectedRoute>
         }
       />
-
+      {/* Protected Analytics Route: opens the dashboard shell with Analytics selected */}
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <DashboardPage initialActiveTab="analytics" />
+          </ProtectedRoute>
+        }
+      />
       {/* Reset Password: User to reset their password */}
       <Route
         path="/reset-password"
