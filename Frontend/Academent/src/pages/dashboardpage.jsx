@@ -14,6 +14,7 @@ const AITutorPage = lazy(() => import('./aitutorpage'));
 const StudyPlannerPage = lazy(() => import('./studyplannerpage'));
 const FlashCardsPage = lazy(() => import('./flashcardspage'));
 const AnalyticsPage = lazy(() => import('./analyticspage'));
+const ProfileSettingsPage = lazy(() => import('./profilesettingspage'));
 
 let dashboardIdCounter = 0;
 const createDashboardId = (prefix = 'id') => {
@@ -1031,6 +1032,10 @@ function DashboardPage({ initialActiveTab = 'home' }) {
         ) : activeTab === 'analytics' ? (
           <Suspense fallback={<LoadingEffect icon="leaderboard" title="Loading analytics" message="Preparing your learning progress report." />}>
             <AnalyticsPage profile={profile} currentUser={currentUser} />
+          </Suspense>
+        ) : activeTab === 'profile' ? (
+          <Suspense fallback={<LoadingEffect icon="account_circle" title="Loading profile" message="Opening your profile and settings." />}>
+            <ProfileSettingsPage profile={profile} currentUser={currentUser} />
           </Suspense>
         ) : (
           /* Under Construction Panel for other Tabs */
