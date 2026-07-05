@@ -70,3 +70,78 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(77, 43, 140, 0.25);
 }
+
+/* Analytics-aligned dashboard window shell */
+.dashboard-home-window {
+  --window-primary: #4d2b8c;
+  --window-secondary: #85409d;
+  --window-gold: #eea727;
+  --window-yellow: #ffef5f;
+  --window-bg: #f8f9ff;
+  --window-ink: #171326;
+  --window-muted: #6f667a;
+  --window-border: rgba(77, 43, 140, 0.12);
+  --window-shadow: 0 18px 45px rgba(45, 28, 88, 0.09);
+  min-height: 100%;
+  padding: 32px !important;
+  background:
+    radial-gradient(circle at top right, rgba(255, 239, 95, 0.22), transparent 30rem),
+    linear-gradient(180deg, #fbfbff 0%, var(--window-bg) 100%);
+  color: var(--window-ink);
+}
+
+.dashboard-home-hero {
+  border-radius: 20px !important;
+  background:
+    linear-gradient(135deg, rgba(77, 43, 140, 0.96), rgba(133, 64, 157, 0.94)),
+    var(--window-primary) !important;
+  box-shadow: 0 20px 45px rgba(77, 43, 140, 0.2);
+}
+
+.dashboard-home-hero::after {
+  content: '';
+  position: absolute;
+  right: 24px;
+  bottom: -36px;
+  width: 220px;
+  height: 110px;
+  border: 1px solid rgba(255, 239, 95, 0.32);
+  border-radius: 50%;
+  transform: rotate(-12deg);
+}
+
+.dashboard-home-window .glass-panel,
+.dashboard-home-window .stat-card {
+  border: 1px solid var(--window-border);
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--window-shadow);
+}
+
+.dashboard-home-window .glass-panel.ai-gradient {
+  background:
+    linear-gradient(145deg, rgba(77, 43, 140, 0.95), rgba(133, 64, 157, 0.9)),
+    var(--window-primary);
+  color: #ffffff;
+}
+
+.dashboard-home-window h4 {
+  color: var(--window-primary);
+}
+
+.dashboard-home-window > div,
+.dashboard-home-window section {
+  scroll-margin-top: 24px;
+}
+
+@media (max-width: 820px) {
+  .dashboard-home-window {
+    padding: 22px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-home-window {
+    padding: 18px !important;
+  }
+}

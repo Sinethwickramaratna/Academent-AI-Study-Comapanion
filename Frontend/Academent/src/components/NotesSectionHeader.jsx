@@ -1,6 +1,6 @@
 function NotesSectionHeader({ title, description, action, backAction }) {
   return (
-    <div className="mt-md flex flex-col lg:flex-row lg:items-end lg:justify-between gap-md">
+    <div className="notes-section-header mt-md flex flex-col lg:flex-row lg:items-end lg:justify-between gap-md">
       <div>
         {backAction}
         <h2 className={`font-headline-md text-lg font-bold text-on-surface ${backAction ? "mt-md" : ""}`}>{title}</h2>

@@ -463,14 +463,14 @@ function DashboardPage({ initialActiveTab = 'home' }) {
         </header>
 
         {activeTab === 'home' ? (
-          <main className="p-gutter md:p-margin-desktop space-y-xl">
+          <main className="dashboard-home-window p-gutter md:p-margin-desktop space-y-xl">
             {/* Top Navigation Row */}
             <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search notes, topics, or AI chat..." />
 
             {/* Welcome Hero Section */}
-            <section className="ai-gradient rounded-xl p-xl relative overflow-hidden text-white flex flex-col md:flex-row justify-between items-stretch md:items-center min-h-[220px] gap-lg">
+            <section className="dashboard-home-hero ai-gradient rounded-xl p-xl relative overflow-hidden text-white flex flex-col md:flex-row justify-between items-stretch md:items-center min-h-[220px] gap-lg">
               <div className="z-10 max-w-lg space-y-md flex-1">
-                <h2 className="font-display-lg text-headline-lg md:text-display-lg">Good Morning, {fullName.split(' ')[0]} ????</h2>
+                <h2 className="font-display-lg text-headline-lg md:text-display-lg">Good Morning, {fullName.split(' ')[0]} {fullName.split(' ')[1]}</h2>
                 <p className="font-body-lg text-body-lg opacity-90">
                   You're on a <span className="font-bold text-tertiary-fixed">12-day study streak</span>. You're just 4 sessions away from your weekly goal.
                 </p>
@@ -1034,7 +1034,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
           </Suspense>
         ) : (
           /* Under Construction Panel for other Tabs */
-          <main className="flex-1 flex items-center justify-center p-gutter md:p-margin-desktop min-h-[400px]">
+          <main className="dashboard-home-window flex-1 flex items-center justify-center p-gutter md:p-margin-desktop min-h-[400px]">
             <div className="bg-white border border-outline-variant/30 p-lg md:p-xxl rounded-2xl shadow-sm text-center py-lg md:py-xxl max-w-lg mx-auto animate-fade-in-up">
               <span className="material-symbols-outlined text-6xl text-primary-fixed-dim mb-md animate-bounce">construction</span>
               <h3 className="font-headline-md text-on-surface font-bold mb-sm">Feature Under Construction</h3>

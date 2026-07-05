@@ -156,7 +156,7 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 									autoComplete="current-password"
 									id="password"
 									name="password"
-									placeholder="????????????????????????"
+									placeholder="Enter your password"
 									type={showPassword ? 'text' : 'password'}
 								/>
 								<button
