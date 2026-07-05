@@ -15,6 +15,12 @@ const StudyPlannerPage = lazy(() => import('./studyplannerpage'));
 const FlashCardsPage = lazy(() => import('./flashcardspage'));
 const AnalyticsPage = lazy(() => import('./analyticspage'));
 
+let dashboardIdCounter = 0;
+const createDashboardId = (prefix = 'id') => {
+  dashboardIdCounter += 1;
+  return prefix + '-' + dashboardIdCounter;
+};
+
 /**
  * DashboardPage component represents the study companion central control panel.
  * Displays student's custom courses, goals progress, and study tools.
@@ -209,7 +215,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
     }
     
     const newTask = {
-      id: Date.now(),
+      id: createDashboardId('task'),
       title,
       tag,
       tagColor,
@@ -229,7 +235,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
     if (!text.trim()) return;
     
     const userMsg = {
-      id: Date.now(),
+      id: createDashboardId('message'),
       sender: 'user',
       text: text.trim(),
       avatar: photoURL
@@ -284,7 +290,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
       }
       
       const aiMsg = {
-        id: Date.now() + 1,
+        id: createDashboardId('message'),
         sender: 'ai',
         text: replyText,
         details,
@@ -331,7 +337,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
         }
         
         const newMaterial = {
-          id: Date.now(),
+          id: createDashboardId('material'),
           name: file.name,
           info: `Uploaded just now ??? ${(file.size / 1024 / 1024).toFixed(1)} MB`,
           icon,
@@ -352,7 +358,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
     if (noteName) {
       const finalName = noteName.endsWith('.txt') || noteName.endsWith('.docx') ? noteName : `${noteName}.docx`;
       const newMaterial = {
-        id: Date.now(),
+        id: createDashboardId('material'),
         name: finalName,
         info: "Created just now ??? 0 words",
         icon: "edit_note",
@@ -377,11 +383,8 @@ function DashboardPage({ initialActiveTab = 'home' }) {
 
   // Fallbacks if Firestore profile does not exist yet
   const fullName = profile?.fullName || currentUser?.displayName || "Student";
-  const university = profile?.academicProfile?.university || "Your University";
-  const degree = profile?.academicProfile?.degree || "Undergraduate";
   const major = profile?.academicProfile?.major || "Undecided Major";
   const subjects = profile?.academicProfile?.subjects || ["General Study"];
-  const goals = profile?.learningPreferences?.learningGoals || ["explain"];
   const studyStyle = profile?.learningPreferences?.studyStyle || "visual";
   const weeklyHours = profile?.learningPreferences?.weeklyHours || "5-10";
   const photoURL = currentUser?.photoURL || profile?.photoURL || "";
@@ -566,7 +569,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                           if (confirm("Clear chat history?")) {
                             setMessages([
                               {
-                                id: Date.now(),
+                                id: createDashboardId('message'),
                                 sender: 'ai',
                                 text: `Hello ${fullName}! How can I help you study today?`
                               }
