@@ -1,4 +1,4 @@
-﻿import rateLimit from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 
 export const quizLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -18,6 +18,14 @@ export const chatLimiter = rateLimit({
   }
 })
 
+export const flashCardLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    error: "Flash card generation limit reached. Please try again after an hour.",
+  }
+});
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
@@ -26,3 +34,4 @@ export const globalLimiter = rateLimit({
     error: "Too many requests. Please try again later.",
   }
 });
+
