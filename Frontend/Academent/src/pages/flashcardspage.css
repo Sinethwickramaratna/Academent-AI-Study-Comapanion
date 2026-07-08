@@ -2274,3 +2274,194 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+/* Flash card row overflow guard */
+.flash-card-list,
+.flash-card-row,
+.flash-card-front,
+.flash-review-status,
+.flash-srs-grid,
+.flash-card-mastery {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.flash-card-row {
+  grid-template-columns: 42px minmax(0, 1fr) 88px;
+  grid-template-areas:
+    "pin front actions"
+    ". difficulty actions"
+    ". ai learning"
+    ". review review"
+    ". srs srs"
+    ". mastery mastery";
+}
+
+.flash-srs-grid {
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+}
+
+.flash-difficulty,
+.flash-ai-badge,
+.flash-learning-status,
+.flash-review-status,
+.flash-row-actions {
+  max-width: 100%;
+}
+
+.flash-difficulty,
+.flash-ai-badge,
+.flash-learning-status {
+  white-space: normal;
+}
+
+.flash-row-actions {
+  align-self: start;
+  grid-template-columns: repeat(2, 38px);
+  grid-template-rows: none;
+}
+
+@media (max-width: 560px) {
+  .flash-card-row {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "pin"
+      "front"
+      "difficulty"
+      "ai"
+      "learning"
+      "review"
+      "srs"
+      "mastery"
+      "actions";
+  }
+
+  .flash-srs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* Compact flash card row height */
+.flash-card-list {
+  gap: 0.55rem;
+}
+
+.flash-card-row {
+  gap: 0.45rem 0.7rem;
+  border-radius: 14px;
+  padding: 0.68rem 0.75rem;
+}
+
+.flash-card-row:hover,
+.flash-card-row:focus-visible,
+.flash-card-row:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(35, 22, 65, 0.11);
+}
+
+.flash-pin {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.flash-pin .material-symbols-outlined {
+  font-size: 1.12rem;
+}
+
+.flash-card-front {
+  gap: 0.16rem;
+}
+
+.flash-card-front strong {
+  font-size: 0.9rem;
+  line-height: 1.18;
+}
+
+.flash-card-front small {
+  font-size: 0.68rem;
+}
+
+.flash-card-front div {
+  gap: 0.26rem;
+  margin-top: 0.08rem;
+}
+
+.flash-card-front div span {
+  padding: 0.14rem 0.4rem;
+  font-size: 0.61rem;
+}
+
+.flash-difficulty,
+.flash-ai-badge,
+.flash-learning-status {
+  min-height: 26px;
+  gap: 0.22rem;
+  padding: 0.28rem 0.48rem;
+  font-size: 0.64rem;
+}
+
+.flash-ai-badge .material-symbols-outlined,
+.flash-learning-status .material-symbols-outlined {
+  font-size: 0.82rem;
+}
+
+.flash-review-status {
+  min-width: 0;
+  gap: 0.08rem;
+  border-radius: 10px;
+  padding: 0.38rem 0.52rem;
+}
+
+.flash-review-status strong {
+  font-size: 0.74rem;
+}
+
+.flash-review-status small {
+  font-size: 0.62rem;
+  line-height: 1.18;
+}
+
+.flash-srs-grid {
+  gap: 0.38rem;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+}
+
+.flash-srs-grid span {
+  min-height: 42px;
+  border-radius: 10px;
+  padding: 0.36rem 0.48rem;
+  font-size: 0.6rem;
+}
+
+.flash-srs-grid strong {
+  margin-top: 0.08rem;
+  font-size: 0.7rem;
+}
+
+.flash-card-mastery {
+  gap: 0.24rem;
+  border-radius: 10px;
+  padding: 0.38rem 0.52rem;
+}
+
+.flash-card-mastery > div:first-child {
+  font-size: 0.62rem;
+}
+
+.flash-card-mastery > div:last-child {
+  height: 6px;
+}
+
+.flash-row-actions {
+  grid-template-columns: repeat(2, 32px);
+  gap: 0.3rem;
+}
+
+.flash-row-actions button {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.flash-row-actions .material-symbols-outlined {
+  font-size: 1rem;
+}
