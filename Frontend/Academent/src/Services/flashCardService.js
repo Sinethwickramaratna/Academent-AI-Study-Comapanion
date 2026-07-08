@@ -519,18 +519,27 @@ export const recordFlashCardReview = async (uid, collectionId, card, rating, dur
     reviewedAt,
     createdAt: serverTimestamp(),
   };
+  const cardReviewEvent = {
+    reviewId: reviewDoc.id,
+    cardId: currentCardId,
+    rating,
+    score,
+    durationMs,
+    reviewedAt,
+    createdAt: reviewedAt,
+  };
 
   await Promise.all([
     updateDoc(cardRef(uid, collectionId, currentCardId), {
       ...schedule,
       updatedAt: serverTimestamp(),
-      reviewHistory: [...(card.reviewHistory || []), reviewEvent].slice(-50),
+      reviewHistory: [...(card.reviewHistory || []), cardReviewEvent].slice(-50),
     }),
     setDoc(reviewDoc, reviewEvent),
   ]);
 
   const analytics = await recalculateCollectionAnalytics(uid, collectionId);
-  return { schedule, reviewEvent, analytics };
+  return { schedule, reviewEvent: cardReviewEvent, analytics };
 };
 
 export const saveManualFlashCard = async (uid, collectionId, cardData) => {

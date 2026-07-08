@@ -3,6 +3,17 @@
   color: #20172f;
 }
 
+.flash-page > .loading-effect,
+.flash-page > .flash-modal-backdrop {
+  margin-top: 0 !important;
+}
+
+.flash-page > .loading-effect {
+  --loader-accent: #4d2b8c;
+  --loader-accent-2: #24b47e;
+  border-color: rgba(77, 43, 140, 0.14);
+}
+
 .flash-eyebrow {
   margin: 0 0 0.35rem;
   color: #4d2b8c;
@@ -311,7 +322,7 @@
   position: relative;
   display: grid;
   gap: 0.75rem;
-  min-height: 222px;
+  min-height: 250px;
   overflow: hidden;
   padding: 1rem;
   cursor: pointer;
@@ -374,11 +385,30 @@
   font-size: 1rem;
 }
 
+.flash-collection-progress {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.flash-collection-progress > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  color: rgba(32, 23, 47, 0.58);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.flash-collection-progress strong {
+  color: #4d2b8c;
+}
+
 .flash-card-hover-actions {
   position: absolute;
   inset: auto 0.75rem 0.75rem;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.35rem;
   opacity: 0;
   transform: translateY(8px);
@@ -413,7 +443,7 @@
 
 .flash-card-row {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto auto;
+  grid-template-columns: 34px minmax(0, 1fr) auto auto auto;
   align-items: center;
   min-width: 0;
   gap: 0.7rem 0.8rem;
@@ -488,7 +518,8 @@
 }
 
 .flash-difficulty,
-.flash-ai-badge {
+.flash-ai-badge,
+.flash-learning-status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -520,8 +551,29 @@
   color: #4d2b8c;
 }
 
-.flash-ai-badge .material-symbols-outlined {
+.flash-ai-badge .material-symbols-outlined,
+.flash-learning-status .material-symbols-outlined {
   font-size: 0.95rem;
+}
+
+.flash-learning-status--learned {
+  background: rgba(36, 180, 126, 0.13);
+  color: #157651;
+}
+
+.flash-learning-status--learning {
+  background: rgba(77, 43, 140, 0.08);
+  color: #4d2b8c;
+}
+
+.flash-learning-status--due {
+  background: rgba(238, 167, 39, 0.18);
+  color: #9a6407;
+}
+
+.flash-learning-status--new {
+  background: rgba(47, 125, 211, 0.12);
+  color: #2f7dd3;
 }
 
 .flash-review-status {
@@ -557,9 +609,45 @@
   font-size: 0.72rem;
 }
 
+.flash-card-mastery {
+  display: grid;
+  grid-column: 2 / 5;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.flash-card-mastery > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  color: rgba(32, 23, 47, 0.58);
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.flash-card-mastery strong {
+  color: #4d2b8c;
+}
+
+.flash-card-mastery > div:last-child {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(77, 43, 140, 0.1);
+}
+
+.flash-card-mastery > div:last-child span {
+  display: block;
+  width: var(--mastery);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4d2b8c, #24b47e);
+}
+
 .flash-row-actions {
   display: grid;
-  grid-column: 4 / -1;
+  grid-column: 5 / -1;
   grid-template-columns: repeat(2, 34px);
   justify-self: end;
   gap: 0.35rem;
@@ -1559,8 +1647,10 @@
 
   .flash-difficulty,
   .flash-ai-badge,
+  .flash-learning-status,
   .flash-review-status,
   .flash-srs-grid,
+  .flash-card-mastery,
   .flash-row-actions {
     grid-column: 2 / -1;
     justify-self: start;
