@@ -1862,7 +1862,14 @@
 .flash-card-list {
   display: grid;
   width: 100%;
-  gap: 0.8rem;
+  gap: 0.72rem;
+}
+
+.flash-card-row,
+.flash-card-row *,
+.flash-card-row *::before,
+.flash-card-row *::after {
+  box-sizing: border-box;
 }
 
 .flash-card-row {
@@ -1870,262 +1877,252 @@
   isolation: isolate;
   display: grid;
   width: 100%;
-  grid-template-columns: 42px minmax(280px, 1fr) auto auto auto minmax(170px, 0.28fr) 88px;
-  grid-template-areas:
-    "pin front difficulty ai learning review actions"
-    ". srs srs srs srs srs actions"
-    ". mastery mastery mastery mastery mastery actions";
-  align-items: center;
-  gap: 0.8rem 0.95rem;
+  min-width: 0;
+  gap: 0.72rem;
   border: 1px solid rgba(77, 43, 140, 0.12);
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(250, 248, 255, 0.9));
-  box-shadow: 0 14px 32px rgba(35, 22, 65, 0.07);
-  padding: 1rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(250, 248, 255, 0.92));
+  box-shadow: 0 12px 28px rgba(35, 22, 65, 0.07);
+  padding: 0.82rem;
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
-}
-
-.flash-card-row::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  opacity: 0;
-  background: linear-gradient(135deg, rgba(77, 43, 140, 0.08), rgba(238, 167, 39, 0.12));
-  transition: opacity 180ms ease;
 }
 
 .flash-card-row:hover,
 .flash-card-row:focus-visible,
 .flash-card-row:focus-within {
-  transform: translateY(-3px);
-  border-color: rgba(77, 43, 140, 0.28);
-  box-shadow: 0 22px 48px rgba(35, 22, 65, 0.13);
+  transform: translateY(-2px);
+  border-color: rgba(77, 43, 140, 0.24);
+  box-shadow: 0 16px 34px rgba(35, 22, 65, 0.1);
   outline: none;
 }
 
-.flash-card-row:hover::before,
-.flash-card-row:focus-visible::before,
-.flash-card-row:focus-within::before {
-  opacity: 1;
-}
-
-.flash-card-row > * {
-  position: relative;
-  z-index: 1;
+.flash-card-row__top {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.72rem;
+  min-width: 0;
 }
 
 .flash-pin {
-  grid-area: pin;
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   place-items: center;
-  border: 0;
-  border-radius: 13px;
-  background: rgba(77, 43, 140, 0.08);
+  border-radius: 11px;
+  background: rgba(77, 43, 140, 0.09);
   color: #4d2b8c;
-  transition: transform 180ms ease, background-color 180ms ease, color 180ms ease;
+  transition: transform 180ms ease, background-color 180ms ease;
 }
 
 .flash-pin .material-symbols-outlined {
-  font-size: 1.35rem;
+  font-size: 1.18rem;
+  font-variation-settings: 'FILL' 1;
 }
 
 .flash-card-front {
-  grid-area: front;
   display: grid;
   min-width: 0;
-  gap: 0.28rem;
-}
-
-.flash-card-front strong {
-  color: #20172f;
-  font-size: 0.96rem;
-  font-weight: 950;
-  line-height: 1.25;
-}
-
-.flash-card-front small {
-  color: rgba(32, 23, 47, 0.58);
-  font-size: 0.74rem;
-  font-weight: 750;
+  gap: 0.24rem;
 }
 
 .flash-card-front strong,
-.flash-card-front small {
+.flash-card-front small,
+.flash-card-tags span,
+.flash-srs-grid span,
+.flash-srs-grid strong,
+.flash-review-status strong,
+.flash-review-status small {
+  min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-.flash-card-front div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.18rem;
+.flash-card-front strong {
+  color: #20172f;
+  font-size: 0.94rem;
+  font-weight: 950;
+  line-height: 1.24;
 }
 
-.flash-card-front div span {
+.flash-card-front small {
+  display: block;
+  color: rgba(32, 23, 47, 0.58);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.flash-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.flash-card-tags span {
   border-radius: 999px;
   background: rgba(133, 64, 157, 0.08);
   color: #85409d;
-  padding: 0.22rem 0.5rem;
-  font-size: 0.66rem;
+  padding: 0.16rem 0.42rem;
+  font-size: 0.62rem;
   font-weight: 900;
+  line-height: 1.2;
+}
+
+.flash-card-row__meta {
+  display: grid;
+  grid-template-columns: repeat(3, max-content) minmax(180px, 1fr);
+  align-items: stretch;
+  gap: 0.45rem;
+  min-width: 0;
 }
 
 .flash-difficulty,
 .flash-ai-badge,
 .flash-learning-status {
   display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 28px;
   align-items: center;
   justify-content: center;
-  justify-self: start;
-  gap: 0.32rem;
-  min-height: 32px;
+  gap: 0.26rem;
+  border: 1px solid transparent;
   border-radius: 999px;
-  padding: 0.4rem 0.62rem;
-  font-size: 0.7rem;
+  padding: 0.3rem 0.52rem;
+  font-size: 0.66rem;
   font-weight: 950;
-  white-space: nowrap;
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  line-height: 1.1;
+  text-align: left;
+  white-space: normal;
 }
 
-.flash-difficulty { grid-area: difficulty; }
-.flash-ai-badge { grid-area: ai; }
-.flash-learning-status { grid-area: learning; }
-
-.flash-difficulty--easy {
-  background: rgba(36, 180, 126, 0.13);
+.flash-difficulty--easy,
+.flash-learning-status--learned {
+  border-color: rgba(36, 180, 126, 0.18);
+  background: rgba(36, 180, 126, 0.12);
   color: #157651;
 }
 
-.flash-difficulty--medium {
-  background: rgba(238, 167, 39, 0.18);
+.flash-difficulty--medium,
+.flash-learning-status--due {
+  border-color: rgba(238, 167, 39, 0.22);
+  background: rgba(238, 167, 39, 0.16);
   color: #9a6407;
 }
 
 .flash-difficulty--hard {
-  background: rgba(201, 45, 92, 0.11);
+  border-color: rgba(201, 45, 92, 0.18);
+  background: rgba(201, 45, 92, 0.1);
   color: #b32652;
 }
 
-.flash-ai-badge {
+.flash-ai-badge,
+.flash-learning-status--learning,
+.flash-difficulty--mixed {
+  border-color: rgba(77, 43, 140, 0.12);
   background: rgba(77, 43, 140, 0.08);
   color: #4d2b8c;
-}
-
-.flash-learning-status--learned {
-  background: rgba(36, 180, 126, 0.13);
-  color: #157651;
-}
-
-.flash-learning-status--learning {
-  background: rgba(77, 43, 140, 0.08);
-  color: #4d2b8c;
-}
-
-.flash-learning-status--due {
-  background: rgba(238, 167, 39, 0.18);
-  color: #9a6407;
 }
 
 .flash-learning-status--new {
-  background: rgba(47, 125, 211, 0.12);
+  border-color: rgba(47, 125, 211, 0.18);
+  background: rgba(47, 125, 211, 0.11);
   color: #2f7dd3;
 }
 
 .flash-ai-badge .material-symbols-outlined,
 .flash-learning-status .material-symbols-outlined {
-  font-size: 0.95rem;
+  flex: 0 0 auto;
+  font-size: 0.88rem;
 }
 
 .flash-review-status {
-  grid-area: review;
   display: grid;
-  min-width: 160px;
-  gap: 0.2rem;
+  min-width: 0;
+  gap: 0.08rem;
   border: 1px solid rgba(77, 43, 140, 0.1);
-  border-radius: 13px;
+  border-radius: 11px;
   background: rgba(77, 43, 140, 0.045);
-  padding: 0.62rem 0.72rem;
-  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  padding: 0.42rem 0.58rem;
 }
 
 .flash-review-status strong {
   color: #20172f;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 950;
+  line-height: 1.18;
 }
 
 .flash-review-status small {
   color: rgba(32, 23, 47, 0.58);
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  line-height: 1.3;
+  line-height: 1.18;
 }
 
 .flash-srs-grid {
-  grid-area: srs;
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.55rem;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 0.45rem;
 }
 
 .flash-srs-grid span {
   display: grid;
-  min-height: 58px;
+  min-height: 48px;
   align-content: center;
+  gap: 0.08rem;
+  overflow: hidden;
   border: 1px solid rgba(77, 43, 140, 0.1);
-  border-radius: 13px;
-  background: rgba(255, 255, 255, 0.72);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.78);
   color: rgba(32, 23, 47, 0.55);
-  padding: 0.58rem 0.65rem;
-  font-size: 0.66rem;
+  padding: 0.42rem 0.58rem;
+  font-size: 0.62rem;
   font-weight: 900;
-  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  line-height: 1.12;
 }
 
 .flash-srs-grid strong {
   display: block;
-  margin-top: 0.18rem;
   color: #20172f;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 950;
-  line-height: 1.2;
+  line-height: 1.16;
 }
 
 .flash-card-mastery {
-  grid-area: mastery;
   display: grid;
   width: 100%;
-  gap: 0.42rem;
+  min-width: 0;
+  gap: 0.28rem;
   border: 1px solid rgba(77, 43, 140, 0.1);
-  border-radius: 13px;
+  border-radius: 11px;
   background: rgba(77, 43, 140, 0.04);
-  padding: 0.62rem 0.72rem;
-  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  padding: 0.46rem 0.62rem;
 }
 
 .flash-card-mastery > div:first-child {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.65rem;
+  gap: 0.6rem;
   color: rgba(32, 23, 47, 0.58);
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 900;
+  line-height: 1.14;
 }
 
 .flash-card-mastery strong {
   color: #4d2b8c;
+  font-weight: 950;
 }
 
 .flash-card-mastery > div:last-child {
-  height: 8px;
+  height: 6px;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(77, 43, 140, 0.1);
@@ -2140,45 +2137,33 @@
 }
 
 .flash-row-actions {
-  grid-area: actions;
-  align-self: stretch;
   display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: repeat(2, 38px);
+  grid-template-columns: repeat(2, 34px);
+  gap: 0.36rem;
   justify-self: end;
-  gap: 0.4rem;
 }
 
 .flash-row-actions button {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   place-items: center;
-  border: 0;
-  border-radius: 12px;
-  background: rgba(77, 43, 140, 0.08);
+  border: 1px solid rgba(77, 43, 140, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
   color: #4d2b8c;
   transition: transform 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.flash-row-actions .material-symbols-outlined {
+  font-size: 1rem;
 }
 
 .flash-card-row:hover .flash-pin,
 .flash-card-row:focus-visible .flash-pin,
 .flash-card-row:focus-within .flash-pin {
   background: rgba(77, 43, 140, 0.14);
-  transform: scale(1.04);
-}
-
-.flash-card-row:hover .flash-difficulty,
-.flash-card-row:focus-visible .flash-difficulty,
-.flash-card-row:focus-within .flash-difficulty,
-.flash-card-row:hover .flash-ai-badge,
-.flash-card-row:focus-visible .flash-ai-badge,
-.flash-card-row:focus-within .flash-ai-badge,
-.flash-card-row:hover .flash-learning-status,
-.flash-card-row:focus-visible .flash-learning-status,
-.flash-card-row:focus-within .flash-learning-status {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(35, 22, 65, 0.08);
+  transform: scale(1.03);
 }
 
 .flash-card-row:hover .flash-review-status,
@@ -2190,278 +2175,71 @@
 .flash-card-row:hover .flash-card-mastery,
 .flash-card-row:focus-visible .flash-card-mastery,
 .flash-card-row:focus-within .flash-card-mastery {
-  border-color: rgba(77, 43, 140, 0.18);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 18px rgba(35, 22, 65, 0.07);
+  border-color: rgba(77, 43, 140, 0.17);
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .flash-row-actions button:hover,
 .flash-row-actions button:focus-visible {
-  transform: translateY(-1px) scale(1.04);
+  transform: translateY(-1px);
   background: #4d2b8c;
   color: #fff;
   box-shadow: 0 8px 18px rgba(77, 43, 140, 0.2);
+  outline: none;
 }
 
-.flash-card-row:hover .flash-card-mastery > div:last-child span,
-.flash-card-row:focus-visible .flash-card-mastery > div:last-child span,
-.flash-card-row:focus-within .flash-card-mastery > div:last-child span {
-  background: linear-gradient(90deg, #4d2b8c, #24b47e, #eea727);
-}
-
-@media (max-width: 1320px) {
-  .flash-card-row {
-    grid-template-columns: 42px minmax(240px, 1fr) auto auto auto 84px;
-    grid-template-areas:
-      "pin front difficulty ai learning actions"
-      ". review review review review actions"
-      ". srs srs srs srs actions"
-      ". mastery mastery mastery mastery actions";
-  }
-
-  .flash-srs-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 860px) {
-  .flash-card-row {
-    grid-template-columns: 42px minmax(0, 1fr) auto;
-    grid-template-areas:
-      "pin front actions"
-      ". difficulty actions"
-      ". ai learning"
-      ". review review"
-      ". srs srs"
-      ". mastery mastery";
-  }
-
-  .flash-srs-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 900px) {
+  .flash-card-row__top {
+    grid-template-columns: 38px minmax(0, 1fr);
   }
 
   .flash-row-actions {
-    align-self: start;
-    grid-template-columns: repeat(2, 38px);
-    grid-template-rows: none;
-  }
-}
-
-@media (max-width: 560px) {
-  .flash-card-row {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "pin"
-      "front"
-      "difficulty"
-      "ai"
-      "learning"
-      "review"
-      "srs"
-      "mastery"
-      "actions";
-  }
-
-  .flash-pin,
-  .flash-difficulty,
-  .flash-ai-badge,
-  .flash-learning-status,
-  .flash-row-actions {
+    grid-column: 2;
     justify-self: start;
   }
 
-  .flash-srs-grid {
+  .flash-card-row__meta {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-/* Flash card row overflow guard */
-.flash-card-list,
-.flash-card-row,
-.flash-card-front,
-.flash-review-status,
-.flash-srs-grid,
-.flash-card-mastery {
-  max-width: 100%;
-  min-width: 0;
-}
 
-.flash-card-row {
-  grid-template-columns: 42px minmax(0, 1fr) 88px;
-  grid-template-areas:
-    "pin front actions"
-    ". difficulty actions"
-    ". ai learning"
-    ". review review"
-    ". srs srs"
-    ". mastery mastery";
-}
-
-.flash-srs-grid {
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-}
-
-.flash-difficulty,
-.flash-ai-badge,
-.flash-learning-status,
-.flash-review-status,
-.flash-row-actions {
-  max-width: 100%;
-}
-
-.flash-difficulty,
-.flash-ai-badge,
-.flash-learning-status {
-  white-space: normal;
-}
-
-.flash-row-actions {
-  align-self: start;
-  grid-template-columns: repeat(2, 38px);
-  grid-template-rows: none;
+  .flash-review-status {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 560px) {
+  .flash-card-list {
+    gap: 0.7rem;
+  }
+
   .flash-card-row {
+    gap: 0.68rem;
+    border-radius: 14px;
+    padding: 0.78rem;
+  }
+
+  .flash-card-row__top,
+  .flash-card-row__meta {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "pin"
-      "front"
-      "difficulty"
-      "ai"
-      "learning"
-      "review"
-      "srs"
-      "mastery"
-      "actions";
+  }
+
+  .flash-row-actions {
+    grid-column: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .flash-row-actions button {
+    width: 100%;
+  }
+
+  .flash-difficulty,
+  .flash-ai-badge,
+  .flash-learning-status {
+    justify-content: flex-start;
   }
 
   .flash-srs-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-/* Compact flash card row height */
-.flash-card-list {
-  gap: 0.55rem;
-}
-
-.flash-card-row {
-  gap: 0.45rem 0.7rem;
-  border-radius: 14px;
-  padding: 0.68rem 0.75rem;
-}
-
-.flash-card-row:hover,
-.flash-card-row:focus-visible,
-.flash-card-row:focus-within {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(35, 22, 65, 0.11);
-}
-
-.flash-pin {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-}
-
-.flash-pin .material-symbols-outlined {
-  font-size: 1.12rem;
-}
-
-.flash-card-front {
-  gap: 0.16rem;
-}
-
-.flash-card-front strong {
-  font-size: 0.9rem;
-  line-height: 1.18;
-}
-
-.flash-card-front small {
-  font-size: 0.68rem;
-}
-
-.flash-card-front div {
-  gap: 0.26rem;
-  margin-top: 0.08rem;
-}
-
-.flash-card-front div span {
-  padding: 0.14rem 0.4rem;
-  font-size: 0.61rem;
-}
-
-.flash-difficulty,
-.flash-ai-badge,
-.flash-learning-status {
-  min-height: 26px;
-  gap: 0.22rem;
-  padding: 0.28rem 0.48rem;
-  font-size: 0.64rem;
-}
-
-.flash-ai-badge .material-symbols-outlined,
-.flash-learning-status .material-symbols-outlined {
-  font-size: 0.82rem;
-}
-
-.flash-review-status {
-  min-width: 0;
-  gap: 0.08rem;
-  border-radius: 10px;
-  padding: 0.38rem 0.52rem;
-}
-
-.flash-review-status strong {
-  font-size: 0.74rem;
-}
-
-.flash-review-status small {
-  font-size: 0.62rem;
-  line-height: 1.18;
-}
-
-.flash-srs-grid {
-  gap: 0.38rem;
-  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
-}
-
-.flash-srs-grid span {
-  min-height: 42px;
-  border-radius: 10px;
-  padding: 0.36rem 0.48rem;
-  font-size: 0.6rem;
-}
-
-.flash-srs-grid strong {
-  margin-top: 0.08rem;
-  font-size: 0.7rem;
-}
-
-.flash-card-mastery {
-  gap: 0.24rem;
-  border-radius: 10px;
-  padding: 0.38rem 0.52rem;
-}
-
-.flash-card-mastery > div:first-child {
-  font-size: 0.62rem;
-}
-
-.flash-card-mastery > div:last-child {
-  height: 6px;
-}
-
-.flash-row-actions {
-  grid-template-columns: repeat(2, 32px);
-  gap: 0.3rem;
-}
-
-.flash-row-actions button {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-}
-
-.flash-row-actions .material-symbols-outlined {
-  font-size: 1rem;
 }
