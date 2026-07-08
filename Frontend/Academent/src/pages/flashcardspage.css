@@ -2034,3 +2034,292 @@
   font-weight: 850;
   outline: none;
 }
+
+/* Responsive refinements for flash card collections and cards */
+.flash-collection-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+}
+
+.flash-collection-card {
+  min-width: 0;
+  min-height: 0;
+  align-content: start;
+}
+
+.flash-collection-card h4,
+.flash-collection-card p,
+.flash-collection-meta span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.flash-card-row {
+  grid-template-columns: 34px minmax(180px, 1fr) auto auto auto;
+  grid-template-areas:
+    "pin front difficulty ai learning"
+    ". review srs srs actions"
+    ". mastery mastery mastery actions";
+  align-items: start;
+}
+
+.flash-pin {
+  grid-area: pin;
+}
+
+.flash-card-front {
+  grid-area: front;
+}
+
+.flash-difficulty {
+  grid-area: difficulty;
+}
+
+.flash-ai-badge {
+  grid-area: ai;
+}
+
+.flash-learning-status {
+  grid-area: learning;
+}
+
+.flash-review-status {
+  grid-area: review;
+  grid-column: auto;
+}
+
+.flash-srs-grid {
+  grid-area: srs;
+  grid-column: auto;
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+}
+
+.flash-card-mastery {
+  grid-area: mastery;
+  grid-column: auto;
+}
+
+.flash-row-actions {
+  grid-area: actions;
+  grid-column: auto;
+  align-self: stretch;
+}
+
+.flash-card-front strong,
+.flash-card-front small,
+.flash-review-status strong,
+.flash-review-status small,
+.flash-srs-grid span,
+.flash-srs-grid strong {
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .flash-card-hover-actions {
+    position: static;
+    opacity: 1;
+    transform: none;
+  }
+
+  .flash-collection-card {
+    padding-bottom: 1rem;
+  }
+}
+
+@media (max-width: 1180px) {
+  .flash-collection-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  }
+
+  .flash-card-row {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "pin front actions"
+      ". difficulty actions"
+      ". ai learning"
+      ". review review"
+      ". srs srs"
+      ". mastery mastery";
+  }
+
+  .flash-row-actions {
+    align-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .flash-collection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flash-collection-card {
+    padding: 0.9rem;
+  }
+
+  .flash-collection-top {
+    align-items: center;
+  }
+
+  .flash-card-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    grid-template-areas:
+      "pin front"
+      ". difficulty"
+      ". ai"
+      ". learning"
+      ". review"
+      ". srs"
+      ". mastery"
+      ". actions";
+    gap: 0.55rem 0.7rem;
+  }
+
+  .flash-difficulty,
+  .flash-ai-badge,
+  .flash-learning-status,
+  .flash-review-status,
+  .flash-srs-grid,
+  .flash-card-mastery,
+  .flash-row-actions {
+    grid-column: auto;
+    justify-self: start;
+  }
+
+  .flash-srs-grid,
+  .flash-card-mastery,
+  .flash-row-actions {
+    width: 100%;
+  }
+
+  .flash-row-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flash-row-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 440px) {
+  .flash-card-row {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "pin"
+      "front"
+      "difficulty"
+      "ai"
+      "learning"
+      "review"
+      "srs"
+      "mastery"
+      "actions";
+  }
+
+  .flash-pin {
+    justify-self: start;
+  }
+}
+/* Compact interactive flash card refinements */
+.flash-collection-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 235px), 280px));
+  justify-content: start;
+  align-items: start;
+}
+
+.flash-collection-card {
+  max-width: 280px;
+}
+
+.flash-collection-card::before,
+.flash-card-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  background: linear-gradient(135deg, rgba(77, 43, 140, 0.08), rgba(238, 167, 39, 0.12));
+  transition: opacity 180ms ease;
+}
+
+.flash-collection-card:hover::before,
+.flash-collection-card:focus-within::before,
+.flash-card-row:hover::before,
+.flash-card-row:focus-visible::before,
+.flash-card-row:focus-within::before {
+  opacity: 1;
+}
+
+.flash-card-row {
+  position: relative;
+  isolation: isolate;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.94);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.flash-card-row:hover,
+.flash-card-row:focus-visible,
+.flash-card-row:focus-within {
+  transform: translateY(-3px);
+  border-color: rgba(77, 43, 140, 0.28);
+  box-shadow: 0 18px 40px rgba(35, 22, 65, 0.12);
+  outline: none;
+}
+
+.flash-card-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+.flash-card-row:hover .flash-pin,
+.flash-card-row:focus-visible .flash-pin,
+.flash-card-row:focus-within .flash-pin {
+  background: rgba(77, 43, 140, 0.14);
+  color: #4d2b8c;
+  transform: scale(1.04);
+}
+
+.flash-card-row:hover .flash-row-actions button,
+.flash-card-row:focus-visible .flash-row-actions button,
+.flash-card-row:focus-within .flash-row-actions button {
+  background: #4d2b8c;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(77, 43, 140, 0.2);
+}
+
+.flash-pin,
+.flash-row-actions button {
+  transition: transform 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.flash-row-actions button:hover,
+.flash-row-actions button:focus-visible {
+  transform: translateY(-1px) scale(1.04);
+}
+
+@media (max-width: 1180px) {
+  .flash-collection-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 260px));
+  }
+
+  .flash-collection-card {
+    max-width: 260px;
+  }
+}
+
+@media (max-width: 760px) {
+  .flash-collection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flash-collection-card {
+    max-width: none;
+  }
+}
