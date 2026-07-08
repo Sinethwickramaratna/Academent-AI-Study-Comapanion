@@ -2489,3 +2489,145 @@
     grid-template-columns: 1fr;
   }
 }
+/* Redesign flash card row details into readable panels */
+.flash-card-row {
+  grid-template-columns: 38px minmax(260px, 1fr) auto auto auto 78px;
+  grid-template-areas:
+    "pin front difficulty ai learning actions"
+    ". review review review review actions"
+    ". srs srs srs srs actions"
+    ". mastery mastery mastery mastery actions";
+  gap: 0.78rem 0.9rem;
+  align-items: start;
+}
+
+.flash-card-front {
+  align-self: center;
+}
+
+.flash-difficulty,
+.flash-ai-badge,
+.flash-learning-status {
+  align-self: center;
+  justify-self: start;
+}
+
+.flash-review-status {
+  display: grid;
+  width: 100%;
+  max-width: none;
+  grid-template-columns: minmax(120px, 0.45fr) minmax(180px, 1fr);
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  border-color: rgba(77, 43, 140, 0.1);
+  background: rgba(77, 43, 140, 0.045);
+  padding: 0.68rem 0.78rem;
+}
+
+.flash-review-status small {
+  text-align: right;
+}
+
+.flash-srs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.flash-srs-grid span {
+  display: grid;
+  min-height: 64px;
+  align-content: center;
+  border-color: rgba(77, 43, 140, 0.1);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.64rem 0.72rem;
+}
+
+.flash-srs-grid strong {
+  margin-top: 0.2rem;
+  font-size: 0.84rem;
+  line-height: 1.2;
+}
+
+.flash-card-mastery {
+  border-color: rgba(77, 43, 140, 0.1);
+  background: rgba(77, 43, 140, 0.04);
+  padding: 0.65rem 0.75rem;
+}
+
+.flash-row-actions {
+  align-self: stretch;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(2, 38px);
+}
+
+.flash-row-actions button {
+  width: 38px;
+  height: 38px;
+}
+
+@media (max-width: 1180px) {
+  .flash-card-row {
+    grid-template-columns: 38px minmax(0, 1fr) auto auto auto;
+    grid-template-areas:
+      "pin front difficulty ai learning"
+      ". review review review actions"
+      ". srs srs srs srs"
+      ". mastery mastery mastery mastery";
+  }
+
+  .flash-srs-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .flash-row-actions {
+    align-self: start;
+    grid-template-columns: repeat(2, 38px);
+    grid-template-rows: none;
+  }
+}
+
+@media (max-width: 840px) {
+  .flash-card-row {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "pin front actions"
+      ". difficulty actions"
+      ". ai learning"
+      ". review review"
+      ". srs srs"
+      ". mastery mastery";
+  }
+
+  .flash-srs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flash-review-status {
+    grid-template-columns: 1fr;
+  }
+
+  .flash-review-status small {
+    text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .flash-card-row {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "pin"
+      "front"
+      "difficulty"
+      "ai"
+      "learning"
+      "review"
+      "srs"
+      "mastery"
+      "actions";
+  }
+
+  .flash-srs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
