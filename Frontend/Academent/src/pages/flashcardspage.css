@@ -1277,13 +1277,19 @@
 
 .flash-rich-editor p {
   margin: 0.65rem 0 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   color: rgba(32, 23, 47, 0.58);
   font-size: 0.82rem;
   font-weight: 750;
 }
 
 .flash-study-mode {
-  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
   padding: 1.25rem;
   background:
     linear-gradient(135deg, rgba(248, 249, 255, 0.96), rgba(255, 255, 255, 0.96)),
@@ -1338,6 +1344,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 0.32fr);
   gap: 1rem;
+  min-height: 0;
+  overflow: hidden;
   margin-top: 1.2rem;
 }
 
@@ -1347,13 +1355,17 @@
 
 .flash-study-center {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 0.85rem;
+  min-height: 0;
+  overflow: hidden;
   justify-items: center;
 }
 
 .flash-study-card {
   width: min(760px, 100%);
-  min-height: 520px;
+  height: 100%;
+  min-height: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -1364,7 +1376,8 @@
 .flash-study-card-inner {
   position: relative;
   width: 100%;
-  min-height: 520px;
+  height: 100%;
+  min-height: 0;
   transform-style: preserve-3d;
   transition: transform 680ms cubic-bezier(0.2, 0.72, 0.22, 1), filter 260ms ease;
 }
@@ -1377,7 +1390,8 @@
   position: absolute;
   inset: 0;
   display: grid;
-  min-height: 520px;
+  height: 100%;
+  min-height: 0;
   place-items: center;
   align-content: center;
   gap: 0.9rem;
@@ -1402,6 +1416,9 @@
 }
 
 .flash-study-face--back {
+  align-content: start;
+  align-items: start;
+  justify-items: stretch;
   transform: rotateY(180deg);
 }
 
@@ -1445,6 +1462,18 @@
   color: #20172f;
   font-weight: 950;
   line-height: 1.24;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.flash-study-face--back h2,
+.flash-answer-grid,
+.flash-answer-grid div,
+.flash-answer-grid span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .flash-study-card h1 {
@@ -1479,12 +1508,14 @@
 
 .flash-answer-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: stretch;
   gap: 0.75rem;
   width: 100%;
 }
 
 .flash-answer-grid div {
+  min-width: 0;
   border-radius: 14px;
   background: rgba(77, 43, 140, 0.06);
   padding: 0.85rem;
@@ -1494,6 +1525,7 @@
 .flash-answer-grid strong,
 .flash-answer-grid span {
   display: block;
+  white-space: normal;
 }
 
 .flash-answer-grid strong {
@@ -1507,6 +1539,7 @@
   color: rgba(32, 23, 47, 0.66);
   font-size: 0.82rem;
   font-weight: 750;
+  line-height: 1.45;
 }
 
 .flash-rating {
@@ -1663,7 +1696,8 @@
   .flash-study-card,
   .flash-study-card-inner,
   .flash-study-face {
-    min-height: 460px;
+    height: 100%;
+    min-height: 0;
   }
 
   .flash-study-face {

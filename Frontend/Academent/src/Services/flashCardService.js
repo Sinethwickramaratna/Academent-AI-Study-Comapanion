@@ -187,6 +187,30 @@ export const resolveSelectedFlashCardSources = (noteManagement, selectedItems = 
   return [...selectedSources.values()];
 };
 
+const parseRetryAfterSeconds = (value) => {
+  if (!value) return null;
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) return Math.max(1, Math.ceil(numeric));
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return Math.max(1, Math.ceil((date.getTime() - Date.now()) / 1000));
+};
+
+const createFlashCardApiError = (response, result = {}) => {
+  const rateLimit = result.rateLimit || {};
+  const retryAfterSeconds = Number(rateLimit.retryAfterSeconds) || parseRetryAfterSeconds(response.headers.get("Retry-After"));
+  const resetAt = rateLimit.resetAt || (retryAfterSeconds ? new Date(Date.now() + retryAfterSeconds * 1000).toISOString() : null);
+  const message = result.error || result.message || "Flash card generation failed.";
+  const error = new Error(message);
+
+  error.status = response.status;
+  error.retryAfterSeconds = retryAfterSeconds || null;
+  error.resetAt = resetAt;
+  error.isRateLimited = response.status === 429 || Boolean(resetAt || retryAfterSeconds);
+
+  return error;
+};
+
 const callFlashCardApi = async (body) => {
   const response = await fetch(`${API_BASE_URL}/api/flashcards/generate`, {
     method: "POST",
@@ -196,7 +220,7 @@ const callFlashCardApi = async (body) => {
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok || result.success === false) {
-    throw new Error(result.error || result.message || "Flash card generation failed.");
+    throw createFlashCardApiError(response, result);
   }
 
   return result.data ?? result;
