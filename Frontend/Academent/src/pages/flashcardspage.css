@@ -150,6 +150,11 @@
   box-shadow: 0 12px 28px rgba(35, 22, 65, 0.05);
 }
 
+.flash-button--danger {
+  background: linear-gradient(135deg, #b32652, #dc3b6d);
+  color: #fff;
+  box-shadow: 0 16px 34px rgba(179, 38, 82, 0.2);
+}
 .flash-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -421,13 +426,68 @@
 }
 
 .flash-card-hover-actions button {
+  position: relative;
   min-height: 34px;
+  overflow: hidden;
   border: 1px solid rgba(77, 43, 140, 0.12);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.92);
   color: #4d2b8c;
   font-size: 0.68rem;
   font-weight: 900;
+  box-shadow: 0 8px 18px rgba(35, 22, 65, 0.06);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.flash-card-hover-actions button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+  transition: opacity 160ms ease;
+}
+
+.flash-card-hover-actions button:hover,
+.flash-card-hover-actions button:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(77, 43, 140, 0.28);
+  background: #4d2b8c;
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(77, 43, 140, 0.2);
+  outline: none;
+}
+
+.flash-card-hover-actions button:hover::before,
+.flash-card-hover-actions button:focus-visible::before {
+  opacity: 1;
+}
+
+.flash-card-hover-actions button:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(35, 22, 65, 0.12);
+}
+
+.flash-card-action--study:hover,
+.flash-card-action--study:focus-visible {
+  border-color: rgba(36, 180, 126, 0.42);
+  background: #157651;
+  box-shadow: 0 12px 26px rgba(21, 118, 81, 0.2);
+}
+
+.flash-card-action--delete:hover,
+.flash-card-action--delete:focus-visible {
+  border-color: rgba(179, 38, 82, 0.36);
+  background: #b32652;
+  box-shadow: 0 12px 26px rgba(179, 38, 82, 0.22);
+}
+
+.flash-card-action--duplicate:hover,
+.flash-card-action--duplicate:focus-visible {
+  border-color: rgba(238, 167, 39, 0.42);
+  background: #9a6407;
+  box-shadow: 0 12px 26px rgba(154, 100, 7, 0.2);
 }
 
 .flash-list-section {
@@ -635,6 +695,67 @@
   width: min(920px, 100%);
 }
 
+.flash-confirm-modal {
+  width: min(460px, 100%);
+  overflow: hidden;
+  border: 1px solid rgba(179, 38, 82, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24px 70px rgba(35, 22, 65, 0.18);
+  animation: flashModalIn 220ms ease forwards;
+}
+
+.flash-confirm-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1.1rem 1.2rem 0.8rem;
+}
+
+.flash-confirm-header > .material-symbols-outlined {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 13px;
+  background: rgba(179, 38, 82, 0.1);
+  color: #b32652;
+  font-size: 1.35rem;
+}
+
+.flash-confirm-header p,
+.flash-confirm-header h3,
+.flash-confirm-body p {
+  margin: 0;
+}
+
+.flash-confirm-header p {
+  color: #b32652;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.flash-confirm-header h3 {
+  margin-top: 0.15rem;
+  color: #20172f;
+  font-size: 1.12rem;
+  font-weight: 950;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.flash-confirm-body {
+  padding: 0 1.2rem 1.05rem 4rem;
+}
+
+.flash-confirm-body p {
+  color: rgba(32, 23, 47, 0.64);
+  font-size: 0.86rem;
+  font-weight: 750;
+  line-height: 1.45;
+}
 @keyframes flashModalIn {
   from {
     transform: translateY(18px) scale(0.98);
