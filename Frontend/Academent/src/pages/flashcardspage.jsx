@@ -1,783 +1,273 @@
 import { useEffect, useMemo, useState } from 'react';
 import TopBar from '../components/TopBar';
 import useNoteManagement from '../Services/useNoteManagement';
+import { FlashCardProvider, useFlashCards } from '../context/FlashCardContext';
+import { toDate } from '../Services/flashCardService';
 import './flashcardspage.css';
 
-const collectionsSeed = [
-  {
-    id: 'biology',
-    icon: 'biotech',
-    name: 'Biology',
-    cards: 35,
-    lastStudied: 'Today, 8:40 AM',
-    progress: 78,
-    difficulty: 'Mixed',
-    studyTime: '18 min',
-    color: '#24b47e',
-  },
-  {
-    id: 'database',
-    icon: 'database',
-    name: 'Database Systems',
-    cards: 42,
-    lastStudied: 'Yesterday',
-    progress: 64,
-    difficulty: 'Medium',
-    studyTime: '24 min',
-    color: '#4D2B8C',
-  },
-  {
-    id: 'software',
-    icon: 'integration_instructions',
-    name: 'Software Engineering',
-    cards: 28,
-    lastStudied: 'Jul 03',
-    progress: 52,
-    difficulty: 'Easy',
-    studyTime: '14 min',
-    color: '#85409D',
-  },
-  {
-    id: 'algorithms',
-    icon: 'hub',
-    name: 'Algorithms',
-    cards: 31,
-    lastStudied: 'Jun 30',
-    progress: 41,
-    difficulty: 'Hard',
-    studyTime: '22 min',
-    color: '#EEA727',
-  },
-  {
-    id: 'mathematics',
-    icon: 'functions',
-    name: 'Mathematics',
-    cards: 56,
-    lastStudied: 'Jun 29',
-    progress: 83,
-    difficulty: 'Mixed',
-    studyTime: '30 min',
-    color: '#2f7dd3',
-  },
+const cardTypes = [
+  { label: 'Definition', value: 'definition' }, { label: 'Concept', value: 'concept' },
+  { label: 'Formula', value: 'formula' }, { label: 'True/False', value: 'true_false' },
+  { label: 'Fill in the Blank', value: 'fill_blank' }, { label: 'Process', value: 'process' },
+  { label: 'Diagram-based', value: 'diagram' }, { label: 'Q&A', value: 'qa' },
 ];
-
-const flashCardsSeed = [
-  {
-    id: 'bio-1',
-    front: 'What is the role of mitochondria in cellular respiration?',
-    back: 'Mitochondria generate ATP by oxidizing glucose-derived molecules through the Krebs cycle and oxidative phosphorylation.',
-    difficulty: 'Medium',
-    tags: ['Cell Biology', 'ATP'],
-    createdFrom: 'Biology Lecture 04.pdf',
-    reviewStatus: 'Due today',
-    lastReviewed: '2h ago',
-    mastery: 82,
-    pinned: true,
-    nextReview: 'Today, 6:00 PM',
-    interval: '2 days',
-    ease: '2.6',
-    retention: '91%',
-    stage: 'Review',
-  },
-  {
-    id: 'bio-2',
-    front: 'Define normalization in relational database design.',
-    back: 'Normalization organizes data to reduce redundancy and dependency issues, commonly through normal forms such as 1NF, 2NF, and 3NF.',
-    difficulty: 'Hard',
-    tags: ['DBMS', 'Schema'],
-    createdFrom: 'Database Systems Notes',
-    reviewStatus: 'Learning',
-    lastReviewed: 'Yesterday',
-    mastery: 48,
-    pinned: false,
-    nextReview: 'Tomorrow',
-    interval: '1 day',
-    ease: '2.1',
-    retention: '74%',
-    stage: 'Learning',
-  },
-  {
-    id: 'bio-3',
-    front: 'What does Big O notation describe?',
-    back: 'Big O expresses how an algorithm scales as input size grows, focusing on upper-bound time or space complexity.',
-    difficulty: 'Easy',
-    tags: ['Algorithms', 'Complexity'],
-    createdFrom: 'Algorithms Week 02',
-    reviewStatus: 'Mastered',
-    lastReviewed: 'Jul 02',
-    mastery: 94,
-    pinned: false,
-    nextReview: 'Jul 09',
-    interval: '7 days',
-    ease: '3.0',
-    retention: '96%',
-    stage: 'Mastered',
-  },
+const preferenceToggles = [
+  { label: 'Include Examples', key: 'includeExamples' }, { label: 'Include Mnemonics', key: 'includeMnemonics' },
+  { label: 'Include Images', key: 'includeImages' }, { label: 'Avoid Duplicates', key: 'avoidDuplicates' },
+  { label: 'Adaptive Difficulty', key: 'adaptiveDifficulty' },
 ];
-
-const kpis = [
-  { label: 'Total Flash Cards', value: '192', delta: '+18', icon: 'style', progress: 76 },
-  { label: 'Mastered Cards', value: '118', delta: '+9', icon: 'verified', progress: 61 },
-  { label: 'Learning Cards', value: '47', delta: '-6', icon: 'school', progress: 44 },
-  { label: "Today's Reviews", value: '23', delta: '8 due', icon: 'event_repeat', progress: 82 },
-  { label: 'Current Streak', value: '12d', delta: '+2d', icon: 'local_fire_department', progress: 88 },
-  { label: 'Weekly Progress', value: '74%', delta: '+11%', icon: 'monitoring', progress: 74 },
-  { label: 'Retention Rate', value: '91%', delta: '+4%', icon: 'psychology_alt', progress: 91 },
-  { label: 'Average Recall Score', value: '86', delta: '+7', icon: 'speed', progress: 86 },
-];
-
-const reviewGroups = [
-  { label: 'Today', count: 23, items: ['Cellular respiration', 'Normal forms', 'Hash tables'], urgent: true },
-  { label: 'Tomorrow', count: 17, items: ['SOLID principles', 'Eigenvectors'], urgent: false },
-  { label: 'This Week', count: 68, items: ['Sorting proofs', 'ER diagrams'], urgent: false },
-  { label: 'Overdue', count: 6, items: ['TCP handshake', 'Calculus limits'], urgent: true },
-];
-
-const cardTypes = ['Definition', 'Concept', 'Formula', 'True/False', 'Fill in the Blank', 'Process', 'Diagram-based', 'Q&A'];
-const preferenceToggles = ['Include examples', 'Include mnemonics', 'Include images', 'Avoid duplicates', 'Adaptive difficulty'];
+const colors = ['#24b47e', '#4D2B8C', '#85409D', '#EEA727', '#2f7dd3', '#b32652'];
+const defaultPreferences = { cardCount: 35, difficulty: 'mixed', cardTypes: ['definition', 'concept', 'formula', 'qa'], includeExamples: true, includeMnemonics: false, includeImages: false, avoidDuplicates: true, adaptiveDifficulty: true };
+const PAGE_SIZE = 6;
 
 function ProgressRing({ value, size = 54, color = '#4D2B8C' }) {
+  const normalized = Math.max(0, Math.min(100, Number(value || 0)));
   const radius = (size - 8) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (circumference * value) / 100;
-
-  return (
-    <span className="flash-ring" style={{ width: size, height: size }}>
-      <svg viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={radius} />
-        <circle cx={size / 2} cy={size / 2} r={radius} style={{ stroke: color, strokeDasharray: circumference, strokeDashoffset: offset }} />
-      </svg>
-      <strong>{value}%</strong>
-    </span>
-  );
+  const offset = circumference - (circumference * normalized) / 100;
+  return <span className="flash-ring" style={{ width: size, height: size }}><svg viewBox={`0 0 ${size} ${size}`} aria-hidden="true"><circle cx={size / 2} cy={size / 2} r={radius} /><circle cx={size / 2} cy={size / 2} r={radius} style={{ stroke: color, strokeDasharray: circumference, strokeDashoffset: offset }} /></svg><strong>{normalized}%</strong></span>;
 }
 
-function MiniChart() {
-  return (
-    <div className="flash-mini-chart" aria-hidden="true">
-      {[42, 68, 54, 84, 72, 91, 79].map((height, index) => <span key={index} style={{ height: `${height}%` }} />)}
-    </div>
-  );
+function MiniChart({ values = [] }) {
+  const nextValues = values.length ? values : [0, 0, 0, 0, 0, 0, 0];
+  return <div className="flash-mini-chart" aria-hidden="true">{nextValues.slice(-7).map((height, index) => <span key={index} style={{ height: `${Math.max(8, Number(height || 0))}%` }} />)}</div>;
 }
 
-function StudyMaterialTree({ semesters, selectedIds, expandedIds, onToggleExpanded, onToggleSelected }) {
+const formatDate = (value, fallback = 'Never') => {
+  const date = toDate(value);
+  if (!date) return fallback;
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) return `Today, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  return date.toLocaleDateString([], { month: 'short', day: '2-digit' });
+};
+const formatDueDate = (value) => {
+  const date = toDate(value);
+  if (!date) return 'Today';
+  const today = new Date();
+  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+  return date.toLocaleDateString([], { month: 'short', day: '2-digit' });
+};
+const formatBytes = (bytes = 0) => {
+  const value = Number(bytes || 0);
+  if (!value) return '';
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+};
+const labelCase = (value) => String(value || 'mixed').replace(/^./, (char) => char.toUpperCase());
+const typeLabel = (value) => cardTypes.find((type) => type.value === value)?.label || 'Q&A';
+const matches = (text, search) => String(text || '').toLowerCase().includes(search.toLowerCase());
+
+function StudyMaterialTree({ semesters, selectedIds, expandedIds, search, onToggleExpanded, onToggleSelected }) {
+  const hasSearch = Boolean(search.trim());
   const renderMaterial = (item, path) => {
-    const material = {
-      id: `${item.type}-${item.id}`,
-      sourceId: item.id,
-      type: item.type,
-      title: item.title,
-      path,
-      icon: item.type === 'pdf' ? 'picture_as_pdf' : 'description',
-    };
-
-    return (
-      <label key={material.id} className="flash-tree-item flash-tree-file">
-        <input checked={selectedIds.includes(material.id)} type="checkbox" onChange={() => onToggleSelected(material)} />
-        <span className="material-symbols-outlined">{material.icon}</span>
-        <span>{material.title}</span>
-      </label>
-    );
+    const material = { id: `${item.type}-${item.id}`, sourceId: item.id, type: item.type, title: item.title, path, icon: item.type === 'pdf' ? 'picture_as_pdf' : 'description' };
+    const preview = item.type === 'note' ? String(item.content || '').slice(0, 180) : '';
+    const meta = item.type === 'pdf' ? [formatBytes(item.size), item.pageCount ? `${item.pageCount} pages` : ''].filter(Boolean).join(' - ') : preview || 'Note preview unavailable';
+    if (hasSearch && !matches(`${material.title} ${path} ${meta}`, search)) return null;
+    return <label key={material.id} className="flash-tree-item flash-tree-file" title={item.type === 'note' ? meta : undefined}><input checked={selectedIds.includes(material.id)} type="checkbox" onChange={() => onToggleSelected(material)} /><span className="material-symbols-outlined">{material.icon}</span><span>{material.title}<small>{meta}</small></span></label>;
   };
-
   const renderFolder = (folder, path) => {
     const folderId = `folder-${folder.folderId}`;
     const folderPath = `${path} / ${folder.title}`;
-    const isOpen = expandedIds.includes(folderId);
+    const isOpen = expandedIds.includes(folderId) || hasSearch;
     const folderMaterial = { id: folderId, sourceId: folder.folderId, type: 'folder', title: folder.title, path, icon: 'folder' };
-
-    return (
-      <div key={folderId} className="flash-tree-branch">
-        <div className="flash-tree-row">
-          <button type="button" className="flash-tree-expand" onClick={() => onToggleExpanded(folderId)} aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${folder.title}`}>
-            <span className="material-symbols-outlined">{isOpen ? 'expand_more' : 'chevron_right'}</span>
-          </button>
-          <label className="flash-tree-item">
-            <input checked={selectedIds.includes(folderId)} type="checkbox" onChange={() => onToggleSelected(folderMaterial)} />
-            <span className="material-symbols-outlined">folder</span>
-            <span>{folder.title}</span>
-          </label>
-        </div>
-        {isOpen && (
-          <div className="flash-tree-children">
-            {(folder.notes || []).map((note) => renderMaterial({ ...note, id: note.noteId, type: 'note' }, folderPath))}
-            {(folder.pdfs || []).map((pdf) => renderMaterial({ ...pdf, id: pdf.pdfId, type: 'pdf' }, folderPath))}
-            {(folder.folders || []).map((child) => renderFolder(child, folderPath))}
-          </div>
-        )}
-      </div>
-    );
+    const children = [...(folder.pdfs || []).map((pdf) => renderMaterial({ ...pdf, id: pdf.pdfId, type: 'pdf' }, folderPath)), ...(folder.notes || []).map((note) => renderMaterial({ ...note, id: note.noteId, type: 'note' }, folderPath)), ...(folder.folders || []).map((child) => renderFolder(child, folderPath))].filter(Boolean);
+    if (hasSearch && !matches(folder.title, search) && !children.length) return null;
+    return <div key={folderId} className="flash-tree-branch"><div className="flash-tree-row"><button type="button" className="flash-tree-expand" onClick={() => onToggleExpanded(folderId)}><span className="material-symbols-outlined">{isOpen ? 'expand_more' : 'chevron_right'}</span></button><label className="flash-tree-item"><input checked={selectedIds.includes(folderId)} type="checkbox" onChange={() => onToggleSelected(folderMaterial)} /><span className="material-symbols-outlined">folder</span><span>{folder.title}</span></label></div>{isOpen && <div className="flash-tree-children">{children}</div>}</div>;
   };
-
-  if (!semesters.length) {
-    return (
-      <div className="flash-tree-empty">
-        <span className="material-symbols-outlined">source_environment</span>
-        <p>Create semesters, modules, notes, or PDFs in My Notes to generate flash cards from your own material.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flash-tree">
-      {semesters.map((semester) => {
-        const semesterId = `semester-${semester.semesterId}`;
-        const semesterOpen = expandedIds.includes(semesterId);
-        const semesterMaterial = { id: semesterId, sourceId: semester.semesterId, type: 'semester', title: semester.title, path: 'Academent', icon: 'auto_stories' };
-
-        return (
-          <div key={semesterId} className="flash-tree-branch">
-            <div className="flash-tree-row flash-tree-root">
-              <button type="button" className="flash-tree-expand" onClick={() => onToggleExpanded(semesterId)} aria-label={`${semesterOpen ? 'Collapse' : 'Expand'} ${semester.title}`}>
-                <span className="material-symbols-outlined">{semesterOpen ? 'expand_more' : 'chevron_right'}</span>
-              </button>
-              <label className="flash-tree-item">
-                <input checked={selectedIds.includes(semesterId)} type="checkbox" onChange={() => onToggleSelected(semesterMaterial)} />
-                <span className="material-symbols-outlined">auto_stories</span>
-                <span>{semester.title}</span>
-              </label>
-            </div>
-            {semesterOpen && (
-              <div className="flash-tree-children">
-                {(semester.modules || []).map((module) => {
-                  const moduleId = `module-${module.moduleId}`;
-                  const moduleOpen = expandedIds.includes(moduleId);
-                  const moduleTitle = module.title || module.moduleId;
-                  const modulePath = `${semester.title} / ${moduleTitle}`;
-                  const moduleMaterial = { id: moduleId, sourceId: module.moduleId, type: 'module', title: moduleTitle, path: semester.title, icon: 'topic' };
-
-                  return (
-                    <div key={moduleId} className="flash-tree-branch">
-                      <div className="flash-tree-row">
-                        <button type="button" className="flash-tree-expand" onClick={() => onToggleExpanded(moduleId)} aria-label={`${moduleOpen ? 'Collapse' : 'Expand'} ${moduleTitle}`}>
-                          <span className="material-symbols-outlined">{moduleOpen ? 'expand_more' : 'chevron_right'}</span>
-                        </button>
-                        <label className="flash-tree-item">
-                          <input checked={selectedIds.includes(moduleId)} type="checkbox" onChange={() => onToggleSelected(moduleMaterial)} />
-                          <span className="material-symbols-outlined">topic</span>
-                          <span>{moduleTitle}</span>
-                        </label>
-                      </div>
-                      {moduleOpen && (
-                        <div className="flash-tree-children">
-                          {(module.notes || []).map((note) => renderMaterial({ ...note, id: note.noteId, type: 'note' }, modulePath))}
-                          {(module.pdfs || []).map((pdf) => renderMaterial({ ...pdf, id: pdf.pdfId, type: 'pdf' }, modulePath))}
-                          {(module.folders || []).map((folder) => renderFolder(folder, modulePath))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+  if (!semesters.length) return <div className="flash-tree-empty"><span className="material-symbols-outlined">source_environment</span><p>Create semesters, modules, notes, or PDFs in My Notes to generate flash cards from your own material.</p></div>;
+  return <div className="flash-tree">{semesters.map((semester) => {
+    const semesterId = `semester-${semester.semesterId}`;
+    const semesterOpen = expandedIds.includes(semesterId) || hasSearch;
+    const semesterMaterial = { id: semesterId, sourceId: semester.semesterId, type: 'semester', title: semester.title, path: 'Academent', icon: 'auto_stories' };
+    const modules = (semester.modules || []).map((module) => {
+      const moduleId = `module-${module.moduleId}`;
+      const moduleOpen = expandedIds.includes(moduleId) || hasSearch;
+      const moduleTitle = module.title || module.moduleId;
+      const modulePath = `${semester.title} / ${moduleTitle}`;
+      const moduleMaterial = { id: moduleId, sourceId: module.moduleId, type: 'module', title: moduleTitle, path: semester.title, icon: 'topic' };
+      const children = [...(module.pdfs || []).map((pdf) => renderMaterial({ ...pdf, id: pdf.pdfId, type: 'pdf' }, modulePath)), ...(module.notes || []).map((note) => renderMaterial({ ...note, id: note.noteId, type: 'note' }, modulePath)), ...(module.folders || []).map((folder) => renderFolder(folder, modulePath))].filter(Boolean);
+      if (hasSearch && !matches(moduleTitle, search) && !children.length) return null;
+      return <div key={moduleId} className="flash-tree-branch"><div className="flash-tree-row"><button type="button" className="flash-tree-expand" onClick={() => onToggleExpanded(moduleId)}><span className="material-symbols-outlined">{moduleOpen ? 'expand_more' : 'chevron_right'}</span></button><label className="flash-tree-item"><input checked={selectedIds.includes(moduleId)} type="checkbox" onChange={() => onToggleSelected(moduleMaterial)} /><span className="material-symbols-outlined">topic</span><span>{moduleTitle}</span></label></div>{moduleOpen && <div className="flash-tree-children">{children}</div>}</div>;
+    }).filter(Boolean);
+    if (hasSearch && !matches(semester.title, search) && !modules.length) return null;
+    return <div key={semesterId} className="flash-tree-branch"><div className="flash-tree-row flash-tree-root"><button type="button" className="flash-tree-expand" onClick={() => onToggleExpanded(semesterId)}><span className="material-symbols-outlined">{semesterOpen ? 'expand_more' : 'chevron_right'}</span></button><label className="flash-tree-item"><input checked={selectedIds.includes(semesterId)} type="checkbox" onChange={() => onToggleSelected(semesterMaterial)} /><span className="material-symbols-outlined">auto_stories</span><span>{semester.title}</span></label></div>{semesterOpen && <div className="flash-tree-children">{modules}</div>}</div>;
+  })}</div>;
 }
 
-function GeneratorModal({ semesters, onClose }) {
+function GeneratorModal({ uid, semesters, noteManagement, working, error, onClose, onGenerate }) {
+  const storageKey = uid ? `academent.flashcards.generator.${uid}` : 'academent.flashcards.generator.guest';
+  const savedState = useMemo(() => { try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { return {}; } }, [storageKey]);
   const [step, setStep] = useState(1);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [expandedIds, setExpandedIds] = useState(() => {
-    const firstSemester = semesters[0];
-    const firstModule = firstSemester?.modules?.[0];
-    return [firstSemester && `semester-${firstSemester.semesterId}`, firstModule && `module-${firstModule.moduleId}`].filter(Boolean);
-  });
-  const [difficulty, setDifficulty] = useState('Mixed');
-  const [cardCount, setCardCount] = useState(35);
-  const [enabledTypes, setEnabledTypes] = useState(['Definition', 'Concept', 'Formula', 'Q&A']);
-  const [enabledToggles, setEnabledToggles] = useState(['Include examples', 'Avoid duplicates', 'Adaptive difficulty']);
-
+  const [selectedItems, setSelectedItems] = useState(savedState.selectedItems || []);
+  const [expandedIds, setExpandedIds] = useState(() => savedState.expandedIds || [semesters[0] && `semester-${semesters[0].semesterId}`, semesters[0]?.modules?.[0] && `module-${semesters[0].modules[0].moduleId}`].filter(Boolean));
+  const [preferences, setPreferences] = useState({ ...defaultPreferences, ...(savedState.preferences || {}) });
+  const [search, setSearch] = useState('');
   const selectedIds = selectedItems.map((item) => item.id);
   const toggleExpanded = (id) => setExpandedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   const toggleSelected = (item) => setSelectedItems((current) => current.some((selected) => selected.id === item.id) ? current.filter((selected) => selected.id !== item.id) : [...current, item]);
-  const toggleType = (type) => setEnabledTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]);
-  const togglePreference = (preference) => setEnabledToggles((current) => current.includes(preference) ? current.filter((item) => item !== preference) : [...current, preference]);
-
-  return (
-    <div className="flash-modal-backdrop">
-      <section className="flash-generator-modal" role="dialog" aria-modal="true" aria-labelledby="flash-generator-title">
-        <header className="flash-modal-header">
-          <div>
-            <p>AI flash card generator</p>
-            <h3 id="flash-generator-title">Create Flash Cards</h3>
-            <span>Step {step} of 3</span>
-          </div>
-          <button className="flash-icon-button" type="button" onClick={onClose} aria-label="Close generator">
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </header>
-
-        <div className="flash-stepper" aria-label="Generator progress">
-          {[1, 2, 3].map((item) => <span key={item} className={step >= item ? 'is-active' : ''} />)}
-        </div>
-
-        <div className="flash-generator-body">
-          {step === 1 && (
-            <section className="flash-generator-grid">
-              <div className="flash-generator-panel flash-tree-panel">
-                <div className="flash-panel-heading">
-                  <h4>Choose Study Material</h4>
-                  <p>Select folders, notes, and PDFs from Notes Management.</p>
-                </div>
-                <label className="flash-search-field">
-                  <span className="material-symbols-outlined">search</span>
-                  <input placeholder="Search tree" />
-                </label>
-                <StudyMaterialTree semesters={semesters} selectedIds={selectedIds} expandedIds={expandedIds} onToggleExpanded={toggleExpanded} onToggleSelected={toggleSelected} />
-              </div>
-              <aside className="flash-generator-panel">
-                <div className="flash-panel-heading">
-                  <h4>Selected Sources</h4>
-                  <p>{selectedItems.length} items ready for generation</p>
-                </div>
-                <div className="flash-selected-sources">
-                  {selectedItems.length ? selectedItems.map((item) => (
-                    <div key={item.id}>
-                      <span className="material-symbols-outlined">{item.icon}</span>
-                      <div>
-                        <strong>{item.title}</strong>
-                        <small>{item.path}</small>
-                      </div>
-                    </div>
-                  )) : <p>Select at least one source to build grounded flash cards.</p>}
-                </div>
-              </aside>
-            </section>
-          )}
-
-          {step === 2 && (
-            <section className="flash-generator-panel">
-              <div className="flash-panel-heading">
-                <h4>Flash Card Preferences</h4>
-                <p>Tune the amount, depth, and card format.</p>
-              </div>
-              <div className="flash-preference-grid">
-                <label className="flash-range-field">
-                  <span>Number of cards</span>
-                  <input min="10" max="80" type="range" value={cardCount} onChange={(event) => setCardCount(Number(event.target.value))} />
-                  <strong>{cardCount}</strong>
-                </label>
-                <fieldset className="flash-segmented">
-                  <legend>Difficulty</legend>
-                  {['Easy', 'Medium', 'Hard', 'Mixed'].map((level) => (
-                    <label key={level}>
-                      <input checked={difficulty === level} type="radio" name="flashDifficulty" onChange={() => setDifficulty(level)} />
-                      <span>{level}</span>
-                    </label>
-                  ))}
-                </fieldset>
-              </div>
-              <div className="flash-choice-grid">
-                {cardTypes.map((type) => (
-                  <button key={type} type="button" className={enabledTypes.includes(type) ? 'is-selected' : ''} onClick={() => toggleType(type)}>
-                    <span className="material-symbols-outlined">{enabledTypes.includes(type) ? 'check_circle' : 'radio_button_unchecked'}</span>
-                    {type}
-                  </button>
-                ))}
-              </div>
-              <div className="flash-toggle-list">
-                {preferenceToggles.map((toggle) => (
-                  <label key={toggle}>
-                    <input checked={enabledToggles.includes(toggle)} type="checkbox" onChange={() => togglePreference(toggle)} />
-                    <span>{toggle}</span>
-                  </label>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {step === 3 && (
-            <section className="flash-generator-grid">
-              <div className="flash-generator-panel">
-                <div className="flash-panel-heading">
-                  <h4>Generation Preview</h4>
-                  <p>Review the estimated scope before creating cards.</p>
-                </div>
-                <div className="flash-preview-metrics">
-                  <div><span>Estimated cards</span><strong>{cardCount}</strong></div>
-                  <div><span>Generation time</span><strong>~45s</strong></div>
-                  <div><span>Sources</span><strong>{Math.max(selectedItems.length, 1)}</strong></div>
-                </div>
-                <div className="flash-coverage">
-                  <div><span style={{ width: '82%' }} /></div>
-                  <p>Coverage graph: strongest in definitions, formulas, and exam-style Q&A.</p>
-                </div>
-              </div>
-              <aside className="flash-generator-panel">
-                <div className="flash-panel-heading">
-                  <h4>Detected Concepts</h4>
-                  <p>Knowledge areas AI will prioritize.</p>
-                </div>
-                <div className="flash-topic-cloud">
-                  {['Core definitions', 'Process steps', 'Common mistakes', 'Formula recall', 'Applied examples', 'Related topics'].map((topic) => <span key={topic}>{topic}</span>)}
-                </div>
-              </aside>
-            </section>
-          )}
-        </div>
-
-        <footer className="flash-modal-actions">
-          <button className="flash-button flash-button--ghost" type="button" onClick={step === 1 ? onClose : () => setStep((current) => current - 1)}>
-            {step === 1 ? 'Cancel' : 'Previous'}
-          </button>
-          <button className="flash-button flash-button--primary" type="button" onClick={step === 3 ? onClose : () => setStep((current) => current + 1)}>
-            <span className="material-symbols-outlined">{step === 3 ? 'auto_awesome' : 'arrow_forward'}</span>
-            {step === 3 ? 'Generate Flash Cards' : 'Continue'}
-          </button>
-        </footer>
-      </section>
+  const toggleType = (type) => setPreferences((current) => ({ ...current, cardTypes: current.cardTypes.includes(type) ? current.cardTypes.filter((item) => item !== type) : [...current.cardTypes, type] }));
+  const togglePreference = (key) => setPreferences((current) => ({ ...current, [key]: !current[key] }));
+  const submit = async () => {
+    localStorage.setItem(storageKey, JSON.stringify({ selectedItems, expandedIds, preferences }));
+    await onGenerate({ selectedItems, preferences, noteManagement });
+  };
+  return <div className="flash-modal-backdrop"><section className="flash-generator-modal" role="dialog" aria-modal="true" aria-labelledby="flash-generator-title">
+    <header className="flash-modal-header"><div><p>AI flash card generator</p><h3 id="flash-generator-title">Create Flash Cards</h3><span>Step {step} of 3</span></div><button className="flash-icon-button" type="button" onClick={onClose} aria-label="Close generator"><span className="material-symbols-outlined">close</span></button></header>
+    <div className="flash-stepper" aria-label="Generator progress">{[1, 2, 3].map((item) => <span key={item} className={step >= item ? 'is-active' : ''} />)}</div>
+    <div className="flash-generator-body">
+      {error && <div className="flash-error-banner"><span className="material-symbols-outlined">error</span>{error.message || String(error)}</div>}
+      {step === 1 && <section className="flash-generator-grid"><div className="flash-generator-panel flash-tree-panel"><div className="flash-panel-heading"><h4>Choose Study Material</h4><p>Select semesters, modules, folders, PDFs, and notes from Notes Management.</p></div><label className="flash-search-field"><span className="material-symbols-outlined">search</span><input value={search} placeholder="Search tree" onChange={(event) => setSearch(event.target.value)} /></label><StudyMaterialTree semesters={semesters} selectedIds={selectedIds} expandedIds={expandedIds} search={search} onToggleExpanded={toggleExpanded} onToggleSelected={toggleSelected} /></div><aside className="flash-generator-panel"><div className="flash-panel-heading"><h4>Selected Sources</h4><p>{selectedItems.length} hierarchy selections remembered for generation</p></div><div className="flash-selected-sources">{selectedItems.length ? selectedItems.map((item) => <div key={item.id}><span className="material-symbols-outlined">{item.icon}</span><div><strong>{item.title}</strong><small>{item.path}</small></div></div>) : <p>Select at least one source to build grounded flash cards.</p>}</div></aside></section>}
+      {step === 2 && <section className="flash-generator-panel"><div className="flash-panel-heading"><h4>Flash Card Preferences</h4><p>Tune the amount, depth, and card format.</p></div><div className="flash-preference-grid"><label className="flash-range-field"><span>Number of cards</span><input min="1" max="100" type="number" value={preferences.cardCount} onChange={(event) => setPreferences((current) => ({ ...current, cardCount: Number(event.target.value) }))} /><strong>{preferences.cardCount || 35}</strong></label><fieldset className="flash-segmented"><legend>Difficulty</legend>{['easy', 'medium', 'hard', 'mixed'].map((level) => <label key={level}><input checked={preferences.difficulty === level} type="radio" name="flashDifficulty" onChange={() => setPreferences((current) => ({ ...current, difficulty: level }))} /><span>{labelCase(level)}</span></label>)}</fieldset></div><div className="flash-choice-grid">{cardTypes.map((type) => <button key={type.value} type="button" className={preferences.cardTypes.includes(type.value) ? 'is-selected' : ''} onClick={() => toggleType(type.value)}><span className="material-symbols-outlined">{preferences.cardTypes.includes(type.value) ? 'check_circle' : 'radio_button_unchecked'}</span>{type.label}</button>)}</div><div className="flash-toggle-list">{preferenceToggles.map((toggle) => <label key={toggle.key}><input checked={Boolean(preferences[toggle.key])} type="checkbox" onChange={() => togglePreference(toggle.key)} /><span>{toggle.label}</span></label>)}</div></section>}
+      {step === 3 && <section className="flash-generator-grid"><div className="flash-generator-panel"><div className="flash-panel-heading"><h4>Generation Preview</h4><p>Academent will extract, rank, generate, validate, dedupe, and save.</p></div><div className="flash-preview-metrics"><div><span>Requested cards</span><strong>{preferences.cardCount}</strong></div><div><span>Sources selected</span><strong>{selectedItems.length}</strong></div><div><span>Difficulty</span><strong>{labelCase(preferences.difficulty)}</strong></div></div><div className="flash-coverage"><div><span style={{ width: `${Math.min(100, preferences.cardTypes.length * 12)}%` }} /></div><p>{preferences.cardTypes.map(typeLabel).join(', ')} cards with selected options respected by the generation pipeline.</p></div></div><aside className="flash-generator-panel"><div className="flash-panel-heading"><h4>Generation Pipeline</h4><p>Only academic, meaningful concepts are used.</p></div><div className="flash-topic-cloud">{['Knowledge extraction', 'Concept ranking', 'Deduplication', 'SM-2 scheduling', 'Analytics refresh', 'Firestore save'].map((topic) => <span key={topic}>{topic}</span>)}</div></aside></section>}
     </div>
-  );
+    <footer className="flash-modal-actions"><button className="flash-button flash-button--ghost" type="button" disabled={working} onClick={step === 1 ? onClose : () => setStep((current) => current - 1)}>{step === 1 ? 'Cancel' : 'Previous'}</button><button className="flash-button flash-button--primary" type="button" disabled={step === 3 ? (!selectedItems.length || !preferences.cardTypes.length || working) : (step === 1 && !selectedItems.length)} onClick={step === 3 ? submit : () => setStep((current) => current + 1)}><span className="material-symbols-outlined">{working ? 'hourglass_top' : step === 3 ? 'auto_awesome' : 'arrow_forward'}</span>{working ? 'Generating...' : step === 3 ? 'Generate Flash Cards' : 'Continue'}</button></footer>
+  </section></div>;
 }
 
-function CardEditorModal({ onClose }) {
-  return (
-    <div className="flash-modal-backdrop">
-      <section className="flash-editor-modal" role="dialog" aria-modal="true" aria-labelledby="flash-editor-title">
-        <header className="flash-modal-header">
-          <div>
-            <p>Card editor</p>
-            <h3 id="flash-editor-title">Edit Flash Card</h3>
-          </div>
-          <button className="flash-icon-button" type="button" onClick={onClose} aria-label="Close editor">
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </header>
-        <div className="flash-editor-body">
-          <label><span>Front</span><textarea defaultValue="What does Big O notation describe?" /></label>
-          <label><span>Back</span><textarea defaultValue="How an algorithm scales as input size grows, focusing on upper-bound time or space complexity." /></label>
-          <label><span>Category</span><input defaultValue="Algorithms" /></label>
-          <label><span>Tags</span><input defaultValue="Complexity, Analysis" /></label>
-          <label><span>Difficulty</span><select defaultValue="Medium"><option>Easy</option><option>Medium</option><option>Hard</option></select></label>
-          <label><span>Notes</span><textarea defaultValue="Use merge sort and binary search as examples during review." /></label>
-          <label className="flash-upload-field">
-            <span>Image upload</span>
-            <div><span className="material-symbols-outlined">add_photo_alternate</span> Drop image or browse</div>
-          </label>
-          <div className="flash-rich-editor">
-            <div><button type="button">B</button><button type="button">I</button><button type="button"><span className="material-symbols-outlined">format_list_bulleted</span></button></div>
-            <p>Rich text preview for formatted explanations, formulas, and diagrams.</p>
-          </div>
-        </div>
-        <footer className="flash-modal-actions">
-          <button className="flash-button flash-button--ghost" type="button" onClick={onClose}>Cancel</button>
-          <button className="flash-button flash-button--ghost" type="button"><span className="material-symbols-outlined">auto_awesome</span>Generate with AI</button>
-          <button className="flash-button flash-button--ghost" type="button"><span className="material-symbols-outlined">visibility</span>Preview</button>
-          <button className="flash-button flash-button--primary" type="button" onClick={onClose}>Save</button>
-        </footer>
-      </section>
-    </div>
-  );
+function CardEditorModal({ card, onClose }) {
+  return <div className="flash-modal-backdrop"><section className="flash-editor-modal" role="dialog" aria-modal="true" aria-labelledby="flash-editor-title"><header className="flash-modal-header"><div><p>Card details</p><h3 id="flash-editor-title">Flash Card</h3></div><button className="flash-icon-button" type="button" onClick={onClose}><span className="material-symbols-outlined">close</span></button></header><div className="flash-editor-body"><label><span>Front</span><textarea readOnly value={card?.front || ''} /></label><label><span>Back</span><textarea readOnly value={card?.back || ''} /></label><label><span>Type</span><input readOnly value={typeLabel(card?.type)} /></label><label><span>Difficulty</span><input readOnly value={labelCase(card?.difficulty)} /></label><label><span>Example</span><textarea readOnly value={card?.example || ''} /></label><label><span>Mnemonic</span><textarea readOnly value={card?.mnemonic || ''} /></label><label><span>Image Description</span><textarea readOnly value={card?.imageDescription || ''} /></label><div className="flash-rich-editor"><p>{card?.explanation || 'No additional explanation was generated for this card.'}</p></div></div><footer className="flash-modal-actions"><button className="flash-button flash-button--primary" type="button" onClick={onClose}>Done</button></footer></section></div>;
 }
 
-function StudyMode({ collection, cards, onExit }) {
+function StudyMode({ collection, cards, onExit, onReview }) {
+  const dueCards = useMemo(() => {
+    const now = new Date();
+    const due = cards.filter((card) => !toDate(card.nextReview) || toDate(card.nextReview) <= now);
+    return due.length ? due : cards;
+  }, [cards]);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [aiOpen, setAiOpen] = useState(true);
-  const activeCard = cards[index] || cards[0];
-  const progress = Math.round(((index + 1) / cards.length) * 100);
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.code === 'Space') {
-        event.preventDefault();
-        setFlipped((current) => !current);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const goTo = (nextIndex) => {
-    setIndex(Math.min(Math.max(nextIndex, 0), cards.length - 1));
-    setFlipped(false);
-  };
-
-  return (
-    <main className="flash-study-mode">
-      <header className="flash-study-topbar">
-        <button className="flash-button flash-button--ghost" type="button" onClick={onExit}><span className="material-symbols-outlined">close</span>Exit Study</button>
-        <div className="flash-study-progress">
-          <div>
-            <strong>Card {index + 1} of {cards.length}</strong>
-            <span>~12 min remaining - 12 streak</span>
-          </div>
-          <div className="flash-progress-track"><span style={{ width: `${progress}%` }} /></div>
-        </div>
-        <button className="flash-icon-button" type="button" onClick={() => setAiOpen((current) => !current)} aria-label="Toggle AI assistant">
-          <span className="material-symbols-outlined">side_panel_right</span>
-        </button>
-      </header>
-
-      <section className={aiOpen ? 'flash-study-layout' : 'flash-study-layout flash-study-layout--wide'}>
-        <div className="flash-study-center">
-          <p className="flash-eyebrow">{collection.name} / {activeCard.difficulty}</p>
-          <article className={flipped ? 'flash-study-card is-flipped' : 'flash-study-card'}>
-            {!flipped ? (
-              <>
-                <span className="material-symbols-outlined">style</span>
-                <p>Question</p>
-                <h1>{activeCard.front}</h1>
-                <div className="flash-card-placeholder">
-                  <span className="material-symbols-outlined">insert_chart</span>
-                  Diagram placeholder
-                </div>
-                <button className="flash-button flash-button--primary flash-flip-button" type="button" onClick={() => setFlipped(true)}>
-                  <span className="material-symbols-outlined">flip</span>Flip
-                </button>
-                <small>Space = Flip</small>
-              </>
-            ) : (
-              <>
-                <span className="material-symbols-outlined">task_alt</span>
-                <p>Answer</p>
-                <h2>{activeCard.back}</h2>
-                <div className="flash-answer-grid">
-                  <div><strong>Explanation</strong><span>Connect the definition to a concrete example before moving on.</span></div>
-                  <div><strong>Example</strong><span>Compare how the idea appears in lectures, notes, and practice questions.</span></div>
-                  <div><strong>Related concept</strong><span>{activeCard.tags.join(', ')}</span></div>
-                </div>
-                <div className="flash-rating">
-                  <p>How well did you know this?</p>
-                  {['Again', 'Hard', 'Good', 'Easy'].map((rating) => <button key={rating} className={`flash-rating-${rating.toLowerCase()}`} type="button">{rating}</button>)}
-                </div>
-              </>
-            )}
-          </article>
-
-          <footer className="flash-study-controls">
-            <button className="flash-button flash-button--ghost" type="button" disabled={index === 0} onClick={() => goTo(index - 1)}><span className="material-symbols-outlined">chevron_left</span>Previous</button>
-            <button className="flash-button flash-button--ghost" type="button" onClick={() => setFlipped((current) => !current)}><span className="material-symbols-outlined">flip</span>Flip</button>
-            <button className="flash-button flash-button--primary" type="button" disabled={index === cards.length - 1} onClick={() => goTo(index + 1)}>Next<span className="material-symbols-outlined">chevron_right</span></button>
-            <button className="flash-icon-button" type="button" aria-label="Shuffle"><span className="material-symbols-outlined">shuffle</span></button>
-            <button className="flash-icon-button" type="button" aria-label="Auto play"><span className="material-symbols-outlined">play_circle</span></button>
-            <button className="flash-icon-button" type="button" aria-label="Fullscreen"><span className="material-symbols-outlined">fullscreen</span></button>
-          </footer>
-        </div>
-
-        {aiOpen && (
-          <aside className="flash-ai-panel">
-            <div className="flash-panel-heading">
-              <h3>AI Assistant</h3>
-              <p>Ask about the current flash card.</p>
-            </div>
-            <label className="flash-ai-input">
-              <input placeholder="Ask AI about this card" />
-              <button type="button" aria-label="Send"><span className="material-symbols-outlined">send</span></button>
-            </label>
-            <div className="flash-ai-actions">
-              {['Explain concept', 'Generate mnemonic', 'Generate memory trick', 'Give real-world example', 'Generate practice question', 'Simplify explanation', 'Expand explanation', 'Show related topics'].map((action) => (
-                <button key={action} type="button">{action}</button>
-              ))}
-            </div>
-          </aside>
-        )}
-      </section>
-    </main>
-  );
+  const [cardStartedAt, setCardStartedAt] = useState(0);
+  const activeCard = dueCards[index];
+  const progress = dueCards.length ? Math.round(((index + 1) / dueCards.length) * 100) : 0;
+  useEffect(() => { const handleKeyDown = (event) => { if (event.code === 'Space') { event.preventDefault(); setFlipped((current) => !current); } }; window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown); }, []);
+  const goTo = (nextIndex, event) => { setIndex(Math.min(Math.max(nextIndex, 0), dueCards.length - 1)); setFlipped(false); setCardStartedAt(event?.timeStamp || 0); };
+  const rateCard = async (rating, event) => { if (!activeCard) return; const duration = cardStartedAt ? Math.max(0, event.timeStamp - cardStartedAt) : 0; await onReview(activeCard, rating, duration); if (index < dueCards.length - 1) goTo(index + 1, event); else onExit(); };
+  if (!activeCard) return <main className="flash-study-mode"><section className="flash-empty-state"><h3>No cards ready</h3><p>This collection does not have loaded cards yet.</p><button className="flash-button flash-button--primary" type="button" onClick={onExit}>Back to Flash Cards</button></section></main>;
+  return <main className="flash-study-mode"><header className="flash-study-topbar"><button className="flash-button flash-button--ghost" type="button" onClick={onExit}><span className="material-symbols-outlined">close</span>Exit Study</button><div className="flash-study-progress"><div><strong>Card {index + 1} of {dueCards.length}</strong><span>{collection.analytics?.currentStreak || 0} day streak - {collection.analytics?.dueToday || 0} due today</span></div><div className="flash-progress-track"><span style={{ width: `${progress}%` }} /></div></div><button className="flash-icon-button" type="button" onClick={() => setAiOpen((current) => !current)}><span className="material-symbols-outlined">side_panel_right</span></button></header><section className={aiOpen ? 'flash-study-layout' : 'flash-study-layout flash-study-layout--wide'}><div className="flash-study-center"><p className="flash-eyebrow">{collection.title} / {labelCase(activeCard.difficulty)}</p><article className={flipped ? 'flash-study-card is-flipped' : 'flash-study-card'}>{!flipped ? <><span className="material-symbols-outlined">style</span><p>{typeLabel(activeCard.type)}</p><h1>{activeCard.front}</h1>{activeCard.imageDescription && <div className="flash-card-placeholder"><span className="material-symbols-outlined">insert_chart</span>{activeCard.imageDescription}</div>}<button className="flash-button flash-button--primary flash-flip-button" type="button" onClick={() => setFlipped(true)}><span className="material-symbols-outlined">flip</span>Flip</button><small>Space = Flip</small></> : <><span className="material-symbols-outlined">task_alt</span><p>Answer</p><h2>{activeCard.back}</h2><div className="flash-answer-grid"><div><strong>Explanation</strong><span>{activeCard.explanation || activeCard.back}</span></div><div><strong>Example</strong><span>{activeCard.example || 'No example generated for this card.'}</span></div><div><strong>Mnemonic</strong><span>{activeCard.mnemonic || 'No mnemonic generated for this card.'}</span></div></div><div className="flash-rating"><p>How well did you know this?</p>{['Again', 'Hard', 'Good', 'Easy'].map((rating) => <button key={rating} className={`flash-rating-${rating.toLowerCase()}`} type="button" onClick={(event) => rateCard(rating, event)}>{rating}</button>)}</div></>}</article><footer className="flash-study-controls"><button className="flash-button flash-button--ghost" type="button" disabled={index === 0} onClick={(event) => goTo(index - 1, event)}><span className="material-symbols-outlined">chevron_left</span>Previous</button><button className="flash-button flash-button--ghost" type="button" onClick={() => setFlipped((current) => !current)}><span className="material-symbols-outlined">flip</span>Flip</button><button className="flash-button flash-button--primary" type="button" disabled={index === dueCards.length - 1} onClick={(event) => goTo(index + 1, event)}>Next<span className="material-symbols-outlined">chevron_right</span></button></footer></div>{aiOpen && <aside className="flash-ai-panel"><div className="flash-panel-heading"><h3>AI Context</h3><p>Generated card details and learning cues.</p></div><div className="flash-ai-actions">{[activeCard.explanation, activeCard.example, activeCard.mnemonic, ...(activeCard.keywords || [])].filter(Boolean).slice(0, 8).map((action) => <button key={action} type="button">{action}</button>)}</div></aside>}</section></main>;
 }
 
-function FlashCardsPage({ profile, currentUser }) {
+const aggregateAnalytics = (collections) => {
+  const totals = collections.reduce((sum, collection) => {
+    const analytics = collection.analytics || {};
+    return {
+      totalFlashCards: sum.totalFlashCards + Number(analytics.totalFlashCards || collection.cardCount || 0),
+      masteredCards: sum.masteredCards + Number(analytics.masteredCards || 0),
+      learningCards: sum.learningCards + Number(analytics.learningCards || 0),
+      todaysReviews: sum.todaysReviews + Number(analytics.todaysReviews || 0),
+      currentStreak: Math.max(sum.currentStreak, Number(analytics.currentStreak || 0)),
+      weeklyProgress: sum.weeklyProgress + Number(analytics.weeklyProgress || 0),
+      retentionRate: sum.retentionRate + Number(analytics.retentionRate || 0),
+      averageRecallScore: sum.averageRecallScore + Number(analytics.averageRecallScore || 0),
+      dueToday: sum.dueToday + Number(analytics.dueToday || 0),
+    };
+  }, { totalFlashCards: 0, masteredCards: 0, learningCards: 0, todaysReviews: 0, currentStreak: 0, weeklyProgress: 0, retentionRate: 0, averageRecallScore: 0, dueToday: 0 });
+  const count = collections.length || 1;
+  return { ...totals, weeklyProgress: Math.round(totals.weeklyProgress / count), retentionRate: Math.round(totals.retentionRate / count), averageRecallScore: Math.round(totals.averageRecallScore / count) };
+};
+
+function FlashCardsWorkspace({ profile, currentUser }) {
   const notes = useNoteManagement();
-  const [collections, setCollections] = useState(collectionsSeed);
-  const [activeCollection, setActiveCollection] = useState(null);
+  const flash = useFlashCards();
+  const loadCards = flash.loadCards;
+  const [activeCollectionId, setActiveCollectionId] = useState(null);
   const [studyCollection, setStudyCollection] = useState(null);
   const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editorCard, setEditorCard] = useState(null);
   const [search, setSearch] = useState('');
-
+  const [filter, setFilter] = useState('all');
+  const [sort, setSort] = useState('recent');
+  const [page, setPage] = useState(1);
   const fullName = profile?.fullName || currentUser?.displayName || 'Student';
   const photoURL = currentUser?.photoURL || profile?.photoURL || '';
-  const filteredCollections = collections.filter((collection) => collection.name.toLowerCase().includes(search.toLowerCase()));
-  const selectedCollection = activeCollection || filteredCollections[0];
-  const dueToday = flashCardsSeed.filter((card) => card.reviewStatus === 'Due today').length;
+  const activeCollection = flash.collections.find((collection) => collection.id === activeCollectionId) || flash.collections[0] || null;
+  const cardsForCollection = useMemo(() => (activeCollection ? (flash.cardsByCollection[activeCollection.id] || []) : []), [activeCollection, flash.cardsByCollection]);
 
-  const cardsForCollection = useMemo(() => flashCardsSeed.map((card, index) => ({
-    ...card,
-    collectionId: selectedCollection?.id,
-    id: `${selectedCollection?.id || 'card'}-${index}`,
-  })), [selectedCollection?.id]);
+  useEffect(() => { if (activeCollection?.id) loadCards(activeCollection.id).catch(() => {}); }, [activeCollection?.id, loadCards]);
 
-  const duplicateCollection = (collection) => {
-    setCollections((current) => [{ ...collection, id: `${collection.id}-${Date.now()}`, name: `${collection.name} Copy`, progress: Math.max(collection.progress - 8, 12) }, ...current]);
+  const filteredCollections = useMemo(() => {
+    const sorted = [...flash.collections].sort((left, right) => {
+      if (sort === 'title') return String(left.title || '').localeCompare(String(right.title || ''));
+      if (sort === 'progress') return Number(right.analytics?.completionPercentage || 0) - Number(left.analytics?.completionPercentage || 0);
+      if (sort === 'cards') return Number(right.cardCount || right.analytics?.totalFlashCards || 0) - Number(left.cardCount || left.analytics?.totalFlashCards || 0);
+      return (toDate(right.createdAt)?.getTime() || 0) - (toDate(left.createdAt)?.getTime() || 0);
+    });
+    return sorted.filter((collection) => {
+      const text = `${collection.title || ''} ${collection.description || ''} ${(collection.selectedSources || []).map((source) => source.title).join(' ')}`;
+      if (search && !matches(text, search)) return false;
+      if (filter === 'due') return Number(collection.analytics?.dueToday || 0) > 0 || Number(collection.analytics?.overdueCards || 0) > 0;
+      if (filter === 'mastered') return Number(collection.analytics?.completionPercentage || 0) >= 80;
+      if (filter === 'learning') return Number(collection.analytics?.learningCards || 0) > 0;
+      return true;
+    });
+  }, [flash.collections, filter, search, sort]);
+
+  const pagedCollections = filteredCollections.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filteredCollections.length / PAGE_SIZE));
+  const analytics = useMemo(() => aggregateAnalytics(flash.collections), [flash.collections]);
+  const kpis = [
+    { label: 'Total Flash Cards', value: analytics.totalFlashCards, delta: `${flash.collections.length} collections`, icon: 'style', progress: Math.min(100, analytics.totalFlashCards) },
+    { label: 'Mastered Cards', value: analytics.masteredCards, delta: `${analytics.learningCards} learning`, icon: 'verified', progress: analytics.totalFlashCards ? Math.round((analytics.masteredCards / analytics.totalFlashCards) * 100) : 0 },
+    { label: 'Learning Cards', value: analytics.learningCards, delta: `${analytics.dueToday} due`, icon: 'school', progress: analytics.totalFlashCards ? Math.round((analytics.learningCards / analytics.totalFlashCards) * 100) : 0 },
+    { label: "Today's Reviews", value: analytics.todaysReviews, delta: `${analytics.dueToday} due`, icon: 'event_repeat', progress: Math.min(100, analytics.todaysReviews * 10) },
+    { label: 'Current Streak', value: `${analytics.currentStreak}d`, delta: 'from reviews', icon: 'local_fire_department', progress: Math.min(100, analytics.currentStreak * 8) },
+    { label: 'Weekly Progress', value: `${analytics.weeklyProgress}%`, delta: '7-day activity', icon: 'monitoring', progress: analytics.weeklyProgress },
+    { label: 'Retention Rate', value: `${analytics.retentionRate}%`, delta: 'good/easy recall', icon: 'psychology_alt', progress: analytics.retentionRate },
+    { label: 'Average Recall Score', value: analytics.averageRecallScore, delta: 'review score', icon: 'speed', progress: analytics.averageRecallScore },
+  ];
+
+  const reviewGroups = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const tomorrowEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+    const groups = { Today: [], Tomorrow: [], 'This Week': [], Overdue: [] };
+    cardsForCollection.forEach((card) => {
+      const due = toDate(card.nextReview);
+      if (!due) groups.Today.push(card);
+      else if (due < todayStart) groups.Overdue.push(card);
+      else if (due < todayEnd) groups.Today.push(card);
+      else if (due < tomorrowEnd) groups.Tomorrow.push(card);
+      else if (due < new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7)) groups['This Week'].push(card);
+    });
+    return Object.entries(groups).map(([label, items]) => ({ label, count: items.length, items: items.slice(0, 3).map((card) => card.front), urgent: label === 'Today' || label === 'Overdue' }));
+  }, [cardsForCollection]);
+
+  const startStudy = async (collection) => {
+    const cards = await flash.loadCards(collection.id, { force: !flash.cardsByCollection[collection.id] });
+    if (cards.length) setStudyCollection(collection);
   };
-
-  const deleteCollection = (collectionId) => {
-    setCollections((current) => current.filter((collection) => collection.id !== collectionId));
-    if (activeCollection?.id === collectionId) setActiveCollection(null);
-  };
+  const handleGenerate = async (payload) => { const created = await flash.generateCollection(payload); setActiveCollectionId(created.id); setIsGeneratorOpen(false); };
+  const removeCollection = async (collectionId) => { if (!window.confirm('Delete this flash card collection and all cards?')) return; await flash.removeCollection(collectionId); if (activeCollectionId === collectionId) setActiveCollectionId(null); };
 
   if (studyCollection) {
-    return <StudyMode collection={studyCollection} cards={cardsForCollection} onExit={() => setStudyCollection(null)} />;
+    const studyCards = flash.cardsByCollection[studyCollection.id] || [];
+    return <StudyMode collection={studyCollection} cards={studyCards} onExit={() => setStudyCollection(null)} onReview={(card, rating, duration) => flash.reviewCard(studyCollection.id, card, rating, duration)} />;
   }
 
-  return (
-    <main className="p-gutter md:p-margin-desktop space-y-xl flash-page">
-      <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search flash cards, concepts, or tags..." />
+  return <main className="p-gutter md:p-margin-desktop space-y-xl flash-page">
+    <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search flash cards, concepts, or tags..." />
+    <section className="flash-header"><div><p className="flash-eyebrow">Dedicated study environment</p><h2>Flash Cards</h2><p>Generate, review, and master AI flash cards from your notes and PDFs.</p></div><div className="flash-header-actions"><label className="flash-search-field"><span className="material-symbols-outlined">search</span><input value={search} placeholder="Search flash cards" onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></label><select className="flash-select-control" value={filter} onChange={(event) => { setFilter(event.target.value); setPage(1); }}><option value="all">All</option><option value="due">Due</option><option value="learning">Learning</option><option value="mastered">Mastered</option></select><select className="flash-select-control" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }}><option value="recent">Recent</option><option value="title">Title</option><option value="progress">Progress</option><option value="cards">Cards</option></select><button className="flash-button flash-button--primary" type="button" onClick={() => setIsGeneratorOpen(true)}><span className="material-symbols-outlined">auto_awesome</span>Create Flash Cards</button></div></section>
+    {(flash.error || notes.error) && <div className="flash-error-banner"><span className="material-symbols-outlined">error</span>{flash.error?.message || notes.error?.message}</div>}
+    <section className="flash-kpi-grid" aria-label="Flash card statistics">{kpis.map((kpi) => <article key={kpi.label} className="flash-kpi-card"><div><span className="material-symbols-outlined">{kpi.icon}</span><p>{kpi.label}</p><h3>{kpi.value}</h3><small>{kpi.delta}</small></div><ProgressRing value={kpi.progress} size={48} color={kpi.progress > 80 ? '#24b47e' : '#4D2B8C'} /><MiniChart values={[kpi.progress, analytics.weeklyProgress, analytics.retentionRate, analytics.averageRecallScore]} /></article>)}</section>
+    <div className="flash-workspace-grid"><div className="flash-main-column"><section><div className="flash-section-heading"><div><h3>Flash Card Collections</h3><p>{filteredCollections.length} collections from notes, PDFs, and generated cards.</p></div><span>{analytics.dueToday} cards due today</span></div>{flash.loading ? <div className="flash-skeleton-panel"><span /><span /><span /></div> : pagedCollections.length ? <><div className="flash-collection-grid">{pagedCollections.map((collection, index) => { const color = colors[index % colors.length]; const progress = Number(collection.analytics?.completionPercentage || 0); return <article key={collection.id} className={activeCollection?.id === collection.id ? 'flash-collection-card is-active' : 'flash-collection-card'} onClick={() => { setActiveCollectionId(collection.id); setPage(1); }}><div className="flash-collection-top"><span className="flash-collection-icon material-symbols-outlined" style={{ color }}>style</span><ProgressRing value={progress} size={58} color={color} /></div><h4>{collection.title}</h4><p>{collection.analytics?.totalFlashCards || collection.cardCount || 0} cards - Last studied {formatDate(collection.analytics?.lastStudyDate, 'Never')}</p><div className="flash-collection-meta"><span>{labelCase(collection.preferences?.difficulty)}</span><span><span className="material-symbols-outlined">schedule</span>{collection.analytics?.averageReviewTime || 0}s avg</span></div><div className="flash-card-hover-actions" onClick={(event) => event.stopPropagation()}><button type="button" onClick={() => startStudy(collection)}>Study</button><button type="button" onClick={() => { setActiveCollectionId(collection.id); setPage(1); }}>Open</button><button type="button" onClick={() => removeCollection(collection.id)}>Delete</button><button type="button" onClick={() => flash.duplicateCollection(collection)}>Duplicate</button></div></article>; })}</div><div className="flash-pagination"><button className="flash-button flash-button--ghost" type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>Previous</button><span>Page {page} of {totalPages}</span><button className="flash-button flash-button--ghost" type="button" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)}>Next</button></div></> : <section className="flash-empty-state"><div className="flash-empty-illustration"><span className="material-symbols-outlined">style</span><span className="material-symbols-outlined">auto_awesome</span><span className="material-symbols-outlined">school</span></div><h3>No Flash Card Collections Yet</h3><p>Generate AI-powered flash cards from your notes or PDFs.</p><div><button className="flash-button flash-button--primary" type="button" onClick={() => setIsGeneratorOpen(true)}>Generate Flash Cards</button></div></section>}</section>
+    {activeCollection && <section className="flash-list-section"><div className="flash-section-heading"><div><h3>{activeCollection.title} Cards</h3><p>Review status, mastery, and spaced repetition signals.</p></div><button className="flash-button flash-button--primary" type="button" disabled={!cardsForCollection.length} onClick={() => startStudy(activeCollection)}><span className="material-symbols-outlined">play_arrow</span>Study</button></div><div className="flash-card-list">{cardsForCollection.length ? cardsForCollection.map((card) => <article key={card.id} className="flash-card-row"><button className="flash-pin" type="button"><span className="material-symbols-outlined">style</span></button><div className="flash-card-front"><strong>{card.front}</strong><small>{(card.sourceTitles || activeCollection.selectedSources?.map((source) => source.title) || []).join(', ')}</small><div>{(card.tags || []).slice(0, 4).map((tag) => <span key={tag}>{tag}</span>)}</div></div><span className={`flash-difficulty flash-difficulty--${card.difficulty}`}>{labelCase(card.difficulty)}</span><span className="flash-ai-badge"><span className="material-symbols-outlined">auto_awesome</span>{card.createdBy || 'AI'}</span><div className="flash-review-status"><strong>{formatDueDate(card.nextReview)}</strong><small>Last reviewed {formatDate(card.lastReviewed, 'never')}</small></div><div className="flash-srs-grid"><span>Next Review <strong>{formatDueDate(card.nextReview)}</strong></span><span>Interval <strong>{card.interval || 0}d</strong></span><span>Ease <strong>{Number(card.easeFactor || 2.5).toFixed(2)}</strong></span><span>Reviews <strong>{card.reviewCount || 0}</strong></span><span>Mastery <strong>{card.masteryLevel || 0}%</strong></span><span>Type <strong>{typeLabel(card.type)}</strong></span></div><div className="flash-row-actions"><button type="button" onClick={() => startStudy(activeCollection)}><span className="material-symbols-outlined">play_arrow</span></button><button type="button" onClick={() => setEditorCard(card)}><span className="material-symbols-outlined">visibility</span></button></div></article>) : <div className="flash-tree-empty"><p>Cards are lazy-loading for this collection.</p></div>}</div></section>}</div>
+    <aside className="flash-review-panel"><div className="flash-panel-heading"><h3>Review Calendar</h3><p>Upcoming spaced repetition reviews for the selected collection.</p></div>{reviewGroups.map((group) => <article key={group.label} className={group.urgent ? 'flash-review-group is-urgent' : 'flash-review-group'}><div><strong>{group.label}</strong><span>{group.count} cards</span></div><ul>{group.items.length ? group.items.map((item) => <li key={item}>{item}</li>) : <li>No cards scheduled</li>}</ul></article>)}{flash.working && <div className="flash-skeleton-panel"><span /><span /><span /></div>}</aside></div>
+    {isGeneratorOpen && <GeneratorModal uid={flash.uid} semesters={notes.data.semesters || []} noteManagement={notes.data} working={flash.working} error={flash.error} onClose={() => setIsGeneratorOpen(false)} onGenerate={handleGenerate} />}
+    {editorCard && <CardEditorModal card={editorCard} onClose={() => setEditorCard(null)} />}
+  </main>;
+}
 
-      <section className="flash-header">
-        <div>
-          <p className="flash-eyebrow">Dedicated study environment</p>
-          <h2>Flash Cards</h2>
-          <p>Memorize concepts faster with AI-generated flash cards.</p>
-        </div>
-        <div className="flash-header-actions">
-          <label className="flash-search-field">
-            <span className="material-symbols-outlined">search</span>
-            <input value={search} placeholder="Search flash cards" onChange={(event) => setSearch(event.target.value)} />
-          </label>
-          <button className="flash-icon-button" type="button" aria-label="Filter flash cards"><span className="material-symbols-outlined">filter_list</span></button>
-          <button className="flash-icon-button" type="button" aria-label="Sort flash cards"><span className="material-symbols-outlined">sort</span></button>
-          <button className="flash-button flash-button--primary" type="button" onClick={() => setIsGeneratorOpen(true)}><span className="material-symbols-outlined">auto_awesome</span>Create Flash Cards</button>
-          <button className="flash-button flash-button--ghost" type="button"><span className="material-symbols-outlined">upload_file</span>Import Flash Cards</button>
-        </div>
-      </section>
-
-      <section className="flash-kpi-grid" aria-label="Flash card statistics">
-        {kpis.map((kpi) => (
-          <article key={kpi.label} className="flash-kpi-card">
-            <div>
-              <span className="material-symbols-outlined">{kpi.icon}</span>
-              <p>{kpi.label}</p>
-              <h3>{kpi.value}</h3>
-              <small>{kpi.delta}</small>
-            </div>
-            <ProgressRing value={kpi.progress} size={48} color={kpi.progress > 80 ? '#24b47e' : '#4D2B8C'} />
-            <MiniChart />
-          </article>
-        ))}
-      </section>
-
-      <div className="flash-workspace-grid">
-        <div className="flash-main-column">
-          <section>
-            <div className="flash-section-heading">
-              <div>
-                <h3>Flash Card Collections</h3>
-                <p>{collections.length} collections built from notes, PDFs, and manual cards.</p>
-              </div>
-              <span>{dueToday} cards due today</span>
-            </div>
-
-            {filteredCollections.length ? (
-              <div className="flash-collection-grid">
-                {filteredCollections.map((collection) => (
-                  <article key={collection.id} className={selectedCollection?.id === collection.id ? 'flash-collection-card is-active' : 'flash-collection-card'} onClick={() => setActiveCollection(collection)}>
-                    <div className="flash-collection-top">
-                      <span className="flash-collection-icon material-symbols-outlined" style={{ color: collection.color }}>{collection.icon}</span>
-                      <ProgressRing value={collection.progress} size={58} color={collection.color} />
-                    </div>
-                    <h4>{collection.name}</h4>
-                    <p>{collection.cards} cards - Last studied {collection.lastStudied}</p>
-                    <div className="flash-collection-meta">
-                      <span>{collection.difficulty}</span>
-                      <span><span className="material-symbols-outlined">schedule</span>{collection.studyTime}</span>
-                    </div>
-                    <div className="flash-card-hover-actions" onClick={(event) => event.stopPropagation()}>
-                      <button type="button" onClick={() => setStudyCollection(collection)}>Continue</button>
-                      <button type="button" onClick={() => setIsEditorOpen(true)}>Edit</button>
-                      <button type="button" onClick={() => deleteCollection(collection.id)}>Delete</button>
-                      <button type="button" onClick={() => duplicateCollection(collection)}>Duplicate</button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <section className="flash-empty-state">
-                <div className="flash-empty-illustration">
-                  <span className="material-symbols-outlined">style</span>
-                  <span className="material-symbols-outlined">auto_awesome</span>
-                  <span className="material-symbols-outlined">school</span>
-                </div>
-                <h3>No Flash Card Collections Yet</h3>
-                <p>Generate AI-powered flash cards from your notes or create your own.</p>
-                <div>
-                  <button className="flash-button flash-button--primary" type="button" onClick={() => setIsGeneratorOpen(true)}>Generate Flash Cards</button>
-                  <button className="flash-button flash-button--ghost" type="button" onClick={() => setIsEditorOpen(true)}>Create Manually</button>
-                </div>
-              </section>
-            )}
-          </section>
-
-          {selectedCollection && (
-            <section className="flash-list-section">
-              <div className="flash-section-heading">
-                <div>
-                  <h3>{selectedCollection.name} Cards</h3>
-                  <p>Review status, mastery, and spaced repetition signals.</p>
-                </div>
-                <button className="flash-button flash-button--primary" type="button" onClick={() => setStudyCollection(selectedCollection)}><span className="material-symbols-outlined">play_arrow</span>Study</button>
-              </div>
-              <div className="flash-card-list">
-                {cardsForCollection.map((card) => (
-                  <article key={card.id} className="flash-card-row">
-                    <button className={card.pinned ? 'flash-pin is-pinned' : 'flash-pin'} type="button" aria-label={card.pinned ? 'Pinned card' : 'Pin card'}>
-                      <span className="material-symbols-outlined">push_pin</span>
-                    </button>
-                    <div className="flash-card-front">
-                      <strong>{card.front}</strong>
-                      <small>Created from {card.createdFrom}</small>
-                      <div>{card.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-                    </div>
-                    <span className={`flash-difficulty flash-difficulty--${card.difficulty.toLowerCase()}`}>{card.difficulty}</span>
-                    <span className="flash-ai-badge"><span className="material-symbols-outlined">auto_awesome</span>AI Generated</span>
-                    <div className="flash-review-status">
-                      <strong>{card.reviewStatus}</strong>
-                      <small>Last reviewed {card.lastReviewed}</small>
-                    </div>
-                    <div className="flash-srs-grid">
-                      <span>Next Review <strong>{card.nextReview}</strong></span>
-                      <span>Interval <strong>{card.interval}</strong></span>
-                      <span>Ease <strong>{card.ease}</strong></span>
-                      <span>Retention <strong>{card.retention}</strong></span>
-                      <span>Mastery <strong>{card.mastery}%</strong></span>
-                      <span>Stage <strong>{card.stage}</strong></span>
-                    </div>
-                    <div className="flash-row-actions">
-                      <button type="button" onClick={() => setStudyCollection(selectedCollection)} aria-label="Study card"><span className="material-symbols-outlined">play_arrow</span></button>
-                      <button type="button" onClick={() => setIsEditorOpen(true)} aria-label="Edit card"><span className="material-symbols-outlined">edit</span></button>
-                      <button type="button" aria-label="Delete card"><span className="material-symbols-outlined">delete</span></button>
-                      <button type="button" aria-label="Duplicate card"><span className="material-symbols-outlined">content_copy</span></button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-
-        <aside className="flash-review-panel">
-          <div className="flash-panel-heading">
-            <h3>Review Calendar</h3>
-            <p>Upcoming spaced repetition reviews.</p>
-          </div>
-          {reviewGroups.map((group) => (
-            <article key={group.label} className={group.urgent ? 'flash-review-group is-urgent' : 'flash-review-group'}>
-              <div>
-                <strong>{group.label}</strong>
-                <span>{group.count} cards</span>
-              </div>
-              <ul>
-                {group.items.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-            </article>
-          ))}
-          <div className="flash-skeleton-panel" aria-label="Skeleton loading preview">
-            <span />
-            <span />
-            <span />
-          </div>
-        </aside>
-      </div>
-
-      {isGeneratorOpen && <GeneratorModal semesters={notes.data.semesters || []} onClose={() => setIsGeneratorOpen(false)} />}
-      {isEditorOpen && <CardEditorModal onClose={() => setIsEditorOpen(false)} />}
-    </main>
-  );
+function FlashCardsPage(props) {
+  return <FlashCardProvider><FlashCardsWorkspace {...props} /></FlashCardProvider>;
 }
 
 export default FlashCardsPage;
+
+
+
+

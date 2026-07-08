@@ -21,7 +21,8 @@ export const createInitialSchedule = (now = new Date()) => ({
 const addDays = (date, days) => new Date(date.getTime() + days * DAY_MS);
 
 export const applySm2Rating = (card, rating, reviewedAt = new Date()) => {
-  const quality = REVIEW_RATINGS[rating] ?? Number(rating) ?? 3;
+  const numericRating = REVIEW_RATINGS[rating] ?? Number(rating);
+  const quality = Number.isFinite(numericRating) ? numericRating : 3;
   const previousEase = Number(card.easeFactor || 2.5);
   const previousRepetitions = Number(card.repetitions || 0);
   const previousReviewCount = Number(card.reviewCount || 0);
@@ -59,3 +60,4 @@ export const applySm2Rating = (card, rating, reviewedAt = new Date()) => {
     masteryLevel,
   };
 };
+

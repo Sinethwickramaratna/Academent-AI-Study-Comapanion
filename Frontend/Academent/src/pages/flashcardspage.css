@@ -1697,3 +1697,81 @@
     padding: 18px !important;
   }
 }
+
+.flash-tree-file span:last-child {
+  display: grid;
+  min-width: 0;
+}
+
+.flash-tree-file small {
+  overflow: hidden;
+  color: rgba(32, 23, 47, 0.5);
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flash-select-control {
+  min-height: 44px;
+  border: 1px solid rgba(77, 43, 140, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #4d2b8c;
+  padding: 0 0.75rem;
+  font-weight: 900;
+  outline: none;
+}
+
+.flash-header .flash-select-control {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.flash-header .flash-select-control option {
+  color: #20172f;
+}
+
+.flash-pagination,
+.flash-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.flash-pagination {
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.flash-pagination span {
+  color: rgba(32, 23, 47, 0.62);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.flash-error-banner {
+  border: 1px solid rgba(179, 38, 82, 0.2);
+  border-radius: 14px;
+  background: rgba(179, 38, 82, 0.08);
+  color: #b32652;
+  padding: 0.8rem 1rem;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.flash-error-banner .material-symbols-outlined {
+  font-size: 1.2rem;
+}
+
+.flash-range-field input[type="number"] {
+  width: 100%;
+  border: 1px solid rgba(77, 43, 140, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #20172f;
+  padding: 0.75rem 0.85rem;
+  font-weight: 850;
+  outline: none;
+}

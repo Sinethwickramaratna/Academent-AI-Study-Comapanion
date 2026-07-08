@@ -1,14 +1,14 @@
-import { GoogleGenAI } from '@google/genai';
+// import { GoogleGenAI } from '@google/genai';
 import { Ollama } from 'ollama';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const gemini = process.env.GEMINI_API_KEY
-  ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-  : null;
+// const gemini = process.env.GEMINI_API_KEY
+//   ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+//   : null;
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b';
 
 const ollama = new Ollama({
@@ -44,25 +44,25 @@ const getOllamaErrorMessage = (error) => {
 };
 
 const createTextResponse = async (input, options = {}) => {
-  if (gemini) {
-    const response = await gemini.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: input,
-      config: {
-        temperature: options.temperature ?? 0.65,
-        topP: options.top_p ?? 0.9,
-        maxOutputTokens: options.max_tokens ?? 5000,
-        responseMimeType: options.json ? 'application/json' : undefined,
-      },
-    });
+  // if (gemini) {
+  //   const response = await gemini.models.generateContent({
+  //     model: GEMINI_MODEL,
+  //     contents: input,
+  //     config: {
+  //       temperature: options.temperature ?? 0.65,
+  //       topP: options.top_p ?? 0.9,
+  //       maxOutputTokens: options.max_tokens ?? 5000,
+  //       responseMimeType: options.json ? 'application/json' : undefined,
+  //     },
+  //   });
 
-    const text = response.text
-      || response.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('')
-      || '';
+  //   const text = response.text
+  //     || response.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('')
+  //     || '';
 
-    if (!text.trim()) throw new Error('Gemini did not return any text output.');
-    return text;
-  }
+  //   if (!text.trim()) throw new Error('Gemini did not return any text output.');
+  //   return text;
+  // }
 
   try {
     const response = await ollama.chat({
@@ -252,3 +252,5 @@ export const generateFlashCards = async ({ sources = [], preferences = {} }) => 
     generatedCount: cards.length,
   };
 };
+
+
