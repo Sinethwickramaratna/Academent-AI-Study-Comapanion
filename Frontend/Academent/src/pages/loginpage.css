@@ -568,7 +568,7 @@
   color-scheme: dark;
 }
 
-.dark .login-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty"], [class*="list"], [class*="item"], [class*="row"], [class*="field"], [class*="selector"], [class*="toggle"], [class*="chip"], [class*="search"], [class*="select"], [class*="filter"], [class*="calendar"], [class*="cell"], [class*="event"], [class*="composer"], [class*="attachment"], [class*="source"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
+.dark .login-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty"], [class*="list"], [class*="item"], [class*="row"], [class*="field"], [class*="selector"], [class*="toggle"], [class*="chip"], [class*="search"], [class*="select"], [class*="filter"], [class*="calendar"], [class*="cell"], [class*="event"], [class*="composer"], [class*="attachment"], [class*="source"], [class*="shell"], [class*="Shell"], [class*="section"], [class*="content"], [class*="body"], [class*="stage"], [class*="option"], [class*="answer"], [class*="question"], [class*="choice"], [class*="tree"], [class*="deck"], [class*="review"], [class*="generator"], [class*="editor"], [class*="agenda"], [class*="task"], [class*="note"], [class*="pdf"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
   background: #302B4D !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
@@ -627,4 +627,22 @@
 .dark .login-page :where(.ai-gradient, .gradient-bg, .primary-gradient, .primary-button, .btn-primary-gradient, .profile-button--primary, .quiz-button--primary, .flash-button--primary, .planner-create-button, .login-page__primary, .ai-send-button:not(:disabled), .ai-new-chat-button, [class*="button--primary"]) :where(span, .material-symbols-outlined, strong, p, small) {
   color: #F7F5FF !important;
 }
+.dark .login-page__formShell,
+.dark .login-page__card,
+.dark .login-page__google,
+.dark .login-page__divider span {
+  background: #302B4D !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+}
 
+.dark .login-page__inputWrap input {
+  background: #211D38 !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+}
+
+.dark .login-page__pattern {
+  background-image: radial-gradient(#4A4568 0.8px, transparent 0.8px) !important;
+  opacity: 0.45;
+}
