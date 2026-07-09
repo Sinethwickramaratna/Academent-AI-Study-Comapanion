@@ -659,7 +659,7 @@
   margin-top: 0.85rem;
   border: 1px solid rgba(77, 43, 140, 0.16);
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(238, 167, 39, 0.14));
+  background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(242, 181, 68, 0.14));
   color: var(--ai-primary);
   padding: 0.75rem 0.85rem;
   text-align: left;
@@ -823,8 +823,8 @@
 }
 
 .ai-composer--dragging {
-  border-color: rgba(238, 167, 39, 0.7);
-  box-shadow: 0 0 0 4px rgba(238, 167, 39, 0.16), 0 20px 45px rgba(77, 43, 140, 0.12);
+  border-color: rgba(242, 181, 68, 0.7);
+  box-shadow: 0 0 0 4px rgba(242, 181, 68, 0.16), 0 20px 45px rgba(77, 43, 140, 0.12);
 }
 
 .ai-attach-button,
@@ -1175,7 +1175,7 @@
   height: 36px;
   place-items: center;
   border-radius: 12px;
-  background: rgba(238, 167, 39, 0.16);
+  background: rgba(242, 181, 68, 0.16);
   color: #7a4e00;
 }
 
@@ -1214,7 +1214,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 [role='button']:focus-visible {
-  outline: 3px solid rgba(238, 167, 39, 0.5);
+  outline: 3px solid rgba(242, 181, 68, 0.5);
   outline-offset: 3px;
 }
 

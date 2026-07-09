@@ -134,7 +134,7 @@
   background: linear-gradient(135deg, var(--academent-yellow), var(--academent-gold));
   color: #321b0a;
   font-weight: 900;
-  box-shadow: 0 12px 24px rgba(238, 167, 39, 0.26);
+  box-shadow: 0 12px 24px rgba(242, 181, 68, 0.26);
   cursor: pointer;
 }
 
@@ -233,8 +233,8 @@
 }
 
 .analytics-stat--gold {
-  --stat-bg: rgba(238, 167, 39, 0.16);
-  --stat-soft: rgba(238, 167, 39, 0.12);
+  --stat-bg: rgba(242, 181, 68, 0.16);
+  --stat-soft: rgba(242, 181, 68, 0.12);
   --stat-color: #9b6100;
 }
 
@@ -333,7 +333,7 @@
   width: 100%;
   border-radius: 999px 999px 0 0;
   background: linear-gradient(180deg, var(--academent-yellow), var(--academent-gold) 38%, var(--academent-secondary));
-  box-shadow: 0 -8px 18px rgba(238, 167, 39, 0.2);
+  box-shadow: 0 -8px 18px rgba(242, 181, 68, 0.2);
 }
 
 .study-chart strong {
@@ -420,7 +420,7 @@
 }
 
 .difficulty-badges .medium {
-  background: rgba(238, 167, 39, 0.18);
+  background: rgba(242, 181, 68, 0.18);
   color: #8a5200;
 }
 
@@ -616,7 +616,7 @@
 }
 
 .mini-calendar__grid .is-exam {
-  background: rgba(238, 167, 39, 0.2);
+  background: rgba(242, 181, 68, 0.2);
   color: #8a5200;
 }
 
@@ -726,7 +726,7 @@
 }
 
 .recommendation-actions button {
-  background: rgba(238, 167, 39, 0.14);
+  background: rgba(242, 181, 68, 0.14);
   color: #7b4800;
 }
 

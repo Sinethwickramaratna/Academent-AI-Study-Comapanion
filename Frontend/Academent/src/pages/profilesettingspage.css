@@ -208,7 +208,7 @@
 .profile-avatar-button {
   padding: 10px 14px;
   border-radius: 14px;
-  background: rgba(238, 167, 39, 0.14);
+  background: rgba(242, 181, 68, 0.14);
   color: #7b4800;
 }
 
@@ -576,7 +576,7 @@
 }
 
 .profile-badge.is-warning {
-  background: rgba(238, 167, 39, 0.18);
+  background: rgba(242, 181, 68, 0.18);
   color: #8a5200;
 }
 
@@ -825,8 +825,8 @@
 }
 
 .mini-stat--gold {
-  --mini-bg: rgba(238, 167, 39, 0.16);
-  --mini-soft: rgba(238, 167, 39, 0.12);
+  --mini-bg: rgba(242, 181, 68, 0.16);
+  --mini-soft: rgba(242, 181, 68, 0.12);
   --mini-color: #9b6100;
 }
 
@@ -1009,18 +1009,22 @@
 }
 
 .profile-settings-page--dark {
-  --profile-bg: #14111f;
-  --profile-ink: #f8f7ff;
-  --profile-muted: #b9b0c8;
-  --profile-border: rgba(255, 255, 255, 0.12);
-  --profile-shadow: 0 18px 45px rgba(0, 0, 0, 0.26);
-  background: linear-gradient(180deg, #171326 0%, #100d19 100%);
+  --profile-primary: #7B5CFF;
+  --profile-secondary: #A178FF;
+  --profile-accent: #F2B544;
+  --profile-yellow: #FFE873;
+  --profile-bg: #1B1830;
+  --profile-ink: #F7F5FF;
+  --profile-muted: #D8D3EE;
+  --profile-border: #4A4568;
+  --profile-shadow: 0 18px 45px rgba(0, 0, 0, 0.34);
+  background: linear-gradient(180deg, #211D38 0%, #1B1830 100%);
 }
 
 .profile-settings-page--dark .profile-card,
 .profile-settings-page--dark .profile-side-card,
 .profile-settings-page--dark .profile-toast {
-  background: rgba(31, 26, 45, 0.96);
+  background: #302B4D;
   border-color: var(--profile-border);
 }
 
@@ -1036,13 +1040,13 @@
 .profile-settings-page--dark .accent-selector button,
 .profile-settings-page--dark .profile-meta-grid span,
 .profile-settings-page--dark .profile-badge {
-  background: #241d34;
-  border-color: rgba(255, 255, 255, 0.12);
+  background: #211D38;
+  border-color: #4A4568;
   color: var(--profile-ink);
 }
 
 .profile-settings-page--dark .profile-field input[readonly] {
-  background: #1b1628;
+  background: #1B1830;
   color: var(--profile-muted);
 }
 
@@ -1051,8 +1055,8 @@
 .profile-settings-page--dark .theme-selector button.is-active,
 .profile-settings-page--dark .profile-segmented button:hover,
 .profile-settings-page--dark .theme-selector button:hover {
-  background: #332845;
-  color: #ffffff;
+  background: #3A345A;
+  color: #F7F5FF;
 }
 
 .profile-settings-page--dark .profile-toast--success {
@@ -1066,8 +1070,8 @@
 }
 
 .profile-settings-page--dark .profile-toast--info {
-  background: rgba(133, 64, 157, 0.16);
-  color: #e9d5ff;
+  background: rgba(123, 92, 255, 0.16);
+  color: #A178FF;
 }
 
 .profile-settings-page--system {

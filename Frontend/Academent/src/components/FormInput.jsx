@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 /**
  * FormInput is a reusable styled input field component.
@@ -70,7 +70,7 @@ function FormInput({
         onChange={onChange}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className={`w-full px-md py-3 bg-[#F9FAFB] border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus ${className}`}
+        className={`w-full px-md py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl text-on-surface placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus ${className}`}
         {...props}
       />
     </div>

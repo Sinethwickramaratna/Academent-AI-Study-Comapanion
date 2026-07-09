@@ -308,7 +308,7 @@
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  background: rgba(238, 167, 39, 0.16);
+  background: rgba(242, 181, 68, 0.16);
   color: #9a6407;
   padding: 0.42rem 0.75rem;
   font-size: 0.76rem;
@@ -485,7 +485,7 @@
 
 .flash-card-action--duplicate:hover,
 .flash-card-action--duplicate:focus-visible {
-  border-color: rgba(238, 167, 39, 0.42);
+  border-color: rgba(242, 181, 68, 0.42);
   background: #9a6407;
   box-shadow: 0 12px 26px rgba(154, 100, 7, 0.2);
 }
@@ -520,7 +520,7 @@
 }
 
 .flash-review-group.is-urgent {
-  border-color: rgba(238, 167, 39, 0.36);
+  border-color: rgba(242, 181, 68, 0.36);
   background: rgba(255, 249, 224, 0.78);
 }
 
@@ -1092,7 +1092,7 @@
 
 .flash-topic-cloud span {
   border-radius: 999px;
-  background: rgba(238, 167, 39, 0.14);
+  background: rgba(242, 181, 68, 0.14);
   color: #8a5a08;
   padding: 0.45rem 0.68rem;
   font-size: 0.76rem;
@@ -1195,7 +1195,7 @@
   padding: 1.25rem;
   background:
     linear-gradient(135deg, rgba(248, 249, 255, 0.96), rgba(255, 255, 255, 0.96)),
-    linear-gradient(90deg, rgba(77, 43, 140, 0.08), rgba(238, 167, 39, 0.08));
+    linear-gradient(90deg, rgba(77, 43, 140, 0.08), rgba(242, 181, 68, 0.08));
 }
 
 .flash-study-topbar {
@@ -1712,7 +1712,7 @@
 .flash-header .flash-button--primary {
   background: linear-gradient(135deg, var(--flash-yellow), var(--flash-gold));
   color: #321b0a;
-  box-shadow: 0 12px 24px rgba(238, 167, 39, 0.26);
+  box-shadow: 0 12px 24px rgba(242, 181, 68, 0.26);
 }
 
 .flash-kpi-card,
@@ -1948,7 +1948,7 @@
   pointer-events: none;
   border-radius: inherit;
   opacity: 0;
-  background: linear-gradient(135deg, rgba(77, 43, 140, 0.07), rgba(238, 167, 39, 0.12));
+  background: linear-gradient(135deg, rgba(77, 43, 140, 0.07), rgba(242, 181, 68, 0.12));
   transition: opacity 180ms ease;
 }
 
@@ -2128,8 +2128,8 @@
 
 .flash-difficulty--medium,
 .flash-learning-status--due {
-  border-color: rgba(238, 167, 39, 0.22);
-  background: rgba(238, 167, 39, 0.16);
+  border-color: rgba(242, 181, 68, 0.22);
+  background: rgba(242, 181, 68, 0.16);
   color: #9a6407;
 }
 

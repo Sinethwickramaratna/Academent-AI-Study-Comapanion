@@ -1,6 +1,62 @@
 import forms from '@tailwindcss/forms';
 import containerQueries from '@tailwindcss/container-queries';
 
+const colorVar = (name) => ({ opacityValue }) => (
+  opacityValue === undefined
+    ? `rgb(var(--color-${name}))`
+    : `rgb(var(--color-${name}) / ${opacityValue})`
+);
+
+const themeColors = {
+  "primary-fixed": "primary-fixed",
+  "surface-container-low": "surface-container-low",
+  "on-tertiary-fixed": "on-tertiary-fixed",
+  "on-primary-fixed-variant": "on-primary-fixed-variant",
+  "on-error-container": "on-error-container",
+  "on-secondary": "on-secondary",
+  "outline": "outline",
+  "on-error": "on-error",
+  "tertiary-container": "tertiary-container",
+  "on-tertiary": "on-tertiary",
+  "inverse-surface": "inverse-surface",
+  "inverse-on-surface": "inverse-on-surface",
+  "outline-variant": "outline-variant",
+  "error-container": "error-container",
+  "error": "error",
+  "tertiary-fixed-dim": "tertiary-fixed-dim",
+  "primary-container": "primary-container",
+  "on-background": "on-background",
+  "surface-container": "surface-container",
+  "surface-container-highest": "surface-container-highest",
+  "surface-container-high": "surface-container-high",
+  "tertiary-fixed": "tertiary-fixed",
+  "tertiary": "tertiary",
+  "surface-variant": "surface-variant",
+  "on-secondary-fixed-variant": "on-secondary-fixed-variant",
+  "surface-dim": "surface-dim",
+  "surface-bright": "surface-bright",
+  "on-primary": "on-primary",
+  "surface-container-lowest": "surface-container-lowest",
+  "on-tertiary-container": "on-tertiary-container",
+  "on-surface": "on-surface",
+  "secondary-container": "secondary-container",
+  "on-primary-fixed": "on-primary-fixed",
+  "on-tertiary-fixed-variant": "on-tertiary-fixed-variant",
+  "on-secondary-fixed": "on-secondary-fixed",
+  "background": "background",
+  "on-secondary-container": "on-secondary-container",
+  "inverse-primary": "inverse-primary",
+  "primary": "primary",
+  "surface": "surface",
+  "secondary-fixed-dim": "secondary-fixed-dim",
+  "surface-tint": "surface-tint",
+  "secondary": "secondary",
+  "secondary-fixed": "secondary-fixed",
+  "primary-fixed-dim": "primary-fixed-dim",
+  "on-surface-variant": "on-surface-variant",
+  "on-primary-container": "on-primary-container",
+};
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -10,55 +66,9 @@ export default {
   darkMode: "class",
   theme: {
     extend: {
-      colors: {
-        "primary-fixed": "#eaddff",
-        "surface-container-low": "#eff4ff",
-        "on-tertiary-fixed": "#281800",
-        "on-primary-fixed-variant": "#533293",
-        "on-error-container": "#93000a",
-        "on-secondary": "#ffffff",
-        "outline": "#7b7582",
-        "on-error": "#ffffff",
-        "tertiary-container": "#593a00",
-        "on-tertiary": "#ffffff",
-        "inverse-surface": "#27313f",
-        "inverse-on-surface": "#eaf1ff",
-        "outline-variant": "#cbc3d3",
-        "error-container": "#ffdad6",
-        "error": "#ba1a1a",
-        "tertiary-fixed-dim": "#ffba47",
-        "primary-container": "#4d2b8c",
-        "on-background": "#121c2a",
-        "surface-container": "#e6eeff",
-        "surface-container-highest": "#d9e3f6",
-        "surface-container-high": "#dee9fc",
-        "tertiary-fixed": "#ffddb0",
-        "tertiary": "#3c2600",
-        "surface-variant": "#d9e3f6",
-        "on-secondary-fixed-variant": "#6b2784",
-        "surface-dim": "#d0dbed",
-        "surface-bright": "#f8f9ff",
-        "on-primary": "#ffffff",
-        "surface-container-lowest": "#ffffff",
-        "on-tertiary-container": "#e49f1d",
-        "on-surface": "#121c2a",
-        "secondary-container": "#e699fd",
-        "on-primary-fixed": "#25005a",
-        "on-tertiary-fixed-variant": "#614000",
-        "on-secondary-fixed": "#330045",
-        "background": "#f8f9ff",
-        "on-secondary-container": "#6c2784",
-        "inverse-primary": "#d2bbff",
-        "primary": "#360d75",
-        "surface": "#f8f9ff",
-        "secondary-fixed-dim": "#eeb0ff",
-        "surface-tint": "#6c4bac",
-        "secondary": "#86419e",
-        "secondary-fixed": "#fad7ff",
-        "primary-fixed-dim": "#d2bbff",
-        "on-surface-variant": "#4a4551",
-        "on-primary-container": "#bc9bff"
-      },
+      colors: Object.fromEntries(
+        Object.entries(themeColors).map(([key, variableName]) => [key, colorVar(variableName)])
+      ),
       borderRadius: {
         "DEFAULT": "0.25rem",
         "lg": "0.5rem",

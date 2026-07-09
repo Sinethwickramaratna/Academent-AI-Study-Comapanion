@@ -12,6 +12,7 @@ import {
 } from '../Services/authService';
 import { uploadProfilePhotoToCloudinary } from '../Services/profilePhotoService';
 import { deleteAllTutorConversations } from '../Services/aiTutorService';
+import { applyThemeMode, storeThemeMode } from '../utils/theme';
 
 const subjectOptions = [
   'Biology',
@@ -208,6 +209,12 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
 
   const setField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleThemeModeChange = (mode) => {
+    setField('themeMode', mode);
+    storeThemeMode(mode);
+    applyThemeMode(mode);
   };
 
   const refreshSharedProfile = async (fallbackProfile) => {
@@ -705,7 +712,7 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
                 <h3>Theme Mode</h3>
                 <div className="theme-selector">
                   {themeModes.map((mode) => (
-                    <button className={mode === form.themeMode ? 'is-active' : ''} type="button" key={mode} onClick={() => setField('themeMode', mode)}>
+                    <button className={mode === form.themeMode ? 'is-active' : ''} type="button" key={mode} onClick={() => handleThemeModeChange(mode)}>
                       <span className="material-symbols-outlined">{mode === 'Light' ? 'light_mode' : mode === 'Dark' ? 'dark_mode' : 'computer'}</span>
                       {mode}
                     </button>

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 // Lazy-load route pages so the initial app shell stays small.
 const LoginPage = lazy(() => import('./pages/loginpage.jsx'))
@@ -19,6 +19,7 @@ import { useAuth } from './context/AuthContext'
 import { logoutUser } from './Services/authService'
 import LoadingEffect from './components/LoadingEffect'
 import { dashboardWindowItems } from './routes/windowRoutes'
+import { applyThemeMode, getStoredThemeMode, normalizeThemeMode, storeThemeMode } from './utils/theme'
 
 
 /**
@@ -30,8 +31,21 @@ function App() {
   const [academicProfileData, setAcademicProfileData] = useState(null)
   const [learningPreferencesData, setLearningPreferencesData] = useState(null)
   const navigate = useNavigate()
-  const { currentUser } = useAuth()
+  const { currentUser, userProfile } = useAuth()
 
+  useEffect(() => {
+    const themeMode = normalizeThemeMode(userProfile?.appPreferences?.themeMode || getStoredThemeMode());
+    storeThemeMode(themeMode);
+    applyThemeMode(themeMode);
+
+    if (themeMode !== 'System') return undefined;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = () => applyThemeMode('System');
+
+    mediaQuery.addEventListener?.('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener?.('change', handleSystemThemeChange);
+  }, [userProfile?.appPreferences?.themeMode]);
   /**
    * Performs client-side navigation.
    * Leverages the Document Transition API (document.startViewTransition) if supported by the browser

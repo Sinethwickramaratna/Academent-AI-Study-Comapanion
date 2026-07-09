@@ -7,15 +7,126 @@
 }
 
 :root {
+  --color-primary-fixed: 234 221 255;
+  --color-surface-container-low: 239 244 255;
+  --color-on-tertiary-fixed: 40 24 0;
+  --color-on-primary-fixed-variant: 83 50 147;
+  --color-on-error-container: 147 0 10;
+  --color-on-secondary: 255 255 255;
+  --color-outline: 123 117 130;
+  --color-on-error: 255 255 255;
+  --color-tertiary-container: 89 58 0;
+  --color-on-tertiary: 255 255 255;
+  --color-inverse-surface: 39 49 63;
+  --color-inverse-on-surface: 234 241 255;
+  --color-outline-variant: 203 195 211;
+  --color-error-container: 255 218 214;
+  --color-error: 186 26 26;
+  --color-tertiary-fixed-dim: 255 186 71;
+  --color-primary-container: 77 43 140;
+  --color-on-background: 18 28 42;
+  --color-surface-container: 230 238 255;
+  --color-surface-container-highest: 217 227 246;
+  --color-surface-container-high: 222 233 252;
+  --color-tertiary-fixed: 255 221 176;
+  --color-tertiary: 60 38 0;
+  --color-surface-variant: 217 227 246;
+  --color-on-secondary-fixed-variant: 107 39 132;
+  --color-surface-dim: 208 219 237;
+  --color-surface-bright: 248 249 255;
+  --color-on-primary: 255 255 255;
+  --color-surface-container-lowest: 255 255 255;
+  --color-on-tertiary-container: 228 159 29;
+  --color-on-surface: 18 28 42;
+  --color-secondary-container: 230 153 253;
+  --color-on-primary-fixed: 37 0 90;
+  --color-on-tertiary-fixed-variant: 97 64 0;
+  --color-on-secondary-fixed: 51 0 69;
+  --color-background: 248 249 255;
+  --color-on-secondary-container: 108 39 132;
+  --color-inverse-primary: 210 187 255;
+  --color-primary: 54 13 117;
+  --color-surface: 248 249 255;
+  --color-secondary-fixed-dim: 238 176 255;
+  --color-surface-tint: 108 75 172;
+  --color-secondary: 134 65 158;
+  --color-secondary-fixed: 250 215 255;
+  --color-primary-fixed-dim: 210 187 255;
+  --color-on-surface-variant: 74 69 81;
+  --color-on-primary-container: 188 155 255;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #121c2a;
-  background: #f8f9ff;
+  color: rgb(var(--color-on-surface));
+  background: rgb(var(--color-background));
+  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root.dark {
+  --dark-main: #1B1830;
+  --dark-sidebar: #211D38;
+  --dark-card: #302B4D;
+  --dark-hover: #3A345A;
+  --dark-border: #4A4568;
+  --dark-primary: #7B5CFF;
+  --dark-secondary: #A178FF;
+  --dark-accent: #F2B544;
+  --dark-highlight: #FFE873;
+  --dark-text: #F7F5FF;
+  --color-primary-fixed: 123 92 255;
+  --color-surface-container-low: 33 29 56;
+  --color-on-tertiary-fixed: 27 24 48;
+  --color-on-primary-fixed-variant: 247 245 255;
+  --color-on-error-container: 255 218 214;
+  --color-on-secondary: 247 245 255;
+  --color-outline: 74 69 104;
+  --color-on-error: 43 0 5;
+  --color-tertiary-container: 58 52 90;
+  --color-on-tertiary: 27 24 48;
+  --color-inverse-surface: 247 245 255;
+  --color-inverse-on-surface: 27 24 48;
+  --color-outline-variant: 74 69 104;
+  --color-error-container: 120 24 42;
+  --color-error: 255 180 171;
+  --color-tertiary-fixed-dim: 242 181 68;
+  --color-primary-container: 58 52 90;
+  --color-on-background: 247 245 255;
+  --color-surface-container: 48 43 77;
+  --color-surface-container-highest: 58 52 90;
+  --color-surface-container-high: 58 52 90;
+  --color-tertiary-fixed: 255 232 115;
+  --color-tertiary: 242 181 68;
+  --color-surface-variant: 48 43 77;
+  --color-on-secondary-fixed-variant: 247 245 255;
+  --color-surface-dim: 27 24 48;
+  --color-surface-bright: 58 52 90;
+  --color-on-primary: 247 245 255;
+  --color-surface-container-lowest: 33 29 56;
+  --color-on-tertiary-container: 255 232 115;
+  --color-on-surface: 247 245 255;
+  --color-secondary-container: 48 43 77;
+  --color-on-primary-fixed: 247 245 255;
+  --color-on-tertiary-fixed-variant: 255 232 115;
+  --color-on-secondary-fixed: 247 245 255;
+  --color-background: 27 24 48;
+  --color-on-secondary-container: 247 245 255;
+  --color-inverse-primary: 123 92 255;
+  --color-primary: 123 92 255;
+  --color-surface: 27 24 48;
+  --color-secondary-fixed-dim: 161 120 255;
+  --color-surface-tint: 123 92 255;
+  --color-secondary: 161 120 255;
+  --color-secondary-fixed: 161 120 255;
+  --color-primary-fixed-dim: 123 92 255;
+  --color-on-surface-variant: 216 211 238;
+  --color-on-primary-container: 247 245 255;
+  color: rgb(var(--color-on-surface));
+  background: rgb(var(--color-background));
+  color-scheme: dark;
 }
 
 html,
@@ -27,7 +138,8 @@ body,
 body {
   margin: 0;
   min-width: 320px;
-  background: #f8f9ff;
+  background: rgb(var(--color-background));
+  color: rgb(var(--color-on-surface));
 }
 
 button,
@@ -71,4 +183,555 @@ img {
 @keyframes scale-up {
   from { transform: scale(1.02); }
   to { transform: scale(1); }
+}
+
+::selection {
+  background: rgb(var(--color-primary) / 0.24);
+}
+
+:root,
+body,
+button,
+input,
+textarea,
+select {
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+input,
+textarea,
+select {
+  color: rgb(var(--color-on-surface));
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgb(var(--color-on-surface-variant) / 0.68);
+}
+
+.dark .bg-white,
+.dark .bg-slate-50,
+.dark .bg-gray-50 {
+  background-color: rgb(var(--color-surface-container-lowest) / var(--tw-bg-opacity, 1)) !important;
+}
+
+.dark .text-slate-900,
+.dark .text-gray-900,
+.dark .text-black {
+  color: rgb(var(--color-on-surface) / var(--tw-text-opacity, 1)) !important;
+}
+
+.dark .text-slate-500,
+.dark .text-gray-500,
+.dark .text-gray-600,
+.dark .text-slate-600 {
+  color: rgb(var(--color-on-surface-variant) / var(--tw-text-opacity, 1)) !important;
+}
+
+.dark .border-white,
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-slate-200 {
+  border-color: rgb(var(--color-outline-variant) / 0.45) !important;
+}
+
+.dark .glass-panel:not(.ai-gradient),
+.dark .glass-card {
+  background: rgb(var(--color-surface-container-lowest) / 0.76) !important;
+  border-color: rgb(var(--color-outline-variant) / 0.48) !important;
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.04) !important;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-primary) / 0.22);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-primary) / 0.38);
+}
+
+.dark .gradient-bg,
+.dark .ai-gradient,
+.dark .primary-gradient,
+.dark .primary-button,
+.dark .btn-gradient,
+.dark .btn-primary-gradient {
+  background: linear-gradient(135deg, #7B5CFF 0%, #A178FF 56%, #F2B544 120%) !important;
+}
+
+.dark .input-focus:focus {
+  border-color: rgb(var(--color-primary));
+  box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.18);
+}
+
+.dark .login-page,
+.dark .login-page__formShell {
+  background:
+    radial-gradient(circle at 18% 12%, rgb(var(--color-primary) / 0.18), transparent 28rem),
+    linear-gradient(145deg, rgb(var(--color-background)) 0%, rgb(var(--color-surface)) 58%, #1B1830 100%);
+  color: rgb(var(--color-on-surface));
+}
+
+.dark .login-page__hero {
+  background: linear-gradient(135deg, #211D38 0%, #302B4D 54%, #F2B544 120%);
+}
+
+.dark .login-page__brand,
+.dark .login-page__fieldRow a,
+.dark .login-page__signup a,
+.dark .login-page__footerLinks a,
+.dark .login-page__textButton {
+  color: rgb(var(--color-primary));
+}
+
+.dark .login-page__card {
+  border-color: rgb(var(--color-outline-variant) / 0.48);
+  background: rgb(var(--color-surface-container-lowest) / 0.78);
+  box-shadow: 0 22px 56px rgb(0 0 0 / 0.34);
+}
+
+.dark .login-page__headingBlock p,
+.dark .login-page__field > span,
+.dark .login-page__fieldRow label,
+.dark .login-page__remember,
+.dark .login-page__signup,
+.dark .login-page__divider {
+  color: rgb(var(--color-on-surface-variant));
+}
+
+.dark .login-page__inputWrap input,
+.dark .login-page__google,
+.dark .login-page__divider span {
+  border-color: rgb(var(--color-outline-variant) / 0.42);
+  background: rgb(var(--color-surface-container-low));
+  color: rgb(var(--color-on-surface));
+}
+
+.dark .login-page__inputWrap input:focus {
+  background: rgb(var(--color-surface-container));
+  box-shadow: 0 0 0 4px rgb(var(--color-primary) / 0.14);
+}
+
+.dark .login-page__divider::before {
+  background: rgb(var(--color-outline-variant));
+}
+
+.dark .dashboard,
+.dark .dashboard-home-window,
+.dark .notes-page,
+.dark .analytics-page,
+.dark .profile-settings-page,
+.dark .flash-page,
+.dark .study-planner-page,
+.dark .quiz-page,
+.dark .ai-tutor-page {
+  color: rgb(var(--color-on-surface));
+}
+
+.dark .dashboard-home-window,
+.dark .notes-page {
+  --window-primary: #7B5CFF;
+  --window-secondary: #A178FF;
+  --window-gold: #F2B544;
+  --window-yellow: #FFE873;
+  --window-bg: #1B1830;
+  --window-ink: #F7F5FF;
+  --window-muted: #D8D3EE;
+  --window-border: #4A4568;
+  --window-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+  background:
+    radial-gradient(circle at top right, rgba(123, 92, 255, 0.15), transparent 30rem),
+    radial-gradient(circle at bottom left, rgba(242, 181, 68, 0.09), transparent 26rem),
+    linear-gradient(180deg, #211D38 0%, var(--window-bg) 100%);
+}
+
+.dark .dashboard-home-window .glass-panel:not(.ai-gradient),
+.dark .dashboard-home-window .stat-card,
+.dark .notes-page .folder-vault-card,
+.dark .notes-page .module-workspace-panel,
+.dark .notes-page .module-note-card,
+.dark .notes-page .module-pdf-card,
+.dark .notes-page .notes-empty-state,
+.dark .note-viewer-modal,
+.dark .pdf-viewer-modal,
+.dark .notes-create-modal,
+.dark .folder-create-modal {
+  border-color: var(--window-border) !important;
+  background: rgb(var(--color-surface-container-lowest) / 0.88) !important;
+  color: rgb(var(--color-on-surface));
+  box-shadow: var(--window-shadow) !important;
+}
+
+.dark .module-workspace-panel p,
+.dark .module-note-card p,
+.dark .module-pdf-card p,
+.dark .notes-empty-state p,
+.dark .note-viewer-body p,
+.dark .file-card-menu__content a {
+  color: rgb(var(--color-on-surface-variant));
+}
+
+.dark .pdf-viewer-frame {
+  border-color: rgb(var(--color-outline-variant) / 0.55);
+  background: rgb(var(--color-surface-dim));
+}
+
+.dark .analytics-page {
+  --academent-primary: #7B5CFF;
+  --academent-secondary: #A178FF;
+  --academent-gold: #F2B544;
+  --academent-yellow: #FFE873;
+  --analytics-bg: #1B1830;
+  --analytics-ink: #F7F5FF;
+  --analytics-muted: #D8D3EE;
+  --analytics-border: #4A4568;
+  --analytics-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+  background:
+    radial-gradient(circle at top right, rgba(123, 92, 255, 0.15), transparent 30rem),
+    radial-gradient(circle at bottom left, rgba(242, 181, 68, 0.09), transparent 26rem),
+    linear-gradient(180deg, #211D38 0%, var(--analytics-bg) 100%);
+}
+
+.dark .analytics-card,
+.dark .module-card,
+.dark .planner-card,
+.dark .insight-card,
+.dark .weak-item,
+.dark .recommendation-item,
+.dark .empty-state,
+.dark .analytics-custom-range,
+.dark .mini-calendar,
+.dark .analytics-page .skeleton-grid span {
+  border-color: var(--analytics-border) !important;
+  background: rgb(var(--color-surface-container-lowest) / 0.88) !important;
+  color: rgb(var(--color-on-surface));
+  box-shadow: var(--analytics-shadow) !important;
+}
+
+.dark .analytics-card p,
+.dark .analytics-card small,
+.dark .planner-list p,
+.dark .weak-item p,
+.dark .recommendation-item p,
+.dark .empty-state p,
+.dark .analytics-custom-range label,
+.dark .analytics-custom-range input {
+  color: rgb(var(--color-on-surface-variant));
+}
+
+.dark .analytics-range button,
+.dark .analytics-tabs button,
+.dark .analytics-custom-range input {
+  border-color: rgb(var(--color-outline-variant) / 0.5);
+  background: rgb(var(--color-surface-container-low));
+  color: rgb(var(--color-on-surface));
+}
+
+.dark .profile-settings-page,
+.dark .profile-settings-page--dark {
+  --profile-primary: #7B5CFF;
+  --profile-secondary: #A178FF;
+  --profile-gold: #F2B544;
+  --profile-yellow: #FFE873;
+  --profile-bg: #1B1830;
+  --profile-ink: #F7F5FF;
+  --profile-muted: #D8D3EE;
+  --profile-border: #4A4568;
+  --profile-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+  background:
+    radial-gradient(circle at top right, rgba(123, 92, 255, 0.15), transparent 30rem),
+    radial-gradient(circle at bottom left, rgba(242, 181, 68, 0.09), transparent 26rem),
+    linear-gradient(180deg, #211D38 0%, var(--profile-bg) 100%);
+}
+
+.dark .profile-card,
+.dark .profile-side-card,
+.dark .profile-toast,
+.dark .profile-field input,
+.dark .profile-field select,
+.dark .account-setting-row,
+.dark .notification-toggle,
+.dark .profile-segmented,
+.dark .theme-selector,
+.dark .privacy-actions button,
+.dark .profile-button--ghost,
+.dark .subject-chip-grid button,
+.dark .accent-selector button,
+.dark .profile-meta-grid span,
+.dark .profile-badge {
+  background: rgb(var(--color-surface-container-lowest) / 0.88) !important;
+  border-color: var(--profile-border) !important;
+  color: rgb(var(--color-on-surface));
+}
+
+.dark .study-planner-page {
+  --planner-primary: #7B5CFF;
+  --planner-secondary: #A178FF;
+  --planner-accent: #F2B544;
+  --planner-highlight: #FFE873;
+  color: rgb(var(--color-on-surface));
+  background:
+    radial-gradient(circle at 12% 8%, rgba(123, 92, 255, 0.15), transparent 28rem),
+    radial-gradient(circle at 82% 14%, rgba(242, 181, 68, 0.1), transparent 24rem),
+    linear-gradient(145deg, rgb(var(--color-background)) 0%, rgb(var(--color-surface)) 54%, #1B1830 100%);
+}
+
+.dark .planner-search,
+.dark .planner-profile,
+.dark .planner-sidebar,
+.dark .planner-calendar-panel,
+.dark .planner-modal,
+.dark .planner-details-panel,
+.dark .planner-filter,
+.dark .planner-toolbar button,
+.dark .planner-deadlines button,
+.dark .planner-quick-buttons button,
+.dark .planner-event-chip,
+.dark .planner-empty-state,
+.dark .planner-notes-selector,
+.dark .planner-select-trigger,
+.dark .planner-select-menu,
+.dark .planner-material-row,
+.dark .planner-selected-materials button,
+.dark .planner-confirm-dialog {
+  border-color: rgb(var(--color-outline-variant) / 0.5) !important;
+  background: rgb(var(--color-surface-container-lowest) / 0.88) !important;
+  color: rgb(var(--color-on-surface));
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.28) !important;
+}
+
+.dark .planner-search input,
+.dark .planner-filter select,
+.dark .planner-form-grid input,
+.dark .planner-form-grid select,
+.dark .planner-form-grid textarea,
+.dark .planner-field input,
+.dark .planner-field textarea,
+.dark .planner-select-menu input {
+  color: rgb(var(--color-on-surface));
+  background: transparent;
+}
+
+.dark .planner-profile small,
+.dark .planner-calendar-toggle,
+.dark .planner-event-copy small,
+.dark .planner-details-list span,
+.dark .planner-empty-state p,
+.dark .planner-notes-empty p,
+.dark .planner-material-row small {
+  color: rgb(var(--color-on-surface-variant));
+}
+
+.dark .ai-tutor-page {
+  --ai-primary: #7B5CFF;
+  --ai-secondary: #A178FF;
+  --ai-accent: #F2B544;
+  --ai-highlight: #FFE873;
+  --ai-ink: #F7F5FF;
+  --ai-muted: rgba(207, 195, 222, 0.78);
+  --ai-line: #4A4568;
+  background:
+    radial-gradient(circle at 22% 12%, rgba(123, 92, 255, 0.15), transparent 28rem),
+    radial-gradient(circle at 78% 16%, rgba(161, 120, 255, 0.11), transparent 24rem),
+    linear-gradient(135deg, #1B1830 0%, #211D38 48%, #302B4D 100%);
+}
+
+.dark .ai-chat-sidebar,
+.dark .ai-tutor-header,
+.dark .ai-composer-shell,
+.dark .ai-composer,
+.dark .ai-context-panel,
+.dark .ai-context-panel section,
+.dark .ai-attachment-drawer,
+.dark .ai-sidebar-profile,
+.dark .ai-suggestion-grid button,
+.dark .ai-message-bubble,
+.dark .ai-hero-card,
+.dark .ai-header-search,
+.dark .ai-drawer-filters label,
+.dark .ai-panel-list article,
+.dark .ai-context-chip,
+.dark .ai-context-indicator > button,
+.dark .ai-drawer-selected {
+  border-color: var(--ai-line) !important;
+  background: rgb(var(--color-surface-container-lowest) / 0.84) !important;
+  color: rgb(var(--color-on-surface));
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.28) !important;
+}
+
+.dark .ai-header-search input,
+.dark .ai-drawer-filters input,
+.dark .ai-composer textarea,
+.dark .ai-drawer-filters select {
+  color: rgb(var(--color-on-surface));
+  background: transparent;
+}
+
+.dark .ai-message--user .ai-message-bubble,
+.dark .ai-new-chat-button,
+.dark .ai-attach-button,
+.dark .ai-send-button:not(:disabled) {
+  background: linear-gradient(135deg, #7B5CFF, #A178FF) !important;
+  color: #ffffff;
+}
+
+.dark .flash-page,
+.dark .flash-study-mode {
+  --flash-primary: #7B5CFF;
+  --flash-secondary: #A178FF;
+  --flash-gold: #F2B544;
+  --flash-yellow: #FFE873;
+  --flash-bg: #1B1830;
+  --flash-ink: #F7F5FF;
+  --flash-muted: #D8D3EE;
+  --flash-border: #4A4568;
+  --flash-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+  color: rgb(var(--color-on-surface));
+  background:
+    radial-gradient(circle at top right, rgba(123, 92, 255, 0.15), transparent 30rem),
+    radial-gradient(circle at bottom left, rgba(242, 181, 68, 0.09), transparent 26rem),
+    linear-gradient(180deg, #211D38 0%, var(--flash-bg) 100%);
+}
+
+.dark .flash-kpi-card,
+.dark .flash-collection-card,
+.dark .flash-list-section,
+.dark .flash-review-panel,
+.dark .flash-generator-panel,
+.dark .flash-editor-modal,
+.dark .flash-generator-modal,
+.dark .flash-confirm-modal,
+.dark .flash-ai-panel,
+.dark .flash-empty-state,
+.dark .flash-search-field,
+.dark .flash-select-control,
+.dark .flash-tree-panel,
+.dark .flash-selected-sources,
+.dark .flash-tree-row,
+.dark .flash-choice-grid button,
+.dark .flash-toggle-list label,
+.dark .flash-ai-actions button,
+.dark .flash-study-card,
+.dark .flash-ai-input {
+  border-color: var(--flash-border) !important;
+  background: rgb(var(--color-surface-container-lowest) / 0.88) !important;
+  color: rgb(var(--color-on-surface));
+  box-shadow: var(--flash-shadow) !important;
+}
+
+.dark .flash-search-field input,
+.dark .flash-select-control,
+.dark .flash-editor-body input,
+.dark .flash-editor-body textarea,
+.dark .flash-editor-body select,
+.dark .flash-range-field input,
+.dark .flash-ai-input input {
+  color: rgb(var(--color-on-surface));
+  background: transparent;
+}
+
+.dark .quiz-page {
+  color: rgb(var(--color-on-surface));
+}
+
+.dark .quiz-card,
+.dark .quiz-setup-card,
+.dark .quiz-question-card,
+.dark .quiz-review-card,
+.dark .quiz-generating-panel,
+.dark .quiz-empty-state,
+.dark .quiz-error-panel,
+.dark .quiz-modal,
+.dark .quiz-delete-modal,
+.dark .quiz-selected-list,
+.dark .quiz-selected-item,
+.dark .quiz-answer-option,
+.dark .quiz-form-field input,
+.dark .quiz-fill-blank-input,
+.dark .quiz-button--ghost,
+.dark .quiz-chip-bank button {
+  border-color: rgb(var(--color-outline-variant) / 0.5) !important;
+  background: rgb(var(--color-surface-container-lowest) / 0.88) !important;
+  color: rgb(var(--color-on-surface));
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.28) !important;
+}
+
+.dark .quiz-card p,
+.dark .quiz-card__meta span,
+.dark .quiz-progress-block span,
+.dark .quiz-selected-item small,
+.dark .quiz-empty-state p,
+.dark .quiz-review-card p,
+.dark .quiz-modal__header p:last-child,
+.dark .quiz-generating-panel p {
+  color: rgb(var(--color-on-surface-variant));
+}
+
+.dark .quiz-page .notes-section-header,
+.dark .quiz-results-hero,
+.dark .dashboard-home-hero,
+.dark .analytics-hero,
+.dark .profile-hero,
+.dark .flash-header,
+.dark .notes-page .notes-section-header {
+  background: linear-gradient(135deg, rgba(123, 92, 255, 0.98), rgba(161, 120, 255, 0.94), rgba(242, 181, 68, 0.86)) !important;
+  box-shadow: 0 22px 54px rgb(0 0 0 / 0.34) !important;
+}
+/* Academent requested dark palette hard stop */
+.dark,
+.dark body,
+.dark #root {
+  background: var(--dark-main) !important;
+  color: var(--dark-text);
+}
+
+.dark :where(.bg-white, .bg-surface, .bg-background) {
+  background-color: var(--dark-main) !important;
+}
+
+.dark :where(.bg-slate-50, .bg-gray-50, .bg-surface-container-lowest, .bg-surface-container-low) {
+  background-color: var(--dark-sidebar) !important;
+}
+
+.dark :where(.bg-surface-container, .bg-surface-container-high, .bg-surface-container-highest, .bg-surface-variant) {
+  background-color: var(--dark-card) !important;
+}
+
+.dark :where(.hover\:bg-surface-container:hover, .hover\:bg-surface-container-high:hover, .hover\:bg-surface-container-low:hover, .hover\:bg-white\/30:hover, .hover\:bg-white\/20:hover) {
+  background-color: var(--dark-hover) !important;
+}
+
+.dark :where(input, textarea, select) {
+  background-color: var(--dark-sidebar);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgb(var(--color-on-surface-variant) / 0.72);
+}
+
+.dark :where(.border-white, .border-gray-100, .border-gray-200, .border-slate-200, .border-outline-variant, .border-outline-variant\/10, .border-outline-variant\/15, .border-outline-variant\/20, .border-outline-variant\/30) {
+  border-color: var(--dark-border) !important;
+}
+
+.dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="dropdown"], [class*="menu__content"], [class*="toolbar"], [class*="shell"], [class*="workspace"], [class*="empty-state"], [class*="list-section"]):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]):not([class*="button"]):not([class*="primary"]) {
+  background-color: var(--dark-card) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text);
+}
+
+
+.dark :where(aside, nav, [class*="sidebar"], [class*="side-nav"], [class*="topbar"], [class*="navigation"]):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]) {
+  background-color: var(--dark-sidebar) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text);
+}
+.dark :where([class*="row"], [class*="item"], [class*="chip"], [class*="toggle"], [class*="field"], [class*="search"], [class*="select"], [class*="filter"]):not([class*="hero"]) {
+  border-color: var(--dark-border) !important;
+}
+
+.dark :where(button:not(.ai-gradient):not(.primary-gradient):not(.primary-button):not(.profile-button--primary):not(.quiz-button--primary):not(.flash-button--primary):not(.planner-create-button):not(.login-page__primary):not([class*="primary"]):not([class*="danger"]):hover, [role="button"]:hover, .is-active, .is-selected) {
+  background-color: var(--dark-hover) !important;
 }
