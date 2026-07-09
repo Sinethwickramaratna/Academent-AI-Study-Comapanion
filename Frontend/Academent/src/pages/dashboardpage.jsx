@@ -1035,7 +1035,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
           </Suspense>
         ) : activeTab === 'profile' ? (
           <Suspense fallback={<LoadingEffect icon="account_circle" title="Loading profile" message="Opening your profile and settings." />}>
-            <ProfileSettingsPage profile={profile} currentUser={currentUser} />
+            <ProfileSettingsPage profile={profile} currentUser={currentUser} onProfileUpdated={setProfile} />
           </Suspense>
         ) : (
           /* Under Construction Panel for other Tabs */

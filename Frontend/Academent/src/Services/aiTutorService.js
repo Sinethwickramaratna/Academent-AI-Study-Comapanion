@@ -165,6 +165,16 @@ export const deleteTutorConversation = async (uid, conversationId) => {
   await deleteDoc(conversationRef(uid, conversationId));
 };
 
+export const deleteAllTutorConversations = async (uid) => {
+  ensureUid(uid);
+  const conversations = await getDocs(conversationCollection(uid));
+
+  await Promise.all(conversations.docs.map(async (conversation) => {
+    await deleteTutorConversation(uid, conversation.id);
+  }));
+
+  return conversations.size;
+};
 export const loadTutorContextMaterials = async (uid, selectedItems = []) => {
   if (!selectedItems.length) return [];
 

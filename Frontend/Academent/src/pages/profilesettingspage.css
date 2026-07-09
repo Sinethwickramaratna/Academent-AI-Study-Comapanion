@@ -935,3 +935,141 @@
     grid-column: auto;
   }
 }
+
+.profile-hidden-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: #ffffff;
+  color: var(--profile-ink);
+  box-shadow: 0 14px 32px rgba(45, 28, 88, 0.1);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.profile-toast .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.profile-toast--success {
+  border-color: rgba(16, 185, 129, 0.2);
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.profile-toast--error {
+  border-color: rgba(244, 63, 94, 0.2);
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.profile-toast--info {
+  border-color: rgba(77, 43, 140, 0.16);
+  background: #f4f1fb;
+  color: var(--profile-primary);
+}
+
+.profile-settings-page button:disabled,
+.profile-settings-page input:disabled,
+.profile-settings-page select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+.profile-field input[readonly] {
+  cursor: default;
+  color: var(--profile-muted);
+  background: #f3f0f8;
+}
+
+.profile-settings-page {
+  accent-color: var(--profile-accent);
+}
+
+.profile-progress__track span {
+  background: linear-gradient(90deg, var(--profile-secondary), var(--profile-accent));
+}
+
+.accent-selector button.is-active {
+  border-color: var(--profile-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--profile-accent) 18%, transparent);
+}
+
+.profile-settings-page--dark {
+  --profile-bg: #14111f;
+  --profile-ink: #f8f7ff;
+  --profile-muted: #b9b0c8;
+  --profile-border: rgba(255, 255, 255, 0.12);
+  --profile-shadow: 0 18px 45px rgba(0, 0, 0, 0.26);
+  background: linear-gradient(180deg, #171326 0%, #100d19 100%);
+}
+
+.profile-settings-page--dark .profile-card,
+.profile-settings-page--dark .profile-side-card,
+.profile-settings-page--dark .profile-toast {
+  background: rgba(31, 26, 45, 0.96);
+  border-color: var(--profile-border);
+}
+
+.profile-settings-page--dark .profile-field input,
+.profile-settings-page--dark .profile-field select,
+.profile-settings-page--dark .account-setting-row,
+.profile-settings-page--dark .notification-toggle,
+.profile-settings-page--dark .profile-segmented,
+.profile-settings-page--dark .theme-selector,
+.profile-settings-page--dark .privacy-actions button,
+.profile-settings-page--dark .profile-button--ghost,
+.profile-settings-page--dark .subject-chip-grid button,
+.profile-settings-page--dark .accent-selector button,
+.profile-settings-page--dark .profile-meta-grid span,
+.profile-settings-page--dark .profile-badge {
+  background: #241d34;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--profile-ink);
+}
+
+.profile-settings-page--dark .profile-field input[readonly] {
+  background: #1b1628;
+  color: var(--profile-muted);
+}
+
+.profile-settings-page--dark .account-setting-row > .material-symbols-outlined,
+.profile-settings-page--dark .profile-segmented button.is-active,
+.profile-settings-page--dark .theme-selector button.is-active,
+.profile-settings-page--dark .profile-segmented button:hover,
+.profile-settings-page--dark .theme-selector button:hover {
+  background: #332845;
+  color: #ffffff;
+}
+
+.profile-settings-page--dark .profile-toast--success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #6ee7b7;
+}
+
+.profile-settings-page--dark .profile-toast--error {
+  background: rgba(244, 63, 94, 0.12);
+  color: #fda4af;
+}
+
+.profile-settings-page--dark .profile-toast--info {
+  background: rgba(133, 64, 157, 0.16);
+  color: #e9d5ff;
+}
+
+.profile-settings-page--system {
+  color-scheme: light dark;
+}

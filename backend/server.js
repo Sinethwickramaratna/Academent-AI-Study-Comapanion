@@ -6,6 +6,7 @@ import quizRoutes from "./routes/quizRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import noteRoutes from "./routes/noteRoutes.js";
 import flashCardRoutes from "./routes/flashCardRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
 
 import { quizLimiter, chatLimiter, flashCardLimiter, globalLimiter } from "./middleware/rateLimiter.js";
 
@@ -22,8 +23,11 @@ app.use("/api/quiz/", quizLimiter, quizRoutes);
 app.use("/api/chat/", chatLimiter, chatRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/flashcards", flashCardLimiter, flashCardRoutes);
+app.use("/api/profile", profileRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+

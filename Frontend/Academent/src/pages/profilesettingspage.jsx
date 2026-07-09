@@ -1,4 +1,17 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './profilesettingspage.css';
+import { useAuth } from '../context/AuthContext';
+import {
+  deleteCurrentUserAccount,
+  getFriendlyAuthError,
+  resendEmailVerification,
+  resetPassword,
+  updateCurrentUserAuthProfile,
+  updateUserProfileData,
+} from '../Services/authService';
+import { uploadProfilePhotoToCloudinary } from '../Services/profilePhotoService';
+import { deleteAllTutorConversations } from '../Services/aiTutorService';
 
 const subjectOptions = [
   'Biology',
@@ -6,50 +19,441 @@ const subjectOptions = [
   'Chemistry',
   'Calculus',
   'Academic Writing',
-  'Research Methods'
+  'Research Methods',
+  'Mathematics',
+  'Computer Science',
+  'Software Engineering',
+  'Data Science',
 ];
 
-const learningStyles = ['Visual', 'Reading', 'Practice-based', 'Mixed'];
+const learningStyles = ['Visual', 'Reading', 'Practice-based', 'Interactive', 'Mixed'];
 const difficultyLevels = ['Easy', 'Medium', 'Hard', 'Adaptive'];
 const themeModes = ['Light', 'Dark', 'System'];
 
+const semesterOptionsBase = [
+  '',
+  'Semester 1',
+  'Semester 2',
+  'Semester 3',
+  'Semester 4',
+  'Semester 5',
+  'Semester 6',
+  'Semester 7',
+  'Semester 8',
+];
+
+const academicYearOptionsBase = [
+  '',
+  '2025 / 2026',
+  '2026 / 2027',
+  '2027 / 2028',
+  'Freshman (Year 1)',
+  'Sophomore (Year 2)',
+  'Junior (Year 3)',
+  'Senior (Year 4)',
+  'Postgraduate',
+];
+
+const studyTimeOptions = [
+  '',
+  'Morning, 6:00 AM - 9:00 AM',
+  'Afternoon, 1:00 PM - 4:00 PM',
+  'Evening, 7:00 PM - 10:00 PM',
+  'Flexible schedule',
+];
+
+const languageOptions = ['English (US)', 'English (UK)', 'Sinhala', 'Tamil'];
+
 const notificationSettings = [
-  { label: 'Quiz reminders', enabled: true },
-  { label: 'Study plan reminders', enabled: true },
-  { label: 'Assignment deadline alerts', enabled: true },
-  { label: 'AI tutor updates', enabled: false }
+  { key: 'quizReminders', label: 'Quiz reminders', defaultEnabled: true },
+  { key: 'studyPlanReminders', label: 'Study plan reminders', defaultEnabled: true },
+  { key: 'assignmentDeadlineAlerts', label: 'Assignment deadline alerts', defaultEnabled: true },
+  { key: 'aiTutorUpdates', label: 'AI tutor updates', defaultEnabled: false },
 ];
 
 const accentColors = [
   { label: 'Primary purple', value: '#4D2B8C' },
   { label: 'Secondary purple', value: '#85409D' },
   { label: 'Accent yellow', value: '#EEA727' },
-  { label: 'Highlight yellow', value: '#FFEF5F' }
+  { label: 'Highlight yellow', value: '#FFEF5F' },
 ];
 
 const summaryStats = [
   { label: 'Completed quizzes', value: '18', icon: 'quiz', trend: '+6 this month', tone: 'purple', chart: [42, 62, 54, 78, 70] },
   { label: 'Study streak', value: '12 days', icon: 'local_fire_department', trend: 'Best: 18 days', tone: 'gold', chart: [40, 52, 64, 72, 88] },
   { label: 'Uploaded notes', value: '36', icon: 'description', trend: '8 PDFs added', tone: 'violet', chart: [50, 46, 68, 58, 76] },
-  { label: 'Average quiz score', value: '84%', icon: 'workspace_premium', trend: '+7.2%', tone: 'emerald', chart: [48, 58, 66, 72, 84] }
+  { label: 'Average quiz score', value: '84%', icon: 'workspace_premium', trend: '+7.2%', tone: 'emerald', chart: [48, 58, 66, 72, 84] },
 ];
 
-function ProfileSettingsPage({ profile, currentUser }) {
-  const fullName = profile?.fullName || currentUser?.displayName || 'Ariana Patel';
-  const email = profile?.email || currentUser?.email || 'ariana.patel@northbridge.edu';
-  const photoURL = currentUser?.photoURL || profile?.photoURL || '';
-  const firstName = fullName.split(' ')[0] || 'Ariana';
-  const role = profile?.role || 'Student';
-  const major = profile?.academicProfile?.major || 'BSc Data Science';
-  const semester = profile?.academicProfile?.semester || 'Semester 4';
-  const university = profile?.academicProfile?.university || 'Northbridge University';
-  const subjects = profile?.academicProfile?.subjects?.length ? profile.academicProfile.subjects : subjectOptions.slice(0, 4);
+const notificationDefaults = notificationSettings.reduce((settings, item) => ({
+  ...settings,
+  [item.key]: item.defaultEnabled,
+}), {});
+
+const uniqueOptions = (options) => [...new Set(options.filter((option) => option !== undefined && option !== null))];
+
+const normalizeLearningStyle = (value) => {
+  const normalized = String(value || '').toLowerCase();
+  const styleMap = {
+    visual: 'Visual',
+    reading: 'Reading',
+    practice: 'Practice-based',
+    practice_based: 'Practice-based',
+    'practice-based': 'Practice-based',
+    interactive: 'Interactive',
+    mixed: 'Mixed',
+  };
+
+  return learningStyles.includes(value) ? value : styleMap[normalized] || 'Mixed';
+};
+
+const getInitialForm = (profile, currentUser) => {
+  const academicProfile = profile?.academicProfile || {};
+  const learningPreferences = profile?.learningPreferences || {};
+  const appPreferences = profile?.appPreferences || {};
+  const notifications = appPreferences.notifications || {};
+
+  return {
+    fullName: profile?.fullName || currentUser?.displayName || '',
+    email: profile?.email || currentUser?.email || '',
+    phoneNumber: profile?.phoneNumber || '',
+    university: academicProfile.university || '',
+    degree: academicProfile.degree || '',
+    major: academicProfile.major || '',
+    semester: academicProfile.semester || '',
+    academicYear: academicProfile.academicYear || '',
+    subjects: Array.isArray(academicProfile.subjects) ? academicProfile.subjects : [],
+    studyGoal: learningPreferences.studyGoal || '',
+    preferredStudyTime: learningPreferences.preferredStudyTime || '',
+    learningStyle: normalizeLearningStyle(learningPreferences.studyStyle),
+    difficultyPreference: learningPreferences.difficultyPreference || 'Adaptive',
+    themeMode: appPreferences.themeMode || 'Light',
+    language: appPreferences.language || academicProfile.language || 'English (US)',
+    notifications: { ...notificationDefaults, ...notifications },
+    accentColor: appPreferences.accentColor || accentColors[0].value,
+    photoURL: profile?.photoURL || currentUser?.photoURL || '',
+    photoPublicId: profile?.photoPublicId || '',
+  };
+};
+
+const safeStringify = (value) => JSON.stringify(value, (key, item) => {
+  if (item && typeof item.toDate === 'function') {
+    return item.toDate().toISOString();
+  }
+  return item;
+}, 2);
+
+const toRoleLabel = (role) => {
+  const label = String(role || 'Student').replace(/[-_]+/g, ' ');
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
+
+function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
+  const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
+  const fileInputRef = useRef(null);
+  const [form, setForm] = useState(() => getInitialForm(profile, currentUser));
+  const [notice, setNotice] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [sendingPasswordReset, setSendingPasswordReset] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
+  const [clearingChats, setClearingChats] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setForm(getInitialForm(profile, currentUser));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [profile, currentUser]);
+
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = window.setTimeout(() => setNotice(null), 4500);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  const semesterOptions = useMemo(() => uniqueOptions([...semesterOptionsBase, form.semester]), [form.semester]);
+  const academicYearOptions = useMemo(() => uniqueOptions([...academicYearOptionsBase, form.academicYear]), [form.academicYear]);
+
+  const fullName = form.fullName.trim() || 'Student';
+  const firstName = fullName.split(' ')[0] || 'Student';
+  const email = form.email || currentUser?.email || '';
+  const role = toRoleLabel(profile?.role);
+  const major = form.major || form.degree || 'Undeclared program';
+  const semester = form.semester || 'Semester not set';
+  const university = form.university || 'University not set';
   const emailVerified = Boolean(currentUser?.emailVerified || profile?.emailVerified);
   const googleLinked = Boolean(currentUser?.providerData?.some((provider) => provider.providerId === 'google.com'));
-  const completion = 82;
+  const busy = saving || uploadingPhoto || sendingPasswordReset || sendingVerification || clearingChats || deletingAccount;
+
+  const completionItems = [
+    form.fullName,
+    email,
+    form.photoURL,
+    form.phoneNumber,
+    form.university,
+    form.degree || form.major,
+    form.semester,
+    form.academicYear,
+    form.subjects.length ? 'subjects' : '',
+    form.studyGoal,
+  ];
+  const completedItems = completionItems.filter((item) => Boolean(String(item).trim())).length;
+  const completion = Math.round((completedItems / completionItems.length) * 100);
+  const updatesLeft = Math.max(completionItems.length - completedItems, 0);
+
+  const showNotice = (type, message) => setNotice({ type, message });
+
+  const setField = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const refreshSharedProfile = async (fallbackProfile) => {
+    const refreshedProfile = await refreshProfile(currentUser?.uid);
+    onProfileUpdated?.(refreshedProfile || fallbackProfile);
+    return refreshedProfile || fallbackProfile;
+  };
+
+  const handlePhotoChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showNotice('error', 'Choose an image file for your profile photo.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showNotice('error', 'Profile photo must be 5 MB or smaller.');
+      return;
+    }
+
+    if (!currentUser?.uid) {
+      showNotice('error', 'You must be signed in to update your photo.');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const uploadedPhoto = await uploadProfilePhotoToCloudinary(file);
+      const photoPatch = {
+        photoURL: uploadedPhoto.url,
+        photoPublicId: uploadedPhoto.publicId,
+        photoStorageProvider: uploadedPhoto.storageProvider,
+      };
+
+      await updateUserProfileData(photoPatch);
+      await updateCurrentUserAuthProfile({ photoURL: uploadedPhoto.url });
+      setForm((current) => ({
+        ...current,
+        photoURL: uploadedPhoto.url,
+        photoPublicId: uploadedPhoto.publicId,
+      }));
+      await refreshSharedProfile({ ...profile, ...photoPatch });
+      showNotice('success', 'Profile photo uploaded and saved.');
+    } catch (error) {
+      showNotice('error', getFriendlyAuthError(error));
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!currentUser?.uid) {
+      showNotice('error', 'You must be signed in to save profile settings.');
+      return;
+    }
+
+    const trimmedName = form.fullName.trim();
+    if (!trimmedName) {
+      showNotice('error', 'Full name is required.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        fullName: trimmedName,
+        email,
+        phoneNumber: form.phoneNumber.trim(),
+        photoURL: form.photoURL || '',
+        photoPublicId: form.photoPublicId || '',
+        emailVerified,
+        academicProfile: {
+          ...(profile?.academicProfile || {}),
+          university: form.university.trim(),
+          degree: form.degree.trim(),
+          major: form.major.trim(),
+          semester: form.semester,
+          academicYear: form.academicYear,
+          language: form.language,
+          subjects: form.subjects,
+        },
+        learningPreferences: {
+          ...(profile?.learningPreferences || {}),
+          studyGoal: form.studyGoal.trim(),
+          preferredStudyTime: form.preferredStudyTime,
+          studyStyle: form.learningStyle,
+          difficultyPreference: form.difficultyPreference,
+        },
+        appPreferences: {
+          ...(profile?.appPreferences || {}),
+          themeMode: form.themeMode,
+          language: form.language,
+          accentColor: form.accentColor,
+          notifications: form.notifications,
+        },
+      };
+
+      await updateUserProfileData(payload);
+      await updateCurrentUserAuthProfile({
+        displayName: trimmedName,
+        ...(form.photoURL ? { photoURL: form.photoURL } : {}),
+      });
+      await refreshSharedProfile({ ...profile, ...payload });
+      showNotice('success', 'Profile settings saved.');
+    } catch (error) {
+      showNotice('error', getFriendlyAuthError(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setForm(getInitialForm(profile, currentUser));
+    showNotice('info', 'Unsaved changes were reset.');
+  };
+
+  const toggleSubject = (subject) => {
+    setForm((current) => ({
+      ...current,
+      subjects: current.subjects.includes(subject)
+        ? current.subjects.filter((item) => item !== subject)
+        : [...current.subjects, subject],
+    }));
+  };
+
+  const toggleNotification = (key) => {
+    setForm((current) => ({
+      ...current,
+      notifications: {
+        ...current.notifications,
+        [key]: !current.notifications[key],
+      },
+    }));
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      showNotice('error', 'No email address is available for password reset.');
+      return;
+    }
+
+    setSendingPasswordReset(true);
+    try {
+      await resetPassword(email);
+      showNotice('success', `Password reset instructions were sent to ${email}.`);
+    } catch (error) {
+      showNotice('error', getFriendlyAuthError(error));
+    } finally {
+      setSendingPasswordReset(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setSendingVerification(true);
+    try {
+      await resendEmailVerification();
+      showNotice('success', `Verification email sent to ${email}.`);
+    } catch (error) {
+      showNotice('error', getFriendlyAuthError(error));
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
+  const handleExportData = () => {
+    const exportPayload = {
+      exportedAt: new Date().toISOString(),
+      authUser: {
+        uid: currentUser?.uid || '',
+        email: currentUser?.email || '',
+        displayName: currentUser?.displayName || '',
+        photoURL: currentUser?.photoURL || '',
+        emailVerified: Boolean(currentUser?.emailVerified),
+      },
+      firestoreProfile: profile || {},
+      currentSettingsDraft: form,
+    };
+
+    const blob = new Blob([safeStringify(exportPayload)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `academent-profile-${currentUser?.uid || 'export'}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    showNotice('success', 'Profile data export started.');
+  };
+
+  const handleClearChatHistory = async () => {
+    if (!currentUser?.uid) {
+      showNotice('error', 'You must be signed in to clear chat history.');
+      return;
+    }
+
+    const confirmed = window.confirm('Clear all AI Tutor conversations and messages? This cannot be undone.');
+    if (!confirmed) return;
+
+    setClearingChats(true);
+    try {
+      const deletedCount = await deleteAllTutorConversations(currentUser.uid);
+      showNotice('success', `${deletedCount} AI Tutor conversation${deletedCount === 1 ? '' : 's'} cleared.`);
+    } catch (error) {
+      showNotice('error', error.message || 'Could not clear AI Tutor history.');
+    } finally {
+      setClearingChats(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm('Delete your Academent account and known study data? This action cannot be undone.');
+    if (!confirmed) return;
+
+    const confirmationText = window.prompt('Type DELETE to confirm permanent account deletion.');
+    if (confirmationText !== 'DELETE') {
+      showNotice('info', 'Account deletion cancelled.');
+      return;
+    }
+
+    setDeletingAccount(true);
+    try {
+      await deleteCurrentUserAccount();
+      navigate('/login', { replace: true });
+    } catch (error) {
+      showNotice('error', getFriendlyAuthError(error));
+      setDeletingAccount(false);
+    }
+  };
+
+  const pageClassName = `profile-settings-page profile-settings-page--${form.themeMode.toLowerCase()}`;
 
   return (
-    <main className="profile-settings-page">
+    <main className={pageClassName} style={{ '--profile-accent': form.accentColor }}>
+      <input
+        ref={fileInputRef}
+        className="profile-hidden-file"
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoChange}
+      />
+
       <section className="profile-hero">
         <div className="profile-hero__copy">
           <span className="profile-kicker">Student workspace</span>
@@ -63,23 +467,37 @@ function ProfileSettingsPage({ profile, currentUser }) {
           </div>
           <div>
             <strong>Profile completion</strong>
-            <p>2 quick updates left</p>
+            <p>{updatesLeft ? `${updatesLeft} update${updatesLeft === 1 ? '' : 's'} left` : 'All key details are set'}</p>
           </div>
         </div>
       </section>
+
+      {notice && (
+        <div className={`profile-toast profile-toast--${notice.type}`} role="status" aria-live="polite">
+          <span className="material-symbols-outlined">
+            {notice.type === 'success' ? 'check_circle' : notice.type === 'error' ? 'error' : 'info'}
+          </span>
+          {notice.message}
+        </div>
+      )}
 
       <div className="profile-layout">
         <div className="profile-main">
           <section className="profile-card profile-overview-card">
             <div className="profile-avatar-area">
-              {photoURL ? (
-                <img className="profile-avatar" src={photoURL} alt="Student profile" />
+              {form.photoURL ? (
+                <img className="profile-avatar" src={form.photoURL} alt="Student profile" />
               ) : (
                 <div className="profile-avatar profile-avatar--initials">{fullName.charAt(0).toUpperCase()}</div>
               )}
-              <button className="profile-avatar-button" type="button">
-                <span className="material-symbols-outlined">photo_camera</span>
-                Change photo
+              <button
+                className="profile-avatar-button"
+                type="button"
+                disabled={uploadingPhoto}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <span className="material-symbols-outlined">{uploadingPhoto ? 'sync' : 'photo_camera'}</span>
+                {uploadingPhoto ? 'Uploading...' : 'Change photo'}
               </button>
             </div>
 
@@ -89,7 +507,7 @@ function ProfileSettingsPage({ profile, currentUser }) {
                 Active student
               </span>
               <h2>{fullName}</h2>
-              <p>{email}</p>
+              <p>{email || 'Email not available'}</p>
               <div className="profile-meta-grid">
                 <span>{role}</span>
                 <span>{major}</span>
@@ -98,7 +516,7 @@ function ProfileSettingsPage({ profile, currentUser }) {
               <div className="profile-progress">
                 <div>
                   <strong>{completion}% complete</strong>
-                  <span>Academic preferences and phone number can be refined.</span>
+                  <span>{updatesLeft ? 'Add the missing details to improve personalization.' : 'Your profile has the essentials for personalization.'}</span>
                 </div>
                 <div className="profile-progress__track">
                   <span style={{ width: `${completion}%` }} />
@@ -119,48 +537,44 @@ function ProfileSettingsPage({ profile, currentUser }) {
             <div className="profile-form-grid">
               <label className="profile-field">
                 <span>Full Name</span>
-                <input type="text" defaultValue={fullName} />
+                <input type="text" value={form.fullName} onChange={(event) => setField('fullName', event.target.value)} />
               </label>
               <label className="profile-field">
                 <span>Email Address</span>
-                <input type="email" defaultValue={email} />
+                <input type="email" value={email} readOnly />
               </label>
               <label className="profile-field">
                 <span>Phone Number</span>
-                <input type="tel" defaultValue="+1 (415) 276-8942" />
+                <input type="tel" value={form.phoneNumber} onChange={(event) => setField('phoneNumber', event.target.value)} placeholder="Add your contact number" />
               </label>
               <label className="profile-field">
                 <span>University / School</span>
-                <input type="text" defaultValue={university} />
+                <input type="text" value={form.university} onChange={(event) => setField('university', event.target.value)} placeholder="Your university or school" />
               </label>
               <label className="profile-field">
                 <span>Degree Program</span>
-                <input type="text" defaultValue={major} />
+                <input type="text" value={form.degree || form.major} onChange={(event) => setField('degree', event.target.value)} placeholder="e.g. Bachelor of Science" />
               </label>
               <label className="profile-field">
                 <span>Current Semester</span>
-                <select defaultValue={semester}>
-                  <option>Semester 3</option>
-                  <option>Semester 4</option>
-                  <option>Semester 5</option>
+                <select value={form.semester} onChange={(event) => setField('semester', event.target.value)}>
+                  {semesterOptions.map((option) => <option value={option} key={option || 'empty-semester'}>{option || 'Select semester'}</option>)}
                 </select>
               </label>
               <label className="profile-field">
                 <span>Academic Year</span>
-                <select defaultValue="2026 / 2027">
-                  <option>2025 / 2026</option>
-                  <option>2026 / 2027</option>
-                  <option>2027 / 2028</option>
+                <select value={form.academicYear} onChange={(event) => setField('academicYear', event.target.value)}>
+                  {academicYearOptions.map((option) => <option value={option} key={option || 'empty-year'}>{option || 'Select academic year'}</option>)}
                 </select>
               </label>
             </div>
 
             <div className="profile-actions">
-              <button className="profile-button profile-button--primary" type="button">
-                <span className="material-symbols-outlined">save</span>
-                Save Changes
+              <button className="profile-button profile-button--primary" type="button" disabled={busy} onClick={handleSaveProfile}>
+                <span className="material-symbols-outlined">{saving ? 'sync' : 'save'}</span>
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
-              <button className="profile-button profile-button--ghost" type="button">Cancel</button>
+              <button className="profile-button profile-button--ghost" type="button" disabled={busy} onClick={handleCancel}>Cancel</button>
             </div>
           </section>
 
@@ -175,8 +589,13 @@ function ProfileSettingsPage({ profile, currentUser }) {
 
             <div className="subject-chip-grid" aria-label="Selected subjects and modules">
               {subjectOptions.map((subject) => (
-                <button className={subjects.includes(subject) ? 'is-selected' : ''} type="button" key={subject}>
-                  <span className="material-symbols-outlined">{subjects.includes(subject) ? 'check_circle' : 'add_circle'}</span>
+                <button
+                  className={form.subjects.includes(subject) ? 'is-selected' : ''}
+                  type="button"
+                  key={subject}
+                  onClick={() => toggleSubject(subject)}
+                >
+                  <span className="material-symbols-outlined">{form.subjects.includes(subject) ? 'check_circle' : 'add_circle'}</span>
                   {subject}
                 </button>
               ))}
@@ -185,14 +604,12 @@ function ProfileSettingsPage({ profile, currentUser }) {
             <div className="profile-form-grid profile-form-grid--compact">
               <label className="profile-field profile-field--wide">
                 <span>Study Goal</span>
-                <input type="text" defaultValue="Raise average quiz score above 88% before finals" />
+                <input type="text" value={form.studyGoal} onChange={(event) => setField('studyGoal', event.target.value)} placeholder="e.g. Raise quiz score before finals" />
               </label>
               <label className="profile-field">
                 <span>Preferred Study Time</span>
-                <select defaultValue="Evening, 7:00 PM - 10:00 PM">
-                  <option>Morning, 6:00 AM - 9:00 AM</option>
-                  <option>Afternoon, 1:00 PM - 4:00 PM</option>
-                  <option>Evening, 7:00 PM - 10:00 PM</option>
+                <select value={form.preferredStudyTime} onChange={(event) => setField('preferredStudyTime', event.target.value)}>
+                  {studyTimeOptions.map((option) => <option value={option} key={option || 'empty-study-time'}>{option || 'Choose a study time'}</option>)}
                 </select>
               </label>
             </div>
@@ -202,7 +619,7 @@ function ProfileSettingsPage({ profile, currentUser }) {
                 <h3>Learning Style</h3>
                 <div className="profile-segmented" role="group" aria-label="Learning style">
                   {learningStyles.map((style) => (
-                    <button className={style === 'Mixed' ? 'is-active' : ''} type="button" key={style}>{style}</button>
+                    <button className={style === form.learningStyle ? 'is-active' : ''} type="button" key={style} onClick={() => setField('learningStyle', style)}>{style}</button>
                   ))}
                 </div>
               </div>
@@ -210,7 +627,7 @@ function ProfileSettingsPage({ profile, currentUser }) {
                 <h3>Difficulty Preference</h3>
                 <div className="profile-segmented" role="group" aria-label="Difficulty preference">
                   {difficultyLevels.map((level) => (
-                    <button className={level === 'Adaptive' ? 'is-active' : ''} type="button" key={level}>{level}</button>
+                    <button className={level === form.difficultyPreference ? 'is-active' : ''} type="button" key={level} onClick={() => setField('difficultyPreference', level)}>{level}</button>
                   ))}
                 </div>
               </div>
@@ -231,9 +648,9 @@ function ProfileSettingsPage({ profile, currentUser }) {
                 <span className="material-symbols-outlined">lock_reset</span>
                 <div>
                   <strong>Password</strong>
-                  <p>Last changed 42 days ago</p>
+                  <p>Send a reset link to your account email.</p>
                 </div>
-                <button type="button">Change password</button>
+                <button type="button" disabled={sendingPasswordReset} onClick={handlePasswordReset}>{sendingPasswordReset ? 'Sending...' : 'Change password'}</button>
               </div>
               <div className="account-setting-row">
                 <span className="material-symbols-outlined">mark_email_read</span>
@@ -241,9 +658,11 @@ function ProfileSettingsPage({ profile, currentUser }) {
                   <strong>Email verification</strong>
                   <p>{emailVerified ? 'Verified and ready for account recovery' : 'Verification is still pending'}</p>
                 </div>
-                <span className={`profile-badge ${emailVerified ? 'is-success' : 'is-warning'}`}>
-                  {emailVerified ? 'Verified' : 'Pending'}
-                </span>
+                {emailVerified ? (
+                  <span className="profile-badge is-success">Verified</span>
+                ) : (
+                  <button type="button" disabled={sendingVerification} onClick={handleResendVerification}>{sendingVerification ? 'Sending...' : 'Send link'}</button>
+                )}
               </div>
               <div className="account-setting-row">
                 <span className="material-symbols-outlined">account_circle</span>
@@ -267,7 +686,7 @@ function ProfileSettingsPage({ profile, currentUser }) {
                   <strong>Delete account</strong>
                   <p>Permanently remove your profile, notes, and progress.</p>
                 </div>
-                <button type="button">Delete account</button>
+                <button type="button" disabled={deletingAccount} onClick={handleDeleteAccount}>{deletingAccount ? 'Deleting...' : 'Delete account'}</button>
               </div>
             </div>
           </section>
@@ -286,7 +705,7 @@ function ProfileSettingsPage({ profile, currentUser }) {
                 <h3>Theme Mode</h3>
                 <div className="theme-selector">
                   {themeModes.map((mode) => (
-                    <button className={mode === 'Light' ? 'is-active' : ''} type="button" key={mode}>
+                    <button className={mode === form.themeMode ? 'is-active' : ''} type="button" key={mode} onClick={() => setField('themeMode', mode)}>
                       <span className="material-symbols-outlined">{mode === 'Light' ? 'light_mode' : mode === 'Dark' ? 'dark_mode' : 'computer'}</span>
                       {mode}
                     </button>
@@ -296,28 +715,25 @@ function ProfileSettingsPage({ profile, currentUser }) {
 
               <label className="profile-field">
                 <span>Language</span>
-                <select defaultValue="English (US)">
-                  <option>English (US)</option>
-                  <option>English (UK)</option>
-                  <option>Sinhala</option>
-                  <option>Tamil</option>
+                <select value={form.language} onChange={(event) => setField('language', event.target.value)}>
+                  {languageOptions.map((option) => <option value={option} key={option}>{option}</option>)}
                 </select>
               </label>
             </div>
 
             <div className="notification-grid">
               {notificationSettings.map((item) => (
-                <label className="notification-toggle" key={item.label}>
+                <label className="notification-toggle" key={item.key}>
                   <span>{item.label}</span>
-                  <input type="checkbox" defaultChecked={item.enabled} />
+                  <input type="checkbox" checked={Boolean(form.notifications[item.key])} onChange={() => toggleNotification(item.key)} />
                   <i />
                 </label>
               ))}
             </div>
 
             <div className="accent-selector" aria-label="Accent color selector">
-              {accentColors.map((color, index) => (
-                <button className={index === 0 ? 'is-active' : ''} type="button" key={color.label} title={color.label}>
+              {accentColors.map((color) => (
+                <button className={color.value === form.accentColor ? 'is-active' : ''} type="button" key={color.label} title={color.label} onClick={() => setField('accentColor', color.value)}>
                   <span style={{ backgroundColor: color.value }} />
                 </button>
               ))}
@@ -334,17 +750,17 @@ function ProfileSettingsPage({ profile, currentUser }) {
             </div>
 
             <div className="privacy-actions">
-              <button type="button">
+              <button type="button" onClick={handleExportData}>
                 <span className="material-symbols-outlined">download</span>
                 Export my data
               </button>
-              <button type="button">
+              <button type="button" onClick={() => navigate('/my-notes')}>
                 <span className="material-symbols-outlined">folder_managed</span>
                 Manage uploaded notes/PDFs
               </button>
-              <button className="is-danger" type="button">
+              <button className="is-danger" type="button" disabled={clearingChats} onClick={handleClearChatHistory}>
                 <span className="material-symbols-outlined">delete_sweep</span>
-                Clear AI chat history
+                {clearingChats ? 'Clearing...' : 'Clear AI chat history'}
               </button>
             </div>
 
@@ -362,7 +778,7 @@ function ProfileSettingsPage({ profile, currentUser }) {
           <section className="profile-side-card profile-side-card--welcome">
             <span className="profile-kicker">Today</span>
             <h2>Nice progress, {firstName}</h2>
-            <p>Your profile is aligned with this semester's study plan.</p>
+            <p>{university === 'University not set' ? 'Finish your profile to tune recommendations.' : `Your profile is aligned with ${university}.`}</p>
           </section>
 
           {summaryStats.map((stat) => (

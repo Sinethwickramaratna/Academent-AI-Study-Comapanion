@@ -12,9 +12,12 @@ import {
 } from "firebase/auth";
 
 import {
+  collection,
+  deleteDoc,
   doc,
   setDoc,
   getDoc,
+  getDocs,
   serverTimestamp,
 } from "firebase/firestore";
 
@@ -202,6 +205,89 @@ export const updateUserProfileData = async (data) => {
   );
 };
 
+const deleteCollectionDocs = async (collectionReference) => {
+  const snapshot = await getDocs(collectionReference);
+  await Promise.all(snapshot.docs.map((item) => deleteDoc(item.ref)));
+};
+
+const deleteKnownUserData = async (uid) => {
+  const aiTutorSnapshot = await getDocs(collection(db, "users", uid, "aiTutorConversations"));
+  await Promise.all(aiTutorSnapshot.docs.map(async (conversation) => {
+    await deleteCollectionDocs(collection(db, "users", uid, "aiTutorConversations", conversation.id, "messages"));
+    await deleteDoc(conversation.ref);
+  }));
+
+  const flashCardSnapshot = await getDocs(collection(db, "users", uid, "flashCardCollections"));
+  await Promise.all(flashCardSnapshot.docs.map(async (flashCardCollection) => {
+    await Promise.all([
+      deleteCollectionDocs(collection(db, "users", uid, "flashCardCollections", flashCardCollection.id, "cards")),
+      deleteCollectionDocs(collection(db, "users", uid, "flashCardCollections", flashCardCollection.id, "reviewSessions")),
+    ]);
+    await deleteDoc(flashCardCollection.ref);
+  }));
+
+  await Promise.all([
+    deleteCollectionDocs(collection(db, "users", uid, "noteManagement")),
+    deleteCollectionDocs(collection(db, "users", uid, "quizzes")),
+    deleteCollectionDocs(collection(db, "users", uid, "quizAttempts")),
+    deleteCollectionDocs(collection(db, "users", uid, "quizKnowledge")),
+    deleteCollectionDocs(collection(db, "users", uid, "studyPlannerEvents")),
+  ]);
+
+  await deleteDoc(doc(db, "users", uid));
+};
+
+const ensureRecentSignInForSensitiveAction = (user) => {
+  const lastSignInTime = Date.parse(user?.metadata?.lastSignInTime || "");
+  const fiveMinutes = 5 * 60 * 1000;
+
+  if (Number.isNaN(lastSignInTime) || Date.now() - lastSignInTime > fiveMinutes) {
+    const error = new Error("Please sign out and sign in again before changing this sensitive account setting.");
+    error.code = "auth/requires-recent-login";
+    throw error;
+  }
+};
+
+/**
+ * Updates Firebase Auth display metadata for the active user.
+ *
+ * @param {object} profileData - Firebase Auth profile fields.
+ * @returns {Promise<object>} The refreshed Firebase user.
+ */
+export const updateCurrentUserAuthProfile = async (profileData = {}) => {
+  if (!auth.currentUser) {
+    throw new Error("No signed-in user found.");
+  }
+
+  const payload = {};
+  if (profileData.displayName !== undefined) {
+    payload.displayName = String(profileData.displayName || "").trim();
+  }
+  if (profileData.photoURL !== undefined) {
+    payload.photoURL = profileData.photoURL || null;
+  }
+
+  if (!Object.keys(payload).length) {
+    return auth.currentUser;
+  }
+
+  await updateProfile(auth.currentUser, payload);
+  await auth.currentUser.reload();
+  return auth.currentUser;
+};
+
+/**
+ * Deletes the current user's known Firestore data and Firebase Auth account.
+ */
+export const deleteCurrentUserAccount = async () => {
+  if (!auth.currentUser) {
+    throw new Error("No signed-in user found.");
+  }
+
+  ensureRecentSignInForSensitiveAction(auth.currentUser);
+  await deleteKnownUserData(auth.currentUser.uid);
+  await deleteUser(auth.currentUser);
+};
 /**
  * Authenticates a user with email and password.
  * 
@@ -259,6 +345,8 @@ export const getFriendlyAuthError = (error) => {
       return "Network error. Please check your connection and try again.";
     case "auth/too-many-requests":
       return "Too many attempts. Please wait a moment and try again.";
+    case "auth/requires-recent-login":
+      return "Please sign out and sign in again before changing this sensitive account setting.";
     case "permission-denied":
       return "Firestore is blocking profile saving. Update your Firestore security rules to allow users to create and update their own profile.";
     default:
