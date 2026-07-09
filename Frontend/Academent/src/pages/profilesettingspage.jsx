@@ -309,12 +309,7 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
   const updatesLeft = Math.max(completionItems.length - completedItems, 0);
 
   const showNotice = useCallback((type, message) => setNotice({ type, message }), []);
-  const appPreferencesFingerprint = useMemo(() => getAppPreferencesFingerprint(form), [
-    form.accentColor,
-    form.language,
-    form.notifications,
-    form.themeMode,
-  ]);
+  const appPreferencesFingerprint = getAppPreferencesFingerprint(form);
 
   const persistLatestAppPreferences = useCallback(async () => {
     if (!currentUser?.uid) return;

@@ -697,6 +697,18 @@ textarea::placeholder {
   background-color: var(--dark-card) !important;
 }
 
+.dark :where(.bg-white\/95, .bg-white\/90, .bg-white\/80, .bg-white\/75, .bg-white\/70, .bg-white\/60, .bg-white\/50, .bg-white\/40) {
+  background-color: rgb(33 29 56 / 0.92) !important;
+}
+
+.dark :where(.bg-white\/30, .bg-white\/20, .bg-white\/15, .bg-white\/10, .bg-white\/5) {
+  background-color: rgb(48 43 77 / 0.56) !important;
+}
+
+.dark :where(.border-white\/30, .border-white\/20, .border-white\/15, .border-white\/10, .border-white\/5) {
+  border-color: rgb(74 69 104 / 0.72) !important;
+}
+
 .dark :where(.hover\:bg-surface-container:hover, .hover\:bg-surface-container-high:hover, .hover\:bg-surface-container-low:hover, .hover\:bg-white\/30:hover, .hover\:bg-white\/20:hover) {
   background-color: var(--dark-hover) !important;
 }
@@ -745,4 +757,13 @@ textarea::placeholder {
 }
 .dark :where(button:not(.ai-gradient):not(.primary-gradient):not(.primary-button):not(.profile-button--primary):not(.quiz-button--primary):not(.flash-button--primary):not(.planner-create-button):not(.login-page__primary):not([class*="primary"]):not([class*="danger"]):hover, [role="button"]:hover, .is-active, .is-selected) {
   background-color: var(--dark-hover) !important;
+}
+/* Academent dark surface smoothing */
+.dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="shell"], [class*="workspace"]) :where([class*="content"], [class*="body"], [class*="section"], [class*="header"], [class*="row"], [class*="item"], [class*="meta"], [class*="copy"], [class*="group"], [class*="grid"], [class*="list"]):not(button):not([role="button"]):not(.is-active):not(.is-selected):not([aria-selected="true"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark :where([class*="card"] [class*="card"], [class*="panel"] [class*="panel"], [class*="card"] [class*="panel"], [class*="panel"] [class*="card"]) {
+  box-shadow: none !important;
 }

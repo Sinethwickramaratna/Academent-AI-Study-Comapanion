@@ -1172,7 +1172,7 @@
   color-scheme: dark;
 }
 
-.dark .profile-settings-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty"], [class*="list"], [class*="item"], [class*="row"], [class*="field"], [class*="selector"], [class*="toggle"], [class*="chip"], [class*="search"], [class*="select"], [class*="filter"], [class*="calendar"], [class*="cell"], [class*="event"], [class*="composer"], [class*="attachment"], [class*="source"], [class*="shell"], [class*="Shell"], [class*="section"], [class*="content"], [class*="body"], [class*="stage"], [class*="option"], [class*="answer"], [class*="question"], [class*="choice"], [class*="tree"], [class*="deck"], [class*="review"], [class*="generator"], [class*="editor"], [class*="agenda"], [class*="task"], [class*="note"], [class*="pdf"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
+.dark .profile-settings-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
   background: #302B4D !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
@@ -1240,4 +1240,37 @@
 
 .dark .profile-settings-page .profile-progress__track span {
   background: linear-gradient(90deg, #A178FF, #F2B544) !important;
+}
+/* Academent dark surface smoothing */
+.dark .profile-settings-page :where([class*="content"], [class*="body"], [class*="copy"], [class*="meta"], [class*="group"], [class*="grid"], [class*="section"], [class*="header"], [class*="list"], [class*="details"], [class*="stats"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .profile-settings-page :where([class*="row"], [class*="item"], [class*="chip"], [class*="option"], [class*="answer"], [class*="choice"], [class*="tree-row"], [class*="material-row"], [class*="note-card"], [class*="pdf-card"], [class*="task"]):not(button):not([role="button"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]):not([class*="primary"]):not([class*="danger"]):not(.is-active):not(.is-selected) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .profile-settings-page :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="workspace"], [class*="shell"]) :where([class*="content"], [class*="body"], [class*="section"], [class*="header"], [class*="list"], [class*="row"], [class*="item"], [class*="group"], [class*="meta"], [class*="copy"]):not(button):not([role="button"]):not(.is-active):not(.is-selected):not([aria-selected="true"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .profile-settings-page :where([class*="row"], [class*="item"], [class*="option"], [class*="answer"], [class*="choice"], [class*="chip"]):hover:not([class*="primary"]):not([class*="danger"]) {
+  background-color: #3A345A !important;
+}
+
+.dark .profile-settings-page :where(.profile-card, .profile-side-card) :where(.profile-overview-content, .profile-form-grid, .profile-preference-grid, .account-settings-list, .notification-grid, .privacy-actions, .profile-choice-row) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .profile-settings-page :where(.account-setting-row, .notification-toggle, .profile-meta-grid span, .profile-badge, .subject-chip-grid button:not(.is-selected)) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .profile-settings-page :where(.profile-field input, .profile-field select, .theme-selector, .profile-segmented, .privacy-actions button, .profile-button--ghost) {
+  background: #211D38 !important;
 }
