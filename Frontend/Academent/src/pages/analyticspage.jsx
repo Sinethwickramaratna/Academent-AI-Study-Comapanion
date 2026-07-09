@@ -231,33 +231,238 @@ function TrendBadge({ change }) {
 function EmptyInline({ icon = 'insights', children }) {
   return <div className="analytics-empty-inline"><span className="material-symbols-outlined">{icon}</span><p>{children}</p></div>;
 }
-const reportEscape = (value, fallback = 'Not provided') => String(value ?? fallback)
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;')
-  .replace(/'/g, '&#39;');
-
-const reportTable = (items, columns, emptyText) => {
-  if (!items.length) return `<p class="report-empty">${reportEscape(emptyText)}</p>`;
-  return `<table><thead><tr>${columns.map(([label]) => `<th>${reportEscape(label)}</th>`).join('')}</tr></thead><tbody>${items.map((item) => `<tr>${columns.map(([, getValue]) => `<td>${reportEscape(getValue(item))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+const PDF_PAGE = { width: 595.28, height: 841.89, margin: 42 };
+const pdfEncoder = new TextEncoder();
+const pdfBytes = (value) => pdfEncoder.encode(value);
+const pdfAscii = (value) => String(value ?? 'Not provided')
+  .normalize('NFKD')
+  .replace(/[^\x20-\x7E]/g, '')
+  .replace(/\s+/g, ' ')
+  .trim() || 'Not provided';
+const pdfString = (value) => pdfAscii(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+const pdfWrap = (value, maxChars) => {
+  const words = pdfAscii(value).split(' ');
+  const lines = [];
+  let line = '';
+  words.forEach((word) => {
+    const next = line ? `${line} ${word}` : word;
+    if (next.length > maxChars && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  });
+  if (line) lines.push(line);
+  return lines.length ? lines : ['Not provided'];
 };
 
-const reportList = (items, getText, emptyText) => (
-  items.length
-    ? `<ul class="report-list">${items.map((item) => `<li>${reportEscape(getText(item))}</li>`).join('')}</ul>`
-    : `<p class="report-empty">${reportEscape(emptyText)}</p>`
-);
+const concatPdfParts = (parts) => {
+  const total = parts.reduce((sum, part) => sum + part.length, 0);
+  const result = new Uint8Array(total);
+  let offset = 0;
+  parts.forEach((part) => {
+    result.set(part, offset);
+    offset += part.length;
+  });
+  return result;
+};
 
-const buildAnalyticsPdfReportHtml = ({ analytics, profile, currentUser }) => {
+const loadReportLogo = () => new Promise((resolve) => {
+  const image = new Image();
+  image.crossOrigin = 'anonymous';
+  image.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth || 120;
+    canvas.height = image.naturalHeight || 120;
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        resolve(null);
+        return;
+      }
+      resolve({ width: canvas.width, height: canvas.height, bytes: new Uint8Array(await blob.arrayBuffer()) });
+    }, 'image/jpeg', 0.92);
+  };
+  image.onerror = () => resolve(null);
+  image.src = logoUrl;
+});
+
+const createPdfBlob = ({ pages, logoImage }) => {
+  const objects = [];
+  const addObject = (body) => {
+    objects.push(typeof body === 'string' ? pdfBytes(body) : body);
+    return objects.length;
+  };
+
+  const catalogId = addObject('');
+  const pagesId = addObject('');
+  const fontId = addObject('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+  const logoId = logoImage ? addObject(concatPdfParts([
+    pdfBytes(`<< /Type /XObject /Subtype /Image /Width ${logoImage.width} /Height ${logoImage.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${logoImage.bytes.length} >>\nstream\n`),
+    logoImage.bytes,
+    pdfBytes('\nendstream'),
+  ])) : null;
+  const pageIds = [];
+
+  pages.forEach((content) => {
+    const contentBytes = pdfBytes(content);
+    const contentId = addObject(concatPdfParts([
+      pdfBytes(`<< /Length ${contentBytes.length} >>\nstream\n`),
+      contentBytes,
+      pdfBytes('\nendstream'),
+    ]));
+    const resources = logoId
+      ? `<< /Font << /F1 ${fontId} 0 R >> /XObject << /Logo ${logoId} 0 R >> >>`
+      : `<< /Font << /F1 ${fontId} 0 R >> >>`;
+    const pageId = addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PDF_PAGE.width} ${PDF_PAGE.height}] /Resources ${resources} /Contents ${contentId} 0 R >>`);
+    pageIds.push(pageId);
+  });
+
+  objects[catalogId - 1] = pdfBytes(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
+  objects[pagesId - 1] = pdfBytes(`<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(' ')}] /Count ${pageIds.length} >>`);
+
+  const parts = [pdfBytes('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n')];
+  const offsets = [0];
+  let length = parts[0].length;
+  objects.forEach((object, index) => {
+    offsets.push(length);
+    const wrapped = concatPdfParts([pdfBytes(`${index + 1} 0 obj\n`), object, pdfBytes('\nendobj\n')]);
+    parts.push(wrapped);
+    length += wrapped.length;
+  });
+  const xrefOffset = length;
+  const xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, '0')} 00000 n `).join('\n')}\ntrailer\n<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  parts.push(pdfBytes(xref));
+  return new Blob([concatPdfParts(parts)], { type: 'application/pdf' });
+};
+
+const createReportPdfBlob = async ({ analytics, profile, currentUser }) => {
   const academicProfile = profile?.academicProfile || {};
   const learningPreferences = profile?.learningPreferences || {};
+  const subjects = Array.isArray(academicProfile.subjects) ? academicProfile.subjects.join(', ') : academicProfile.subjects;
   const fullName = profile?.fullName || currentUser?.displayName || 'Student';
-  const subjects = Array.isArray(academicProfile.subjects)
-    ? academicProfile.subjects.join(', ')
-    : academicProfile.subjects;
   const generatedAt = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date());
-  const details = [
+  const logoImage = await loadReportLogo();
+  const pages = [];
+  let commands = [];
+  let y = PDF_PAGE.height - PDF_PAGE.margin;
+
+  const add = (command) => commands.push(command);
+  const color = (hex) => {
+    const value = hex.replace('#', '');
+    const r = parseInt(value.slice(0, 2), 16) / 255;
+    const g = parseInt(value.slice(2, 4), 16) / 255;
+    const b = parseInt(value.slice(4, 6), 16) / 255;
+    return `${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)}`;
+  };
+  const text = (value, x, textY, size = 10, fill = '#171326') => add(`${color(fill)} rg BT /F1 ${size} Tf ${x} ${textY} Td (${pdfString(value)}) Tj ET`);
+  const line = (x1, y1, x2, y2, stroke = '#e5ddf3') => add(`${color(stroke)} RG ${x1} ${y1} m ${x2} ${y2} l S`);
+  const rect = (x, rectY, width, height, fill = '#fbf9ff') => add(`${color(fill)} rg ${x} ${rectY} ${width} ${height} re f`);
+  const addPage = (continued = true) => {
+    pages.push(commands.join('\n'));
+    commands = [];
+    y = PDF_PAGE.height - PDF_PAGE.margin;
+    if (continued) {
+      text('Academent Analytics Report - continued', PDF_PAGE.margin, y, 12, '#4d2b8c');
+      y -= 20;
+      line(PDF_PAGE.margin, y, PDF_PAGE.width - PDF_PAGE.margin, y, '#4d2b8c');
+      y -= 24;
+    }
+  };
+  const ensure = (height) => {
+    if (y - height < PDF_PAGE.margin) addPage();
+  };
+  const heading = (value) => {
+    ensure(34);
+    y -= 8;
+    text(value, PDF_PAGE.margin, y, 15, '#4d2b8c');
+    y -= 12;
+    line(PDF_PAGE.margin, y, PDF_PAGE.width - PDF_PAGE.margin, y, '#e5ddf3');
+    y -= 18;
+  };
+  const wrappedText = (value, x, maxWidth, size = 9, fill = '#171326') => {
+    const lines = pdfWrap(value, Math.max(12, Math.floor(maxWidth / (size * 0.52))));
+    lines.forEach((item) => {
+      text(item, x, y, size, fill);
+      y -= size + 4;
+    });
+  };
+  const keyValues = (title, items) => {
+    heading(title);
+    const columnWidth = (PDF_PAGE.width - PDF_PAGE.margin * 2 - 12) / 2;
+    for (let index = 0; index < items.length; index += 2) {
+      ensure(48);
+      [0, 1].forEach((offset) => {
+        const item = items[index + offset];
+        if (!item) return;
+        const x = PDF_PAGE.margin + offset * (columnWidth + 12);
+        rect(x, y - 31, columnWidth, 38);
+        text(item[0], x + 8, y - 5, 8, '#6f667a');
+        text(item[1], x + 8, y - 22, 10, '#171326');
+      });
+      y -= 48;
+    }
+  };
+  const table = (title, columns, rows, emptyText) => {
+    heading(title);
+    if (!rows.length) {
+      ensure(26);
+      rect(PDF_PAGE.margin, y - 22, PDF_PAGE.width - PDF_PAGE.margin * 2, 28);
+      text(emptyText, PDF_PAGE.margin + 8, y - 10, 9, '#6f667a');
+      y -= 38;
+      return;
+    }
+    const totalWidth = PDF_PAGE.width - PDF_PAGE.margin * 2;
+    const widths = columns.map((column) => column.width || totalWidth / columns.length);
+    ensure(26);
+    rect(PDF_PAGE.margin, y - 18, totalWidth, 24, '#4d2b8c');
+    let x = PDF_PAGE.margin;
+    columns.forEach((column, index) => {
+      text(column.label, x + 6, y - 9, 8, '#ffffff');
+      x += widths[index];
+    });
+    y -= 28;
+    rows.forEach((row, rowIndex) => {
+      ensure(30);
+      rect(PDF_PAGE.margin, y - 18, totalWidth, 24, rowIndex % 2 ? '#ffffff' : '#fbf9ff');
+      x = PDF_PAGE.margin;
+      columns.forEach((column, index) => {
+        text(column.value(row), x + 6, y - 9, 8, '#171326');
+        x += widths[index];
+      });
+      y -= 24;
+    });
+    y -= 8;
+  };
+  const bullets = (title, items, emptyText) => {
+    heading(title);
+    if (!items.length) {
+      wrappedText(emptyText, PDF_PAGE.margin, PDF_PAGE.width - PDF_PAGE.margin * 2, 9, '#6f667a');
+      y -= 8;
+      return;
+    }
+    items.forEach((item) => {
+      ensure(36);
+      text('-', PDF_PAGE.margin, y, 10, '#4d2b8c');
+      wrappedText(item, PDF_PAGE.margin + 14, PDF_PAGE.width - PDF_PAGE.margin * 2 - 14, 9, '#171326');
+      y -= 2;
+    });
+  };
+
+  if (logoImage) add('q 54 0 0 54 42 744 cm /Logo Do Q');
+  text('Analytics Report', logoImage ? 108 : 42, 785, 24, '#4d2b8c');
+  text('Academent AI Study Companion', logoImage ? 108 : 42, 766, 11, '#6f667a');
+  text(generatedAt, 410, 785, 9, '#171326');
+  text(`Range: ${analytics.rangeLabel}`, 410, 768, 9, '#6f667a');
+  y = 718;
+  line(PDF_PAGE.margin, y, PDF_PAGE.width - PDF_PAGE.margin, y, '#4d2b8c');
+  y -= 20;
+
+  keyValues('Student Details', [
     ['Student name', fullName],
     ['Email', currentUser?.email || profile?.email],
     ['Major / Program', academicProfile.major],
@@ -266,65 +471,54 @@ const buildAnalyticsPdfReportHtml = ({ analytics, profile, currentUser }) => {
     ['Study style', learningPreferences.studyStyle],
     ['Weekly target', learningPreferences.weeklyHours],
     ['Report range', analytics.rangeLabel],
-  ];
+  ]);
+  table('Performance Summary', [
+    { label: 'Metric', value: (item) => item.label, width: 155 },
+    { label: 'Value', value: (item) => item.value, width: 80 },
+    { label: 'Change', value: (item) => item.change?.label || '0', width: 80 },
+    { label: 'Note', value: (item) => item.helper, width: 196 },
+  ], analytics.summaryCards, 'No summary data available.');
+  table('Study Progress', [
+    { label: 'Period', value: (item) => item.day, width: 260 },
+    { label: 'Study time', value: (item) => item.hours, width: 251 },
+  ], analytics.studyBars, 'No study sessions in this range.');
+  table('Quiz Performance', [
+    { label: 'Module', value: (item) => item.subject, width: 330 },
+    { label: 'Average score', value: (item) => `${item.score}%`, width: 181 },
+  ], analytics.subjectScores, 'No completed quizzes in this range.');
+  table('Flash Cards', [
+    { label: 'Metric', value: (item) => item.label, width: 300 },
+    { label: 'Value', value: (item) => item.value, width: 211 },
+  ], [
+    { label: 'Total cards', value: analytics.flash.cards },
+    { label: 'Mastered cards', value: analytics.flash.mastered },
+    { label: 'Due now', value: analytics.flash.due },
+    { label: 'Retention rate', value: `${analytics.flash.retentionRate}%` },
+  ], 'No flashcard data yet.');
+  table('Subject / Module Progress', [
+    { label: 'Module', value: (item) => item.name, width: 220 },
+    { label: 'Progress', value: (item) => `${item.progress}%`, width: 80 },
+    { label: 'Study time', value: (item) => item.hours, width: 90 },
+    { label: 'Average score', value: (item) => item.score, width: 121 },
+  ], analytics.modules, 'No module progress data yet.');
+  table('Upcoming Planner Items', [
+    { label: 'Type', value: (item) => item.type, width: 90 },
+    { label: 'Title', value: (item) => item.title, width: 200 },
+    { label: 'When', value: (item) => item.time, width: 135 },
+    { label: 'Status', value: (item) => item.status, width: 86 },
+  ], analytics.plannerItems, 'No upcoming planner items.');
+  table('Weak Areas', [
+    { label: 'Topic', value: (item) => item.topic, width: 270 },
+    { label: 'Score', value: (item) => item.score, width: 90 },
+    { label: 'Action', value: (item) => item.action, width: 151 },
+  ], analytics.weakAreas, 'No weak areas detected in this range.');
+  bullets('AI Learning Insights', analytics.aiInsights, 'No insights available yet.');
+  bullets('Recent Activity', analytics.recentActivity.map((item) => `${item.title}: ${item.detail} (${item.time})`), 'No recent activity yet.');
 
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Academent Analytics Report</title>
-  <style>
-    @page { size: A4; margin: 16mm; }
-    * { box-sizing: border-box; }
-    body { margin: 0; color: #171326; font-family: Arial, Helvetica, sans-serif; background: #ffffff; }
-    .report { max-width: 1040px; margin: 0 auto; padding: 28px; }
-    .header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; padding-bottom: 22px; border-bottom: 3px solid #4d2b8c; }
-    .brand { display: flex; gap: 14px; align-items: center; }
-    .brand img { width: 58px; height: 58px; object-fit: contain; }
-    .brand h1 { margin: 0; color: #4d2b8c; font-size: 30px; line-height: 1.05; }
-    .brand p, .meta p { margin: 5px 0 0; color: #6f667a; font-size: 12px; font-weight: 700; }
-    .meta { text-align: right; min-width: 190px; }
-    .meta strong { color: #4d2b8c; font-size: 13px; }
-    h2 { margin: 26px 0 12px; color: #4d2b8c; font-size: 18px; }
-    .details, .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .detail, .card { min-height: 72px; padding: 12px; border: 1px solid #e5ddf3; border-radius: 10px; background: #fbf9ff; }
-    .detail span, .card span { display: block; color: #6f667a; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-    .detail strong, .card strong { display: block; margin-top: 6px; color: #171326; font-size: 15px; line-height: 1.25; }
-    .card strong { color: #4d2b8c; font-size: 22px; }
-    .card small { display: block; margin-top: 6px; color: #6f667a; font-size: 11px; }
-    table { width: 100%; border-collapse: collapse; page-break-inside: avoid; }
-    th { background: #4d2b8c; color: #ffffff; font-size: 11px; padding: 9px; text-align: left; }
-    td { border: 1px solid #e7e1f0; padding: 8px 9px; font-size: 12px; vertical-align: top; }
-    tr:nth-child(even) td { background: #fbf9ff; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    .section { page-break-inside: avoid; }
-    .report-list { margin: 0; padding-left: 18px; }
-    .report-list li { margin: 0 0 8px; font-size: 12px; line-height: 1.45; }
-    .report-empty { margin: 0; padding: 12px; border-radius: 10px; background: #f8f6fc; color: #6f667a; font-size: 12px; font-weight: 700; }
-    .footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid #e5ddf3; color: #6f667a; font-size: 11px; }
-    @media print { .report { padding: 0; } body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
-  </style>
-</head>
-<body>
-  <main class="report">
-    <header class="header">
-      <div class="brand"><img src="${logoUrl}" alt="Academent logo" /><div><h1>Analytics Report</h1><p>Academent AI Study Companion</p></div></div>
-      <div class="meta"><strong>${reportEscape(generatedAt)}</strong><p>Generated report</p><p>${reportEscape(analytics.rangeLabel)}</p></div>
-    </header>
-    <section class="section"><h2>Student Details</h2><div class="details">${details.map(([label, value]) => `<div class="detail"><span>${reportEscape(label)}</span><strong>${reportEscape(value)}</strong></div>`).join('')}</div></section>
-    <section class="section"><h2>Performance Summary</h2><div class="cards">${analytics.summaryCards.map((card) => `<div class="card"><span>${reportEscape(card.label)}</span><strong>${reportEscape(card.value)}</strong><small>${reportEscape(card.change?.label || '0')} - ${reportEscape(card.helper)}</small></div>`).join('')}</div></section>
-    <section class="section"><h2>Study Progress</h2>${reportTable(analytics.studyBars, [['Period', (item) => item.day], ['Study time', (item) => item.hours]], 'No study sessions in this range.')}</section>
-    <section class="grid-2"><div class="section"><h2>Quiz Performance</h2>${reportTable(analytics.subjectScores, [['Module', (item) => item.subject], ['Average score', (item) => `${item.score}%`]], 'No completed quizzes in this range.')}</div><div class="section"><h2>Flash Cards</h2>${reportTable([{ label: 'Total cards', value: analytics.flash.cards }, { label: 'Mastered cards', value: analytics.flash.mastered }, { label: 'Due now', value: analytics.flash.due }, { label: 'Retention rate', value: `${analytics.flash.retentionRate}%` }], [['Metric', (item) => item.label], ['Value', (item) => item.value]], 'No flashcard data yet.')}</div></section>
-    <section class="section"><h2>Subject / Module Progress</h2>${reportTable(analytics.modules, [['Module', (item) => item.name], ['Progress', (item) => `${item.progress}%`], ['Study time', (item) => item.hours], ['Average score', (item) => item.score]], 'No module progress data yet.')}</section>
-    <section class="grid-2"><div class="section"><h2>Upcoming Planner Items</h2>${reportTable(analytics.plannerItems, [['Type', (item) => item.type], ['Title', (item) => item.title], ['When', (item) => item.time], ['Status', (item) => item.status]], 'No upcoming planner items.')}</div><div class="section"><h2>Weak Areas</h2>${reportTable(analytics.weakAreas, [['Topic', (item) => item.topic], ['Score', (item) => item.score], ['Action', (item) => item.action]], 'No weak areas detected in this range.')}</div></section>
-    <section class="grid-2"><div class="section"><h2>AI Learning Insights</h2>${reportList(analytics.aiInsights, (item) => item, 'No insights available yet.')}</div><div class="section"><h2>Recent Activity</h2>${reportList(analytics.recentActivity, (item) => `${item.title}: ${item.detail} (${item.time})`, 'No recent activity yet.')}</div></section>
-    <footer class="footer">This report was generated from Academent analytics data for ${reportEscape(fullName)}.</footer>
-  </main>
-  <script>window.addEventListener('load', function () { window.setTimeout(function () { window.focus(); window.print(); }, 250); });</script>
-</body>
-</html>`;
+  text(`Generated for ${fullName} by Academent AI Study Companion`, PDF_PAGE.margin, 32, 8, '#6f667a');
+  pages.push(commands.join('\n'));
+  return createPdfBlob({ pages, logoImage });
 };
-
 function AnalyticsPage({ profile, currentUser }) {
   const navigate = useNavigate();
   const notes = useNoteManagement();
@@ -542,13 +736,16 @@ function AnalyticsPage({ profile, currentUser }) {
 
   const loading = notes.loading || quizStore.loading || plannerLoading || flashLoading;
   const errorMessage = notes.error?.message || quizStore.error?.message || plannerError?.message || flashError?.message || '';
-  const exportReport = () => {
-    const reportWindow = window.open('', '_blank', 'width=960,height=1200');
-    if (!reportWindow) return;
-
-    reportWindow.document.open();
-    reportWindow.document.write(buildAnalyticsPdfReportHtml({ analytics, profile, currentUser }));
-    reportWindow.document.close();
+  const exportReport = async () => {
+    const pdfBlob = await createReportPdfBlob({ analytics, profile, currentUser });
+    const url = URL.createObjectURL(pdfBlob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `academent-analytics-report-${toInputDate(new Date())}.pdf`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   return (
     <main className="analytics-page">
@@ -615,6 +812,8 @@ function AnalyticsPage({ profile, currentUser }) {
 }
 
 export default AnalyticsPage;
+
+
 
 
 
