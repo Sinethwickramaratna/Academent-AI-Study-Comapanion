@@ -73,11 +73,23 @@ const notificationSettings = [
 ];
 
 const accentColors = [
-  { label: 'Primary purple', value: '#4D2B8C' },
-  { label: 'Secondary purple', value: '#85409D' },
-  { label: 'Accent yellow', value: '#EEA727' },
-  { label: 'Highlight yellow', value: '#FFEF5F' },
+  { label: 'Primary purple', value: '#7B5CFF' },
+  { label: 'Secondary purple', value: '#A178FF' },
+  { label: 'Accent gold', value: '#F2B544' },
+  { label: 'Highlight yellow', value: '#FFE873' },
 ];
+
+const normalizeAccentColor = (value) => {
+  const normalized = String(value || '').trim().toUpperCase();
+  const legacyAccentMap = {
+    '#4D2B8C': '#7B5CFF',
+    '#85409D': '#A178FF',
+    '#EEA727': '#F2B544',
+    '#FFEF5F': '#FFE873',
+  };
+  const migratedValue = legacyAccentMap[normalized] || normalized;
+  return accentColors.some((color) => color.value.toUpperCase() === migratedValue) ? migratedValue : accentColors[0].value;
+};
 
 const summaryStats = [
   { label: 'Completed quizzes', value: '18', icon: 'quiz', trend: '+6 this month', tone: 'purple', chart: [42, 62, 54, 78, 70] },
@@ -131,9 +143,59 @@ const getInitialForm = (profile, currentUser) => {
     themeMode: appPreferences.themeMode || 'Light',
     language: appPreferences.language || academicProfile.language || 'English (US)',
     notifications: { ...notificationDefaults, ...notifications },
-    accentColor: appPreferences.accentColor || accentColors[0].value,
+    accentColor: normalizeAccentColor(appPreferences.accentColor),
     photoURL: profile?.photoURL || currentUser?.photoURL || '',
     photoPublicId: profile?.photoPublicId || '',
+  };
+};
+
+const buildProfileSettingsPayload = ({ form, profile, currentUser, email, emailVerified }) => {
+  const trimmedName = form.fullName.trim();
+  const academicProfile = {
+    ...(profile?.academicProfile || {}),
+    university: form.university.trim(),
+    degree: form.degree.trim(),
+    major: form.major.trim(),
+    semester: form.semester,
+    academicYear: form.academicYear,
+    language: form.language,
+    subjects: form.subjects,
+  };
+  const learningPreferences = {
+    ...(profile?.learningPreferences || {}),
+    studyGoal: form.studyGoal.trim(),
+    preferredStudyTime: form.preferredStudyTime,
+    studyStyle: form.learningStyle,
+    difficultyPreference: form.difficultyPreference,
+  };
+  const appPreferences = {
+    ...(profile?.appPreferences || {}),
+    themeMode: form.themeMode,
+    language: form.language,
+    accentColor: form.accentColor,
+    notifications: form.notifications,
+  };
+  const personalSettings = {
+    fullName: trimmedName,
+    email,
+    phoneNumber: form.phoneNumber.trim(),
+    photoURL: form.photoURL || '',
+    photoPublicId: form.photoPublicId || '',
+    emailVerified,
+  };
+
+  return {
+    uid: currentUser?.uid || profile?.uid || '',
+    ...personalSettings,
+    academicProfile,
+    learningPreferences,
+    appPreferences,
+    userSettings: {
+      personal: personalSettings,
+      academic: academicProfile,
+      learning: learningPreferences,
+      app: appPreferences,
+    },
   };
 };
 
@@ -251,15 +313,22 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
         photoURL: uploadedPhoto.url,
         photoPublicId: uploadedPhoto.publicId,
         photoStorageProvider: uploadedPhoto.storageProvider,
+        userSettings: {
+          personal: {
+            photoURL: uploadedPhoto.url,
+            photoPublicId: uploadedPhoto.publicId,
+          },
+        },
+      };
+      const nextForm = {
+        ...form,
+        photoURL: uploadedPhoto.url,
+        photoPublicId: uploadedPhoto.publicId,
       };
 
       await updateUserProfileData(photoPatch);
       await updateCurrentUserAuthProfile({ photoURL: uploadedPhoto.url });
-      setForm((current) => ({
-        ...current,
-        photoURL: uploadedPhoto.url,
-        photoPublicId: uploadedPhoto.publicId,
-      }));
+      setForm(nextForm);
       await refreshSharedProfile({ ...profile, ...photoPatch });
       showNotice('success', 'Profile photo uploaded and saved.');
     } catch (error) {
@@ -283,38 +352,7 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
 
     setSaving(true);
     try {
-      const payload = {
-        fullName: trimmedName,
-        email,
-        phoneNumber: form.phoneNumber.trim(),
-        photoURL: form.photoURL || '',
-        photoPublicId: form.photoPublicId || '',
-        emailVerified,
-        academicProfile: {
-          ...(profile?.academicProfile || {}),
-          university: form.university.trim(),
-          degree: form.degree.trim(),
-          major: form.major.trim(),
-          semester: form.semester,
-          academicYear: form.academicYear,
-          language: form.language,
-          subjects: form.subjects,
-        },
-        learningPreferences: {
-          ...(profile?.learningPreferences || {}),
-          studyGoal: form.studyGoal.trim(),
-          preferredStudyTime: form.preferredStudyTime,
-          studyStyle: form.learningStyle,
-          difficultyPreference: form.difficultyPreference,
-        },
-        appPreferences: {
-          ...(profile?.appPreferences || {}),
-          themeMode: form.themeMode,
-          language: form.language,
-          accentColor: form.accentColor,
-          notifications: form.notifications,
-        },
-      };
+      const payload = buildProfileSettingsPayload({ form, profile, currentUser, email, emailVerified });
 
       await updateUserProfileData(payload);
       await updateCurrentUserAuthProfile({
@@ -639,6 +677,13 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
                 </div>
               </div>
             </div>
+
+            <div className="profile-actions profile-actions--section">
+              <button className="profile-button profile-button--primary" type="button" disabled={busy} onClick={handleSaveProfile}>
+                <span className="material-symbols-outlined">{saving ? 'sync' : 'save'}</span>
+                {saving ? 'Saving...' : 'Save academic settings'}
+              </button>
+            </div>
           </section>
 
           <section className="profile-card">
@@ -744,6 +789,13 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
                   <span style={{ backgroundColor: color.value }} />
                 </button>
               ))}
+            </div>
+
+            <div className="profile-actions profile-actions--section">
+              <button className="profile-button profile-button--primary" type="button" disabled={busy} onClick={handleSaveProfile}>
+                <span className="material-symbols-outlined">{saving ? 'sync' : 'save'}</span>
+                {saving ? 'Saving...' : 'Save app settings'}
+              </button>
             </div>
           </section>
 

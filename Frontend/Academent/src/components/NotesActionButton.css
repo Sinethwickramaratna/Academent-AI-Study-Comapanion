@@ -27,3 +27,15 @@
     width: 100%;
   }
 }
+/* Academent shared dark component patch */
+:root.dark .notes-add-folder-btn {
+  background: linear-gradient(135deg, rgba(123, 92, 255, 0.18), rgba(48, 43, 77, 0.92)) !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24) !important;
+}
+
+:root.dark .notes-add-folder-btn:hover {
+  background: #3A345A !important;
+  border-color: #7B5CFF !important;
+}

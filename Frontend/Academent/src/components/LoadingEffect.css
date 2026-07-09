@@ -215,3 +215,36 @@
     animation-iteration-count: 1;
   }
 }
+/* Academent shared dark component patch */
+:root.dark .loading-effect {
+  --loader-accent: #7B5CFF;
+  --loader-accent-2: #A178FF;
+  --loader-ink: #F7F5FF;
+  --loader-muted: #D8D3EE;
+  background:
+    linear-gradient(135deg, rgba(48, 43, 77, 0.96), rgba(33, 29, 56, 0.94)),
+    repeating-linear-gradient(135deg, rgba(123, 92, 255, 0.08) 0 1px, transparent 1px 14px) !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28) !important;
+}
+
+:root.dark .loading-effect--full {
+  background:
+    radial-gradient(circle at top left, rgba(123, 92, 255, 0.16), transparent 34%),
+    linear-gradient(135deg, #1B1830, #211D38 52%, #302B4D) !important;
+}
+
+:root.dark .loading-effect::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 232, 115, 0.22), transparent) !important;
+}
+
+:root.dark .loading-effect__mark .material-symbols-outlined {
+  background: #211D38 !important;
+  color: #A178FF !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24) !important;
+}
+
+:root.dark .loading-effect__skeleton span {
+  background: linear-gradient(90deg, rgba(123, 92, 255, 0.18), rgba(242, 181, 68, 0.22), rgba(161, 120, 255, 0.18)) !important;
+}

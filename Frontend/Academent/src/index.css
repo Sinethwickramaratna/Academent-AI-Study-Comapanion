@@ -732,6 +732,17 @@ textarea::placeholder {
   border-color: var(--dark-border) !important;
 }
 
+.dark :where(main, aside, section, article, form, dialog, [class*="page"], [class*="window"], [class*="card"], [class*="panel"], [class*="modal"]) :where(h1, h2, h3, h4, h5, h6, strong, label, .text-on-surface, .text-slate-900, .text-gray-900, .text-black) {
+  color: var(--dark-text) !important;
+}
+
+.dark :where(main, aside, section, article, form, dialog, [class*="page"], [class*="window"], [class*="card"], [class*="panel"], [class*="modal"]) :where(p, small, li, dd, dt, figcaption, .text-on-surface-variant, .text-outline, .text-slate-500, .text-slate-600, .text-gray-500, .text-gray-600) {
+  color: #D8D3EE !important;
+}
+
+.dark :where(.ai-gradient, .primary-gradient, .primary-button, .profile-button--primary, .quiz-button--primary, .flash-button--primary, .planner-create-button, .login-page__primary, .dashboard-home-hero, .profile-hero, .analytics-hero, .flash-header, .quiz-results-hero, .notes-section-header) :where(h1, h2, h3, h4, h5, h6, p, span, strong, small, label) {
+  color: inherit !important;
+}
 .dark :where(button:not(.ai-gradient):not(.primary-gradient):not(.primary-button):not(.profile-button--primary):not(.quiz-button--primary):not(.flash-button--primary):not(.planner-create-button):not(.login-page__primary):not([class*="primary"]):not([class*="danger"]):hover, [role="button"]:hover, .is-active, .is-selected) {
   background-color: var(--dark-hover) !important;
 }

@@ -57,3 +57,50 @@
 .animate-fade-in-up {
   animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+/* Academent shared dark component patch */
+:root.dark .glass-card,
+:root.dark .glass-panel {
+  background: #302B4D !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
+}
+
+:root.dark .gradient-bg,
+:root.dark .gradient-bg-sidebar,
+:root.dark .primary-gradient,
+:root.dark .btn-primary-gradient,
+:root.dark .btn-gradient,
+:root.dark .gradient-button,
+:root.dark .primary-button {
+  background: linear-gradient(135deg, #7B5CFF 0%, #A178FF 62%, #F2B544 120%) !important;
+  color: #F7F5FF !important;
+  border-color: transparent !important;
+}
+
+:root.dark .bg-brand-solid,
+:root.dark .step-dot.active,
+:root.dark .chip-active,
+:root.dark .selection-card-active,
+:root.dark .goal-card-active {
+  background: #3A345A !important;
+  border-color: #7B5CFF !important;
+  color: #F7F5FF !important;
+}
+
+:root.dark .btn-social,
+:root.dark .selection-card,
+:root.dark .goal-card-content {
+  background: #302B4D !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+}
+
+:root.dark .input-focus:focus {
+  border-color: #7B5CFF !important;
+  box-shadow: 0 0 0 3px rgba(123, 92, 255, 0.24) !important;
+}
+
+:root.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4A4568 !important;
+}
