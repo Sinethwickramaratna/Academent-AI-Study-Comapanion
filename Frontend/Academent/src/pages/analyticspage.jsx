@@ -5,6 +5,7 @@ import useNoteManagement from '../Services/useNoteManagement';
 import useQuizGenerator from '../Services/useQuizGenerator';
 import { subscribeToFlashCardCollections } from '../Services/flashCardService';
 import { subscribeStudyPlannerEvents } from '../Services/studyPlannerService';
+import logoUrl from '../assets/Logo/Logo.png';
 import './analyticspage.css';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -230,6 +231,100 @@ function TrendBadge({ change }) {
 function EmptyInline({ icon = 'insights', children }) {
   return <div className="analytics-empty-inline"><span className="material-symbols-outlined">{icon}</span><p>{children}</p></div>;
 }
+const reportEscape = (value, fallback = 'Not provided') => String(value ?? fallback)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+const reportTable = (items, columns, emptyText) => {
+  if (!items.length) return `<p class="report-empty">${reportEscape(emptyText)}</p>`;
+  return `<table><thead><tr>${columns.map(([label]) => `<th>${reportEscape(label)}</th>`).join('')}</tr></thead><tbody>${items.map((item) => `<tr>${columns.map(([, getValue]) => `<td>${reportEscape(getValue(item))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+};
+
+const reportList = (items, getText, emptyText) => (
+  items.length
+    ? `<ul class="report-list">${items.map((item) => `<li>${reportEscape(getText(item))}</li>`).join('')}</ul>`
+    : `<p class="report-empty">${reportEscape(emptyText)}</p>`
+);
+
+const buildAnalyticsPdfReportHtml = ({ analytics, profile, currentUser }) => {
+  const academicProfile = profile?.academicProfile || {};
+  const learningPreferences = profile?.learningPreferences || {};
+  const fullName = profile?.fullName || currentUser?.displayName || 'Student';
+  const subjects = Array.isArray(academicProfile.subjects)
+    ? academicProfile.subjects.join(', ')
+    : academicProfile.subjects;
+  const generatedAt = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date());
+  const details = [
+    ['Student name', fullName],
+    ['Email', currentUser?.email || profile?.email],
+    ['Major / Program', academicProfile.major],
+    ['Education level', academicProfile.educationLevel],
+    ['Subjects', subjects],
+    ['Study style', learningPreferences.studyStyle],
+    ['Weekly target', learningPreferences.weeklyHours],
+    ['Report range', analytics.rangeLabel],
+  ];
+
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Academent Analytics Report</title>
+  <style>
+    @page { size: A4; margin: 16mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #171326; font-family: Arial, Helvetica, sans-serif; background: #ffffff; }
+    .report { max-width: 1040px; margin: 0 auto; padding: 28px; }
+    .header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; padding-bottom: 22px; border-bottom: 3px solid #4d2b8c; }
+    .brand { display: flex; gap: 14px; align-items: center; }
+    .brand img { width: 58px; height: 58px; object-fit: contain; }
+    .brand h1 { margin: 0; color: #4d2b8c; font-size: 30px; line-height: 1.05; }
+    .brand p, .meta p { margin: 5px 0 0; color: #6f667a; font-size: 12px; font-weight: 700; }
+    .meta { text-align: right; min-width: 190px; }
+    .meta strong { color: #4d2b8c; font-size: 13px; }
+    h2 { margin: 26px 0 12px; color: #4d2b8c; font-size: 18px; }
+    .details, .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .detail, .card { min-height: 72px; padding: 12px; border: 1px solid #e5ddf3; border-radius: 10px; background: #fbf9ff; }
+    .detail span, .card span { display: block; color: #6f667a; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    .detail strong, .card strong { display: block; margin-top: 6px; color: #171326; font-size: 15px; line-height: 1.25; }
+    .card strong { color: #4d2b8c; font-size: 22px; }
+    .card small { display: block; margin-top: 6px; color: #6f667a; font-size: 11px; }
+    table { width: 100%; border-collapse: collapse; page-break-inside: avoid; }
+    th { background: #4d2b8c; color: #ffffff; font-size: 11px; padding: 9px; text-align: left; }
+    td { border: 1px solid #e7e1f0; padding: 8px 9px; font-size: 12px; vertical-align: top; }
+    tr:nth-child(even) td { background: #fbf9ff; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .section { page-break-inside: avoid; }
+    .report-list { margin: 0; padding-left: 18px; }
+    .report-list li { margin: 0 0 8px; font-size: 12px; line-height: 1.45; }
+    .report-empty { margin: 0; padding: 12px; border-radius: 10px; background: #f8f6fc; color: #6f667a; font-size: 12px; font-weight: 700; }
+    .footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid #e5ddf3; color: #6f667a; font-size: 11px; }
+    @media print { .report { padding: 0; } body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+  </style>
+</head>
+<body>
+  <main class="report">
+    <header class="header">
+      <div class="brand"><img src="${logoUrl}" alt="Academent logo" /><div><h1>Analytics Report</h1><p>Academent AI Study Companion</p></div></div>
+      <div class="meta"><strong>${reportEscape(generatedAt)}</strong><p>Generated report</p><p>${reportEscape(analytics.rangeLabel)}</p></div>
+    </header>
+    <section class="section"><h2>Student Details</h2><div class="details">${details.map(([label, value]) => `<div class="detail"><span>${reportEscape(label)}</span><strong>${reportEscape(value)}</strong></div>`).join('')}</div></section>
+    <section class="section"><h2>Performance Summary</h2><div class="cards">${analytics.summaryCards.map((card) => `<div class="card"><span>${reportEscape(card.label)}</span><strong>${reportEscape(card.value)}</strong><small>${reportEscape(card.change?.label || '0')} - ${reportEscape(card.helper)}</small></div>`).join('')}</div></section>
+    <section class="section"><h2>Study Progress</h2>${reportTable(analytics.studyBars, [['Period', (item) => item.day], ['Study time', (item) => item.hours]], 'No study sessions in this range.')}</section>
+    <section class="grid-2"><div class="section"><h2>Quiz Performance</h2>${reportTable(analytics.subjectScores, [['Module', (item) => item.subject], ['Average score', (item) => `${item.score}%`]], 'No completed quizzes in this range.')}</div><div class="section"><h2>Flash Cards</h2>${reportTable([{ label: 'Total cards', value: analytics.flash.cards }, { label: 'Mastered cards', value: analytics.flash.mastered }, { label: 'Due now', value: analytics.flash.due }, { label: 'Retention rate', value: `${analytics.flash.retentionRate}%` }], [['Metric', (item) => item.label], ['Value', (item) => item.value]], 'No flashcard data yet.')}</div></section>
+    <section class="section"><h2>Subject / Module Progress</h2>${reportTable(analytics.modules, [['Module', (item) => item.name], ['Progress', (item) => `${item.progress}%`], ['Study time', (item) => item.hours], ['Average score', (item) => item.score]], 'No module progress data yet.')}</section>
+    <section class="grid-2"><div class="section"><h2>Upcoming Planner Items</h2>${reportTable(analytics.plannerItems, [['Type', (item) => item.type], ['Title', (item) => item.title], ['When', (item) => item.time], ['Status', (item) => item.status]], 'No upcoming planner items.')}</div><div class="section"><h2>Weak Areas</h2>${reportTable(analytics.weakAreas, [['Topic', (item) => item.topic], ['Score', (item) => item.score], ['Action', (item) => item.action]], 'No weak areas detected in this range.')}</div></section>
+    <section class="grid-2"><div class="section"><h2>AI Learning Insights</h2>${reportList(analytics.aiInsights, (item) => item, 'No insights available yet.')}</div><div class="section"><h2>Recent Activity</h2>${reportList(analytics.recentActivity, (item) => `${item.title}: ${item.detail} (${item.time})`, 'No recent activity yet.')}</div></section>
+    <footer class="footer">This report was generated from Academent analytics data for ${reportEscape(fullName)}.</footer>
+  </main>
+  <script>window.addEventListener('load', function () { window.setTimeout(function () { window.focus(); window.print(); }, 250); });</script>
+</body>
+</html>`;
+};
+
 function AnalyticsPage({ profile, currentUser }) {
   const navigate = useNavigate();
   const notes = useNoteManagement();
@@ -448,25 +543,13 @@ function AnalyticsPage({ profile, currentUser }) {
   const loading = notes.loading || quizStore.loading || plannerLoading || flashLoading;
   const errorMessage = notes.error?.message || quizStore.error?.message || plannerError?.message || flashError?.message || '';
   const exportReport = () => {
-    const report = {
-      generatedAt: new Date().toISOString(),
-      range: analytics.rangeLabel,
-      summary: analytics.summaryCards.map((card) => ({ label: card.label, value: card.value, change: card.change, helper: card.helper })),
-      modules: analytics.modules,
-      quizPerformance: analytics.subjectScores,
-      plannerItems: analytics.plannerItems,
-      weakAreas: analytics.weakAreas,
-      recentActivity: analytics.recentActivity,
-      flashCards: analytics.flash,
-    };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }));
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `academent-analytics-${toInputDate(new Date())}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  };
+    const reportWindow = window.open('', '_blank', 'width=960,height=1200');
+    if (!reportWindow) return;
 
+    reportWindow.document.open();
+    reportWindow.document.write(buildAnalyticsPdfReportHtml({ analytics, profile, currentUser }));
+    reportWindow.document.close();
+  };
   return (
     <main className="analytics-page">
       <section className="analytics-hero">
@@ -476,7 +559,7 @@ function AnalyticsPage({ profile, currentUser }) {
             {rangeOptions.map(([key, label]) => <button key={key} className={rangeKey === key ? 'is-active' : ''} type="button" aria-pressed={rangeKey === key} onClick={() => setRangeKey(key)}>{label}</button>)}
           </div>
           {rangeKey === 'custom' && <div className="analytics-custom-range"><input type="date" value={customRange.start} onChange={(event) => setCustomRange((current) => ({ ...current, start: event.target.value }))} aria-label="Analytics custom start date" /><input type="date" value={customRange.end} onChange={(event) => setCustomRange((current) => ({ ...current, end: event.target.value }))} aria-label="Analytics custom end date" /></div>}
-          <button className="analytics-export" type="button" onClick={exportReport} disabled={!analytics.hasData}><span className="material-symbols-outlined">download</span>Export Report</button>
+          <button className="analytics-export" type="button" onClick={exportReport} disabled={!analytics.hasData}><span className="material-symbols-outlined">picture_as_pdf</span>PDF Report</button>
         </div>
       </section>
       {errorMessage && <section className="analytics-alert" role="alert"><span className="material-symbols-outlined">error</span><p>{errorMessage}</p></section>}
@@ -532,6 +615,9 @@ function AnalyticsPage({ profile, currentUser }) {
 }
 
 export default AnalyticsPage;
+
+
+
 
 
 
