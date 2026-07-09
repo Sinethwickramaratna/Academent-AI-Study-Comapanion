@@ -1,3 +1,5 @@
+import './NotesActionButton.css';
+
 function NotesActionButton({ icon = "create_new_folder", label, className = "notes-add-folder-btn", onClick }) {
   return (
     <button className={className} type="button" onClick={onClick}>
@@ -8,3 +10,4 @@ function NotesActionButton({ icon = "create_new_folder", label, className = "not
 }
 
 export default NotesActionButton;
+

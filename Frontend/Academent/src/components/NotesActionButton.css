@@ -1,0 +1,29 @@
+.notes-add-folder-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(77, 43, 140, 0.16);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(18, 196, 196, 0.12));
+  color: #4d2b8c;
+  font-size: 0.875rem;
+  font-weight: 800;
+  box-shadow: 0 12px 30px rgba(77, 43, 140, 0.08);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.notes-add-folder-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(77, 43, 140, 0.32);
+  box-shadow: 0 16px 36px rgba(77, 43, 140, 0.14);
+}
+
+@media (max-width: 640px) {
+  .notes-add-folder-btn {
+    width: 100%;
+  }
+}
