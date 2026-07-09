@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './profilesettingspage.css';
 import { useAuth } from '../context/AuthContext';
@@ -199,6 +199,21 @@ const buildProfileSettingsPayload = ({ form, profile, currentUser, email, emailV
   };
 };
 
+const buildAppPreferences = ({ form, profile }) => ({
+  ...(profile?.appPreferences || {}),
+  themeMode: form.themeMode || 'Light',
+  language: form.language || 'English (US)',
+  accentColor: normalizeAccentColor(form.accentColor),
+  notifications: { ...notificationDefaults, ...(form.notifications || {}) },
+});
+
+const getAppPreferencesFingerprint = (form) => JSON.stringify({
+  themeMode: form.themeMode || 'Light',
+  language: form.language || 'English (US)',
+  accentColor: normalizeAccentColor(form.accentColor),
+  notifications: { ...notificationDefaults, ...(form.notifications || {}) },
+});
+
 const safeStringify = (value) => JSON.stringify(value, (key, item) => {
   if (item && typeof item.toDate === 'function') {
     return item.toDate().toISOString();
@@ -216,8 +231,16 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
   const { refreshProfile } = useAuth();
   const fileInputRef = useRef(null);
   const [form, setForm] = useState(() => getInitialForm(profile, currentUser));
+  const latestFormRef = useRef(form);
+  const latestProfileRef = useRef(profile);
+  const appPreferencesTimerRef = useRef(null);
+  const appPreferencesSaveInFlightRef = useRef(false);
+  const appPreferencesSaveQueuedRef = useRef(false);
+  const skipNextProfileFormSyncRef = useRef(false);
+  const lastSavedAppPreferencesRef = useRef(getAppPreferencesFingerprint(form));
   const [notice, setNotice] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [savingAppPreferences, setSavingAppPreferences] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [sendingPasswordReset, setSendingPasswordReset] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
@@ -225,8 +248,26 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
+    latestFormRef.current = form;
+  }, [form]);
+
+  useEffect(() => {
+    latestProfileRef.current = profile;
+  }, [profile]);
+
+  useEffect(() => {
+    const nextForm = getInitialForm(profile, currentUser);
+    const nextAppPreferencesFingerprint = getAppPreferencesFingerprint(nextForm);
+
+    if (skipNextProfileFormSyncRef.current) {
+      skipNextProfileFormSyncRef.current = false;
+      lastSavedAppPreferencesRef.current = nextAppPreferencesFingerprint;
+      return undefined;
+    }
+
     const timer = window.setTimeout(() => {
-      setForm(getInitialForm(profile, currentUser));
+      lastSavedAppPreferencesRef.current = nextAppPreferencesFingerprint;
+      setForm(nextForm);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [profile, currentUser]);
@@ -267,7 +308,100 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
   const completion = Math.round((completedItems / completionItems.length) * 100);
   const updatesLeft = Math.max(completionItems.length - completedItems, 0);
 
-  const showNotice = (type, message) => setNotice({ type, message });
+  const showNotice = useCallback((type, message) => setNotice({ type, message }), []);
+  const appPreferencesFingerprint = useMemo(() => getAppPreferencesFingerprint(form), [
+    form.accentColor,
+    form.language,
+    form.notifications,
+    form.themeMode,
+  ]);
+
+  const persistLatestAppPreferences = useCallback(async () => {
+    if (!currentUser?.uid) return;
+
+    if (appPreferencesSaveInFlightRef.current) {
+      appPreferencesSaveQueuedRef.current = true;
+      return;
+    }
+
+    const formSnapshot = latestFormRef.current;
+    const appPreferencesFingerprint = getAppPreferencesFingerprint(formSnapshot);
+
+    if (appPreferencesFingerprint === lastSavedAppPreferencesRef.current) {
+      setSavingAppPreferences(false);
+      return;
+    }
+
+    appPreferencesSaveInFlightRef.current = true;
+    appPreferencesSaveQueuedRef.current = false;
+    setSavingAppPreferences(true);
+
+    try {
+      const profileSnapshot = latestProfileRef.current;
+      const appPreferences = buildAppPreferences({ form: formSnapshot, profile: profileSnapshot });
+      const nextProfile = {
+        ...(profileSnapshot || {}),
+        appPreferences,
+        userSettings: {
+          ...(profileSnapshot?.userSettings || {}),
+          app: appPreferences,
+        },
+      };
+
+      await updateUserProfileData({
+        appPreferences,
+        userSettings: {
+          app: appPreferences,
+        },
+      });
+
+      lastSavedAppPreferencesRef.current = appPreferencesFingerprint;
+      if (onProfileUpdated) {
+        skipNextProfileFormSyncRef.current = true;
+        onProfileUpdated(nextProfile);
+      }
+    } catch (error) {
+      showNotice('error', getFriendlyAuthError(error));
+    } finally {
+      appPreferencesSaveInFlightRef.current = false;
+
+      const latestFingerprint = getAppPreferencesFingerprint(latestFormRef.current);
+      const shouldSaveQueuedChange = appPreferencesSaveQueuedRef.current
+        || latestFingerprint !== lastSavedAppPreferencesRef.current;
+      appPreferencesSaveQueuedRef.current = false;
+
+      if (shouldSaveQueuedChange) {
+        window.clearTimeout(appPreferencesTimerRef.current);
+        appPreferencesTimerRef.current = window.setTimeout(() => {
+          persistLatestAppPreferences();
+        }, 300);
+      } else {
+        setSavingAppPreferences(false);
+      }
+    }
+  }, [currentUser?.uid, onProfileUpdated, showNotice]);
+
+  useEffect(() => {
+    if (!currentUser?.uid) return undefined;
+
+    if (appPreferencesFingerprint === lastSavedAppPreferencesRef.current) {
+      return undefined;
+    }
+
+    if (appPreferencesSaveInFlightRef.current) {
+      appPreferencesSaveQueuedRef.current = true;
+      return undefined;
+    }
+
+    window.clearTimeout(appPreferencesTimerRef.current);
+    appPreferencesTimerRef.current = window.setTimeout(() => {
+      persistLatestAppPreferences();
+    }, 500);
+
+    return () => window.clearTimeout(appPreferencesTimerRef.current);
+  }, [appPreferencesFingerprint, currentUser?.uid, persistLatestAppPreferences]);
+
+  useEffect(() => () => window.clearTimeout(appPreferencesTimerRef.current), []);
 
   const setField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -749,6 +883,7 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
                 <h2>App Preferences</h2>
                 <p>Set your dashboard theme, reminders, language, and accent color.</p>
               </div>
+              {savingAppPreferences && <span className="profile-badge">Saving...</span>}
               <span className="profile-section-icon material-symbols-outlined">tune</span>
             </div>
 
@@ -789,13 +924,6 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
                   <span style={{ backgroundColor: color.value }} />
                 </button>
               ))}
-            </div>
-
-            <div className="profile-actions profile-actions--section">
-              <button className="profile-button profile-button--primary" type="button" disabled={busy} onClick={handleSaveProfile}>
-                <span className="material-symbols-outlined">{saving ? 'sync' : 'save'}</span>
-                {saving ? 'Saving...' : 'Save app settings'}
-              </button>
             </div>
           </section>
 
