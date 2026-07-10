@@ -1017,7 +1017,11 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
   const [conversations, setConversations] = useState([]);
   const [conversationsLoading, setConversationsLoading] = useState(Boolean(uid));
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(() => {
+    const queuedPrompt = sessionStorage.getItem('academent_dashboard_ai_prompt') || '';
+    if (queuedPrompt) sessionStorage.removeItem('academent_dashboard_ai_prompt');
+    return queuedPrompt;
+  });
   const [selectedItems, setSelectedItems] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [panelCollapsed, setPanelCollapsed] = useState(false);

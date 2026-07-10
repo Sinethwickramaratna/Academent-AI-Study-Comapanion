@@ -1,12 +1,14 @@
-import { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef, useMemo } from 'react';
 import './dashboardpage.css';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
-import { logoutUser, getUserProfileData } from '../Services/authService';
+import { logoutUser } from '../Services/authService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LoadingEffect from '../components/LoadingEffect';
 import TopBar from '../components/TopBar';
 import { dashboardWindowItems, getDashboardRouteForTab, getDashboardTabForPath } from '../routes/windowRoutes';
+import { DEFAULT_DASHBOARD_DATA, subscribeDashboardData } from '../Services/dashboardService';
+import { markStudyPlannerEventCompleted, saveStudyPlannerEvent } from '../Services/studyPlannerService';
 
 const NotePage = lazy(() => import('./notepage'));
 const QuizGeneratorPage = lazy(() => import('./quizgeneratorpage'));
@@ -16,10 +18,411 @@ const FlashCardsPage = lazy(() => import('./flashcardspage'));
 const AnalyticsPage = lazy(() => import('./analyticspage'));
 const ProfileSettingsPage = lazy(() => import('./profilesettingspage'));
 
-let dashboardIdCounter = 0;
-const createDashboardId = (prefix = 'id') => {
-  dashboardIdCounter += 1;
-  return prefix + '-' + dashboardIdCounter;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const RING_CIRCUMFERENCE = 339.29;
+
+const eventTypeMeta = {
+  exam: { label: 'Exam', icon: 'school' },
+  assignment: { label: 'Assignment', icon: 'assignment' },
+  task: { label: 'Task', icon: 'task_alt' },
+  studyPlan: { label: 'Study Session', icon: 'event_available' },
+};
+
+const taskToneClasses = {
+  urgent: {
+    tagColor: 'bg-error-container text-on-error-container',
+    borderHover: 'hover:border-error/50',
+    barColor: 'bg-error',
+  },
+  primary: {
+    tagColor: 'bg-surface-container-highest text-on-surface-variant',
+    borderHover: 'hover:border-primary/50',
+    barColor: 'bg-primary',
+  },
+  routine: {
+    tagColor: 'bg-surface-container-highest text-on-surface-variant',
+    borderHover: 'hover:border-tertiary-fixed-dim/50',
+    barColor: 'bg-tertiary-fixed-dim',
+  },
+};
+
+const toDate = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value.toDate === 'function') return value.toDate();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const startDay = (value = new Date()) => {
+  const date = toDate(value) || new Date();
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+};
+
+const startWeek = (value = new Date()) => {
+  const date = startDay(value);
+  const day = date.getDay();
+  return new Date(date.getTime() + (day === 0 ? -6 : 1 - day) * DAY_MS);
+};
+
+const addDays = (date, days) => new Date(date.getTime() + days * DAY_MS);
+
+const toInputDate = (value = new Date()) => {
+  const date = toDate(value) || new Date();
+  const copy = new Date(date);
+  copy.setMinutes(copy.getMinutes() - copy.getTimezoneOffset());
+  return copy.toISOString().slice(0, 10);
+};
+
+const fromInputDate = (value) => {
+  const [year, month, day] = String(value || '').split('-').map(Number);
+  return year && month && day ? new Date(year, month - 1, day) : null;
+};
+
+const sameDay = (left, right) => startDay(left).getTime() === startDay(right).getTime();
+const clamp = (value) => Math.max(0, Math.min(100, Number(value || 0)));
+const average = (items) => {
+  const values = items.map(Number).filter(Number.isFinite);
+  return values.length ? values.reduce((sum, item) => sum + item, 0) / values.length : 0;
+};
+
+const shortDate = (date) => new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(date);
+const shortTime = (time) => {
+  const [hours = 0, minutes = 0] = String(time || '00:00').split(':').map(Number);
+  return new Intl.DateTimeFormat('en', { hour: 'numeric', minute: '2-digit' }).format(new Date(2026, 0, 1, hours, minutes));
+};
+
+const relativeTime = (value) => {
+  const date = toDate(value);
+  if (!date) return 'Recently';
+  const diff = Date.now() - date.getTime();
+  if (diff < 0) return shortDate(date);
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  return shortDate(date);
+};
+
+const formatHours = (minutes = 0) => {
+  const safeMinutes = Math.max(0, Math.round(Number(minutes || 0)));
+  if (!safeMinutes) return '0h';
+  if (safeMinutes < 60) return `${safeMinutes}m`;
+  const hours = safeMinutes / 60;
+  return `${Number.isInteger(hours) ? hours.toFixed(0) : hours.toFixed(1)}h`;
+};
+
+const formatHourValue = (hours = 0) => {
+  const rounded = Math.round(Number(hours || 0) * 10) / 10;
+  return Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1);
+};
+
+const formatFileSize = (bytes = 0) => {
+  const size = Number(bytes || 0);
+  if (!size) return '';
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
+  return `${Math.round((size / 1024 / 1024) * 10) / 10} MB`;
+};
+
+const getWeeklyTargetHours = (weeklyHours) => {
+  const numbers = String(weeklyHours || '5-10').match(/\d+/g)?.map(Number) || [];
+  return numbers.length ? numbers[numbers.length - 1] : 10;
+};
+
+const eventDate = (event, end = false) => {
+  const day = fromInputDate(event?.date);
+  if (!day) return null;
+  const [hours = 0, minutes = 0] = String((end ? event.endTime : event.startTime) || '00:00').split(':').map(Number);
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hours, minutes);
+};
+
+const eventMinutes = (event) => {
+  const explicit = Number(event?.durationMinutes || 0);
+  if (explicit > 0) return explicit;
+  const start = eventDate(event);
+  const end = eventDate(event, true);
+  return start && end && end > start ? Math.round((end - start) / 60000) : 0;
+};
+
+const plannerStatus = (event) => {
+  if (event?.status === 'completed') return 'completed';
+  const end = eventDate(event, true) || eventDate(event);
+  if (end && end < new Date()) return 'overdue';
+  return eventDate(event) && sameDay(eventDate(event), new Date()) ? 'today' : 'upcoming';
+};
+
+const plannerTime = (event) => {
+  const date = eventDate(event);
+  if (!date) return 'No date set';
+  const status = plannerStatus(event);
+  if (status === 'overdue') {
+    const days = Math.max(1, Math.ceil((startDay(new Date()) - startDay(date)) / DAY_MS));
+    return `Overdue by ${days} ${days === 1 ? 'day' : 'days'}`;
+  }
+  if (sameDay(date, new Date())) return `Today, ${shortTime(event.startTime)}`;
+  if (sameDay(date, addDays(startDay(new Date()), 1))) return `Tomorrow, ${shortTime(event.startTime)}`;
+  return `${shortDate(date)}, ${shortTime(event.startTime)}`;
+};
+
+const quizDate = (quiz) => toDate(quiz?.completedAt) || toDate(quiz?.updatedAt) || toDate(quiz?.createdAt) || new Date(0);
+const quizScore = (quiz) => {
+  const percentage = Number(quiz?.percentage);
+  if (Number.isFinite(percentage)) return clamp(percentage);
+  const score = Number(quiz?.score);
+  const total = Number(quiz?.totalQuestions || quiz?.questions?.length || 0);
+  return Number.isFinite(score) && total > 0 ? clamp(Math.round((score / total) * 100)) : 0;
+};
+
+const flattenNoteManagement = (data = {}) => {
+  const materials = [];
+  const modules = [];
+  const addMaterial = (item, type, semester, module, path) => {
+    const id = type === 'note' ? item.noteId : item.pdfId;
+    if (!id) return;
+    const title = item.title || item.originalName || (type === 'note' ? 'Untitled note' : 'Untitled PDF');
+    const content = String(item.content || '');
+    materials.push({
+      id,
+      type,
+      title,
+      path,
+      moduleId: module.moduleId,
+      moduleTitle: module.title || 'Untitled module',
+      size: item.size || 0,
+      pageCount: item.pageCount || item.pages || 0,
+      wordCount: type === 'note' ? content.split(/\s+/).filter(Boolean).length : 0,
+    });
+  };
+  const visitFolder = (folder, semester, module, path) => {
+    const nextPath = `${path} / ${folder.title || 'Folder'}`;
+    (folder.notes || []).forEach((note) => addMaterial(note, 'note', semester, module, nextPath));
+    (folder.pdfs || []).forEach((pdf) => addMaterial(pdf, 'pdf', semester, module, nextPath));
+    (folder.folders || []).forEach((child) => visitFolder(child, semester, module, nextPath));
+  };
+
+  (data.semesters || []).forEach((semester) => {
+    (semester.modules || []).forEach((module) => {
+      const path = `${semester.title || 'Semester'} / ${module.title || 'Module'}`;
+      const beforeCount = materials.length;
+      (module.notes || []).forEach((note) => addMaterial(note, 'note', semester, module, path));
+      (module.pdfs || []).forEach((pdf) => addMaterial(pdf, 'pdf', semester, module, path));
+      (module.folders || []).forEach((folder) => visitFolder(folder, semester, module, path));
+      modules.push({
+        id: module.moduleId,
+        title: module.title || 'Untitled module',
+        semester: semester.title || 'Semester',
+        materialCount: materials.length - beforeCount,
+      });
+    });
+  });
+
+  return { materials, modules };
+};
+
+const materialIcon = (type) => (type === 'pdf'
+  ? { icon: 'picture_as_pdf', iconColor: 'bg-blue-100 text-blue-600', btn2: 'Generate Quiz' }
+  : { icon: 'edit_note', iconColor: 'bg-purple-100 text-purple-600', btn2: 'Flashcards' });
+
+const materialInfo = (material) => {
+  const details = [];
+  if (material.path) details.push(material.path);
+  if (material.type === 'note' && material.wordCount) details.push(`${material.wordCount} words`);
+  if (material.type === 'pdf') {
+    const size = formatFileSize(material.size);
+    if (size) details.push(size);
+    if (material.pageCount) details.push(`${material.pageCount} pages`);
+  }
+  return details.slice(0, 2).join(' - ') || 'Saved in My Notes';
+};
+
+const flashTotals = (collections = []) => {
+  const totals = collections.reduce((sum, collection) => {
+    const analytics = collection.analytics || {};
+    sum.totalCards += Number(analytics.totalFlashCards || collection.cardCount || 0);
+    sum.due += Number(analytics.dueToday || 0) + Number(analytics.overdueCards || 0);
+    sum.reviews += Number(analytics.cardsReviewed || analytics.reviewSessions || 0);
+    sum.completion.push(Number(analytics.completionPercentage || 0));
+    sum.retention.push(Number(analytics.retentionRate || 0));
+    const lastStudyDate = toDate(analytics.lastStudyDate);
+    if (lastStudyDate) sum.studyDates.push(lastStudyDate);
+    return sum;
+  }, { totalCards: 0, due: 0, reviews: 0, completion: [], retention: [], studyDates: [] });
+
+  return {
+    ...totals,
+    completionPercentage: Math.round(average(totals.completion)),
+    retentionRate: Math.round(average(totals.retention)),
+  };
+};
+
+const calculateStreak = (dates = []) => {
+  const dayKeys = new Set(dates.map((date) => toInputDate(startDay(date))));
+  let streak = 0;
+  let cursor = startDay(new Date());
+  while (dayKeys.has(toInputDate(cursor))) {
+    streak += 1;
+    cursor = addDays(cursor, -1);
+  }
+  return streak;
+};
+
+const taskTone = (event, status) => {
+  if (status === 'overdue' || event.priority === 'high') return 'urgent';
+  if (event.type === 'studyPlan') return 'routine';
+  return 'primary';
+};
+
+const buildDashboardTasks = (events = [], flashCollections = []) => {
+  const pendingPlannerTasks = events
+    .filter((event) => event.type !== 'exam' && event.status !== 'completed')
+    .map((event) => {
+      const status = plannerStatus(event);
+      const tone = taskTone(event, status);
+      const progress = status === 'overdue' ? 18 : status === 'today' ? 60 : 30;
+      return {
+        id: event.eventId || event.id,
+        source: 'planner',
+        rawEvent: event,
+        title: event.title || event.studyTopic || 'Untitled plan',
+        tag: status === 'overdue' ? 'Urgent' : status === 'today' ? 'Today' : eventTypeMeta[event.type]?.label || 'Task',
+        due: plannerTime(event),
+        progress,
+        completed: false,
+        date: eventDate(event) || new Date(0),
+        priority: event.priority || 'medium',
+        ...taskToneClasses[tone],
+      };
+    })
+    .sort((left, right) => {
+      const statusWeight = { overdue: 0, today: 1, upcoming: 2 };
+      const priorityWeight = { high: 0, medium: 1, low: 2 };
+      return (statusWeight[plannerStatus(left.rawEvent)] ?? 2) - (statusWeight[plannerStatus(right.rawEvent)] ?? 2)
+        || (priorityWeight[left.priority] ?? 1) - (priorityWeight[right.priority] ?? 1)
+        || left.date - right.date;
+    });
+
+  const flash = flashTotals(flashCollections);
+  const flashTask = flash.due > 0 ? [{
+    id: 'flash-review-due',
+    source: 'flashcards',
+    title: `${flash.due} flash cards due for review`,
+    tag: 'Routine',
+    due: 'Spaced repetition queue',
+    progress: Math.max(10, Math.min(95, flash.completionPercentage || 20)),
+    completed: false,
+    ...taskToneClasses.routine,
+  }] : [];
+
+  return [...pendingPlannerTasks, ...flashTask].slice(0, 5);
+};
+
+const buildExamCountdowns = (events = []) => events
+  .filter((event) => event.type === 'exam' && event.status !== 'completed')
+  .map((event) => ({ ...event, sortDate: eventDate(event) }))
+  .filter((event) => event.sortDate && event.sortDate >= startDay(new Date()))
+  .sort((left, right) => left.sortDate - right.sortDate)
+  .slice(0, 3)
+  .map((event) => ({
+    id: event.eventId || event.id,
+    month: new Intl.DateTimeFormat('en', { month: 'short' }).format(event.sortDate).toUpperCase(),
+    day: String(event.sortDate.getDate()).padStart(2, '0'),
+    title: event.title || 'Upcoming exam',
+    detail: `${event.studyTopic || event.description || 'Exam'} - ${shortTime(event.startTime)}`,
+  }));
+
+const deriveDashboardMetrics = (profile, dashboardData, noteIndex) => {
+  const quizzes = dashboardData.quizzes || [];
+  const plannerEvents = dashboardData.plannerEvents || [];
+  const flash = flashTotals(dashboardData.flashCardCollections || []);
+  const targetHours = getWeeklyTargetHours(profile?.learningPreferences?.weeklyHours);
+  const weekStart = startWeek(new Date());
+  const weekEnd = addDays(weekStart, 7);
+  const completedEvents = plannerEvents.filter((event) => event.status === 'completed');
+  const weeklyCompletedEvents = completedEvents.filter((event) => {
+    const date = eventDate(event) || toDate(event.updatedAt);
+    return date && date >= weekStart && date < weekEnd;
+  });
+  const studyMinutes = weeklyCompletedEvents.reduce((sum, event) => sum + eventMinutes(event), 0);
+  const studiedHours = Math.round((studyMinutes / 60) * 10) / 10;
+  const goalPercentage = targetHours ? clamp(Math.round((studiedHours / targetHours) * 100)) : 0;
+  const completedQuizzes = quizzes.filter((quiz) => quiz.status === 'completed');
+  const averageQuizScore = Math.round(average(completedQuizzes.map(quizScore)));
+  const workEvents = plannerEvents.filter((event) => event.type !== 'exam');
+  const completedWorkCount = workEvents.filter((event) => event.status === 'completed').length;
+  const workCompletionRate = workEvents.length ? Math.round((completedWorkCount / workEvents.length) * 100) : 0;
+  const productivityFactors = [goalPercentage];
+  if (completedQuizzes.length) productivityFactors.push(averageQuizScore);
+  if (workEvents.length) productivityFactors.push(workCompletionRate);
+  if ((dashboardData.flashCardCollections || []).length) productivityFactors.push(flash.completionPercentage);
+  const productivityScore = Math.round(average(productivityFactors));
+  const activityDates = [
+    ...completedEvents.map((event) => eventDate(event) || toDate(event.updatedAt)),
+    ...completedQuizzes.map(quizDate),
+    ...flash.studyDates,
+  ].filter(Boolean);
+  const streak = calculateStreak(activityDates);
+  const notesCreated = noteIndex.materials.filter((material) => material.type === 'note').length;
+  const targetGpa = String(profile?.academicGoals?.targetGpa || '').trim();
+  const xp = completedWorkCount * 75
+    + completedQuizzes.length * 120
+    + noteIndex.materials.length * 20
+    + flash.totalCards * 5
+    + flash.reviews * 15;
+
+  return {
+    targetHours,
+    studiedHours,
+    weeklyStudyHours: formatHours(studyMinutes),
+    goalPercentage,
+    strokeDashoffset: RING_CIRCUMFERENCE - (RING_CIRCUMFERENCE * goalPercentage) / 100,
+    studyHoursRemaining: Math.max(0, Math.round((targetHours - studiedHours) * 10) / 10),
+    streak,
+    notesCreated,
+    quizzesTaken: completedQuizzes.length,
+    targetGpa: targetGpa || 'Not set',
+    gpaHelper: targetGpa ? 'Target from onboarding' : 'Add target in profile',
+    quizAccuracy: completedQuizzes.length ? `${averageQuizScore}%` : '0%',
+    quizHelper: completedQuizzes.length ? `${completedQuizzes.length} completed quizzes` : 'Complete a quiz to unlock this',
+    completedWork: `${completedWorkCount}/${workEvents.length || 0}`,
+    completedWorkHelper: `${workCompletionRate}% planner completion`,
+    productivityScore,
+    productivityHelper: productivityFactors.length > 1 ? 'Based on your live study signals.' : 'Add quizzes, tasks, or flashcards for richer scoring.',
+    flash,
+    xp,
+  };
+};
+
+const buildScoreboard = (fullName, photoURL, metrics) => ([
+  { id: 'you', rank: 1, name: fullName, value: `${metrics.xp.toLocaleString()} XP`, photoURL, highlight: true, icon: 'person' },
+  { id: 'goal', rank: 2, name: 'Weekly goal', value: `${metrics.goalPercentage}%`, icon: 'flag' },
+  { id: 'accuracy', rank: 3, name: 'Quiz accuracy', value: metrics.quizAccuracy, icon: 'verified' },
+]);
+
+const buildTutorPreviewMessages = (conversations = [], fullName = 'Student') => {
+  if (!conversations.length) {
+    return [{
+      id: 'ai-welcome',
+      sender: 'ai',
+      text: `Hello ${fullName.split(' ')[0] || 'there'}! Your recent AI Tutor conversations will appear here once you start asking questions.`,
+      actions: ['Open AI Tutor'],
+    }];
+  }
+
+  return conversations.slice(0, 4).reverse().map((conversation) => ({
+    id: conversation.conversationId || conversation.id,
+    sender: 'ai',
+    text: `${conversation.title || 'AI Tutor Chat'}\n${conversation.preview || 'No preview available yet.'}`,
+    details: {
+      title: relativeTime(conversation.updatedAt),
+      content: `${Number(conversation.messageCount || 0)} saved messages`,
+    },
+    actions: ['Open AI Tutor'],
+  }));
 };
 
 /**
@@ -32,128 +435,100 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   const location = useLocation();
   const routeActiveTab = getDashboardTabForPath(location.pathname) || initialActiveTab || 'home';
   
-  // Profile state loaded from Firestore
+  const uid = currentUser?.uid || null;
   const [profile, setProfile] = useState(null);
+  const [dashboardData, setDashboardData] = useState(DEFAULT_DASHBOARD_DATA);
   const [loading, setLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState(null);
   const activeTab = routeActiveTab;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
   const [quizToOpenId, setQuizToOpenId] = useState(null);
-  
-  
-  // Task list state (Interactive)
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: "Physics Problem Set #4",
-      tag: "Urgent",
-      tagColor: "bg-error-container text-on-error-container",
-      borderHover: "hover:border-error/50",
-      barColor: "bg-error",
-      progress: 65,
-      due: "Due Today at 11:59 PM",
-      completed: false
-    },
-    {
-      id: 2,
-      title: "Bioethics Essay Outline",
-      tag: "Upcoming",
-      tagColor: "bg-surface-container-highest text-on-surface-variant",
-      borderHover: "hover:border-primary/50",
-      barColor: "bg-primary",
-      progress: 30,
-      due: "Due in 2 days",
-      completed: false
-    },
-    {
-      id: 3,
-      title: "Daily Flashcard Review",
-      tag: "Routine",
-      tagColor: "bg-surface-container-highest text-on-surface-variant",
-      borderHover: "hover:border-tertiary-fixed-dim/50",
-      barColor: "bg-tertiary-fixed-dim",
-      progress: 90,
-      due: "Daily Task",
-      completed: false
-    }
-  ]);
-
-  // AI Tutor Messages state (Interactive)
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: 'user',
-      text: "Can you explain Newton's Second Law with a real-world example? I'm struggling to visualize it.",
-      avatar: ""
-    },
-    {
-      id: 2,
-      sender: 'ai',
-      text: "Newton's Second Law (F = ma) basically states that the force acting on an object is equal to its mass times its acceleration.",
-      details: {
-        title: "???? The Car Example:",
-        content: "Imagine pushing a toy car vs. a real car. If you apply the same strength (force), the toy car accelerates much faster because it has less mass. To make the real car move at the same speed, you'd need a massive amount of force."
-      },
-      actions: ["Generate Quiz", "Save to Notes"]
-    }
-  ]);
   const [inputMessage, setInputMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [isSavingTask, setIsSavingTask] = useState(false);
   const chatBottomRef = useRef(null);
 
-  // Recent Study Materials state (Interactive)
-  const [materials, setMaterials] = useState([
-    { 
-      id: 1, 
-      name: "Lecture_04_Kinematics.pdf", 
-      info: "Last opened 2h ago ??? 12 pages", 
-      icon: "picture_as_pdf", 
-      iconColor: "bg-blue-100 text-blue-600", 
-      btn1: "Summarize", 
-      btn2: "Generate Quiz" 
-    },
-    { 
-      id: 2, 
-      name: "Chemistry Lab Notes (Week 6)", 
-      info: "Edited Yesterday ??? 2,400 words", 
-      icon: "edit_note", 
-      iconColor: "bg-purple-100 text-purple-600", 
-      btn1: "Summarize", 
-      btn2: "Flashcards" 
-    },
-    { 
-      id: 3, 
-      name: "Organic_Chem_Full_Lecture.mp4", 
-      info: "AI Transcribed ??? 54 mins", 
-      icon: "slideshow", 
-      iconColor: "bg-orange-100 text-orange-600", 
-      btn1: "Review Outline", 
-      btn2: "Ask Video" 
-    }
-  ]);
-
-  // Load user profile on component mount
   useEffect(() => {
-    async function loadProfile() {
-      if (!currentUser) return;
-      try {
-        const data = await getUserProfileData(currentUser.uid);
-        setProfile(data);
-      } catch (error) {
-        console.error("Failed to load user profile:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadProfile();
-  }, [currentUser]);
+    let cancelled = false;
 
-  // Scroll to bottom of chat when new message arrives
+    if (!uid) {
+      Promise.resolve().then(() => {
+        if (cancelled) return;
+        setProfile(null);
+        setDashboardData(DEFAULT_DASHBOARD_DATA);
+        setLoading(false);
+      });
+      return () => { cancelled = true; };
+    }
+
+    setLoading(true);
+    setDashboardError(null);
+
+    const unsubscribe = subscribeDashboardData(
+      uid,
+      (nextData) => {
+        if (cancelled) return;
+        setDashboardData(nextData);
+        setProfile(nextData.profile);
+        setLoading(false);
+      },
+      (error) => {
+        if (cancelled) return;
+        console.error('Failed to load dashboard data:', error);
+        setDashboardError(error);
+        setLoading(false);
+      },
+    );
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [uid]);
+
+  const effectiveProfile = profile || dashboardData.profile || null;
+  const noteIndex = useMemo(() => flattenNoteManagement(dashboardData.noteManagement), [dashboardData.noteManagement]);
+
+  const fullName = effectiveProfile?.fullName || currentUser?.displayName || 'Student';
+  const major = effectiveProfile?.academicProfile?.major || 'Undecided Major';
+  const rawSubjects = effectiveProfile?.academicProfile?.subjects;
+  const subjects = Array.isArray(rawSubjects) && rawSubjects.length
+    ? rawSubjects
+    : rawSubjects
+      ? [rawSubjects]
+      : ['General Study'];
+  const studyStyle = effectiveProfile?.learningPreferences?.studyStyle || 'visual';
+  const photoURL = currentUser?.photoURL || effectiveProfile?.photoURL || '';
+
+  const metrics = useMemo(() => deriveDashboardMetrics(effectiveProfile, dashboardData, noteIndex), [dashboardData, effectiveProfile, noteIndex]);
+  const tasks = useMemo(() => buildDashboardTasks(dashboardData.plannerEvents, dashboardData.flashCardCollections), [dashboardData.flashCardCollections, dashboardData.plannerEvents]);
+  const examCountdowns = useMemo(() => buildExamCountdowns(dashboardData.plannerEvents), [dashboardData.plannerEvents]);
+  const messages = useMemo(() => buildTutorPreviewMessages(dashboardData.tutorConversations, fullName), [dashboardData.tutorConversations, fullName]);
+  const materials = useMemo(() => noteIndex.materials.slice(-6).reverse().slice(0, 3).map((material) => ({
+    ...material,
+    name: material.title,
+    info: materialInfo(material),
+    btn1: 'Summarize',
+    ...materialIcon(material.type),
+  })), [noteIndex.materials]);
+  const scoreboardItems = useMemo(() => buildScoreboard(fullName, photoURL, metrics), [fullName, metrics, photoURL]);
+
+  const targetHours = metrics.targetHours;
+  const studiedHours = formatHourValue(metrics.studiedHours);
+  const percentage = metrics.goalPercentage;
+  const strokeDashoffset = metrics.strokeDashoffset;
+  const averageGpa = metrics.targetGpa;
+  const gpaProgress = metrics.gpaHelper;
+  const weeklyStudyHours = metrics.weeklyStudyHours;
+  const quizAccuracy = metrics.quizAccuracy;
+  const completedWork = metrics.completedWork;
+  const sidebarItems = dashboardWindowItems;
+
   useEffect(() => {
     if (chatBottomRef.current) {
       chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isTyping]);
+  }, [messages]);
 
   /**
    * Log out currently signed-in user and redirect to login page.
@@ -163,7 +538,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
       await logoutUser();
       navigate('/login');
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error('Logout failed:', error);
     }
   };
 
@@ -176,200 +551,100 @@ function DashboardPage({ initialActiveTab = 'home' }) {
     }
   };
 
-  // Toggle task completed state
-  const toggleTaskCompleted = (id) => {
-    setTasks(prev => prev.map(t => 
-      t.id === id 
-        ? { 
-            ...t, 
-            completed: !t.completed, 
-            progress: t.completed ? (t.prevProgress !== undefined ? t.prevProgress : 50) : 100, 
-            prevProgress: t.progress 
-          } 
-        : t
-    ));
-  };
-
-  // Add a task in state
-  const handleAddTask = () => {
-    const title = prompt("Enter task title:");
-    if (!title) return;
-    const tagInput = prompt("Enter task priority (Urgent, Upcoming, Routine):", "Upcoming") || "Upcoming";
-    const due = prompt("Enter due date (e.g. Due in 3 days):", "Due soon") || "Due soon";
-    
-    let tag = "Upcoming";
-    let tagColor = "bg-surface-container-highest text-on-surface-variant";
-    let borderHover = "hover:border-primary/50";
-    let barColor = "bg-primary";
-    
-    const normalizedTag = tagInput.trim().toLowerCase();
-    if (normalizedTag === 'urgent') {
-      tag = "Urgent";
-      tagColor = "bg-error-container text-on-error-container";
-      borderHover = "hover:border-error/50";
-      barColor = "bg-error";
-    } else if (normalizedTag === 'routine') {
-      tag = "Routine";
-      tagColor = "bg-surface-container-highest text-on-surface-variant";
-      borderHover = "hover:border-tertiary-fixed-dim/50";
-      barColor = "bg-tertiary-fixed-dim";
-    }
-    
-    const newTask = {
-      id: createDashboardId('task'),
-      title,
-      tag,
-      tagColor,
-      borderHover,
-      barColor,
-      progress: 0,
-      due,
-      completed: false
-    };
-    
-    setTasks(prev => [...prev, newTask]);
-  };
-
-  // Send a chat message
-  const handleSendMessage = (textToSend = null) => {
-    const text = textToSend || inputMessage;
-    if (!text.trim()) return;
-    
-    const userMsg = {
-      id: createDashboardId('message'),
-      sender: 'user',
-      text: text.trim(),
-      avatar: photoURL
-    };
-    
-    setMessages(prev => [...prev, userMsg]);
-    if (!textToSend) setInputMessage('');
-    setIsTyping(true);
-    
-    // Simulate AI response after 1.2 seconds
-    setTimeout(() => {
-      let replyText = "I've analyzed your question! As your AI Study Tutor, I'm here to help you master this topic. What specific details can I clear up for you?";
-      let details = null;
-      let actions = ["Generate Quiz", "Save to Notes"];
-      
-      const lower = text.toLowerCase();
-      if (lower.includes('newton') || lower.includes('law')) {
-        replyText = "Newton's Second Law (F = ma) states that force equals mass times acceleration. Let's look at another example:";
-        details = {
-          title: "?????? The Baseball Example:",
-          content: "A professional pitcher throws a baseball with huge force, giving it high acceleration. Throwing a heavy bowling ball with the same force would result in much lower acceleration due to its massive weight."
-        };
-      } else if (lower.includes('kinematics') || lower.includes('lecture')) {
-        replyText = "I see you're studying Kinematics! This branch of mechanics describes the motion of points, bodies, and systems without reference to the forces that cause the motion.";
-        details = {
-          title: "???? Key Concepts in Kinematics:",
-          content: "Focus on the big four equations of motion. They link Displacement (d), Initial Velocity (vi), Final Velocity (vf), Acceleration (a), and Time (t). Make sure you understand how to solve for one unknown when given three known values."
-        };
-        actions = ["Generate Flashcards", "Practice Problems"];
-      } else if (lower.includes('chemistry') || lower.includes('organic')) {
-        replyText = "Organic chemistry is all about understanding carbon compounds and functional groups. Let's break it down:";
-        details = {
-          title: "???? Study Tip for Organic Chem:",
-          content: "Do not just memorize reactions. Focus on nucleophiles and electrophiles (mechanisms). Once you know where the electrons want to go, you can predict almost any reaction."
-        };
-        actions = ["Flashcard Quiz", "Reaction Guide"];
-      } else if (lower.includes('gpa') || lower.includes('grade')) {
-        replyText = "Your GPA progress is looking great this term! To raise your GPA further, consistency is key. Keep maintaining your 12-day study streak.";
-        details = {
-          title: "???? GPA Goal Booster:",
-          content: "Spend just 15 minutes reviewing active flashcards every morning. Spaced repetition has been shown to raise average quiz scores by up to 15%."
-        };
-      } else if (lower.includes('essay') || lower.includes('ethics') || lower.includes('bioethics')) {
-        replyText = "Writing a bioethics outline can be challenging. I recommend organizing it around the four main principles of biomedical ethics:";
-        details = {
-          title: "???? The Four Bioethics Pillars:",
-          content: "1. Autonomy (respecting decision making)\n2. Beneficence (acting in the patient's best interest)\n3. Non-maleficence (doing no harm)\n4. Justice (fair distribution of resources)"
-        };
-        actions = ["Generate Outline", "Cite Sources"];
-      } else if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-        replyText = `Hello ${fullName}! ???? I'm your Academent AI Tutor. I can help explain difficult concepts, summarize lectures, or generate study guides and quizzes for you. What are we studying today?`;
-      }
-      
-      const aiMsg = {
-        id: createDashboardId('message'),
-        sender: 'ai',
-        text: replyText,
-        details,
-        actions
-      };
-      
-      setMessages(prev => [...prev, aiMsg]);
-      setIsTyping(false);
-    }, 1200);
-  };
-
-  // Click handler for study material action buttons
-  const handleMaterialAction = (materialName, action) => {
+  const openAiTutorWithPrompt = (text = '') => {
+    const promptText = text.trim();
+    if (promptText) sessionStorage.setItem('academent_dashboard_ai_prompt', promptText);
     switchToTab('ai-tutor');
-    setIsMobileMenuOpen(false);
-    setTimeout(() => {
-      handleSendMessage(`${action} my study material: "${materialName}"`);
-    }, 500);
   };
 
-  // Mock Upload function
-  const handleUpload = () => {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const ext = file.name.split('.').pop().toLowerCase();
-        let icon = "edit_note";
-        let iconColor = "bg-purple-100 text-purple-600";
-        let btn1 = "Summarize";
-        let btn2 = "Flashcards";
-        
-        if (ext === 'pdf') {
-          icon = "picture_as_pdf";
-          iconColor = "bg-blue-100 text-blue-600";
-          btn1 = "Summarize";
-          btn2 = "Generate Quiz";
-        } else if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) {
-          icon = "slideshow";
-          iconColor = "bg-orange-100 text-orange-600";
-          btn1 = "Review Outline";
-          btn2 = "Ask Video";
-        }
-        
-        const newMaterial = {
-          id: createDashboardId('material'),
-          name: file.name,
-          info: `Uploaded just now ??? ${(file.size / 1024 / 1024).toFixed(1)} MB`,
-          icon,
-          iconColor,
-          btn1,
-          btn2
-        };
-        
-        setMaterials(prev => [newMaterial, ...prev]);
-      }
-    };
-    fileInput.click();
-  };
+  const toggleTaskCompleted = async (id) => {
+    const task = tasks.find((item) => item.id === id);
+    if (!task) return;
 
-  // Mock New Note function
-  const handleNewNote = () => {
-    const noteName = prompt("Enter note title:");
-    if (noteName) {
-      const finalName = noteName.endsWith('.txt') || noteName.endsWith('.docx') ? noteName : `${noteName}.docx`;
-      const newMaterial = {
-        id: createDashboardId('material'),
-        name: finalName,
-        info: "Created just now ??? 0 words",
-        icon: "edit_note",
-        iconColor: "bg-purple-100 text-purple-600",
-        btn1: "Summarize",
-        btn2: "Flashcards"
-      };
-      setMaterials(prev => [newMaterial, ...prev]);
+    if (task.source === 'flashcards') {
+      switchToTab('flashcards');
+      return;
+    }
+
+    if (!uid) {
+      alert('Please sign in before updating tasks.');
+      return;
+    }
+
+    setIsSavingTask(true);
+    try {
+      await markStudyPlannerEventCompleted(uid, id);
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      alert(error.message || 'Could not update this task.');
+    } finally {
+      setIsSavingTask(false);
     }
   };
+
+  const handleAddTask = async () => {
+    if (!uid) {
+      alert('Please sign in before adding tasks.');
+      return;
+    }
+
+    const title = prompt('Enter task title:');
+    if (!title?.trim()) return;
+    const priorityInput = prompt('Enter priority (high, medium, low):', 'medium') || 'medium';
+    const dateInput = prompt('Enter due date (YYYY-MM-DD):', toInputDate(new Date())) || toInputDate(new Date());
+    const dueDate = fromInputDate(dateInput);
+
+    if (!dueDate) {
+      alert('Please use the YYYY-MM-DD date format.');
+      return;
+    }
+
+    const normalizedPriority = priorityInput.trim().toLowerCase();
+    const priority = normalizedPriority === 'urgent' ? 'high' : ['high', 'medium', 'low'].includes(normalizedPriority) ? normalizedPriority : 'medium';
+
+    setIsSavingTask(true);
+    try {
+      await saveStudyPlannerEvent(uid, {
+        title: title.trim(),
+        type: 'task',
+        date: toInputDate(dueDate),
+        startTime: '09:00',
+        endTime: '09:30',
+        priority,
+        repeat: 'none',
+        reminder: { enabled: false, beforeMinutes: 0 },
+        description: 'Created from the dashboard.',
+        status: 'pending',
+        durationMinutes: 30,
+      });
+    } catch (error) {
+      console.error('Failed to save dashboard task:', error);
+      alert(error.message || 'Could not save this task.');
+    } finally {
+      setIsSavingTask(false);
+    }
+  };
+
+  const handleSendMessage = (textToSend = null) => {
+    const text = String(textToSend || inputMessage || '').trim();
+    setInputMessage('');
+    openAiTutorWithPrompt(text);
+  };
+
+  const handleMaterialAction = (material, action) => {
+    if (action === 'Generate Quiz') {
+      switchToTab('quiz-generator');
+      return;
+    }
+    if (action === 'Flashcards') {
+      switchToTab('flashcards');
+      return;
+    }
+    openAiTutorWithPrompt(`${action} my study material: "${material.name}"`);
+  };
+
+  const handleUpload = () => switchToTab('my-notes');
+  const handleNewNote = () => switchToTab('my-notes');
 
   if (loading) {
     return (
@@ -381,29 +656,6 @@ function DashboardPage({ initialActiveTab = 'home' }) {
       />
     );
   }
-
-  // Fallbacks if Firestore profile does not exist yet
-  const fullName = profile?.fullName || currentUser?.displayName || "Student";
-  const major = profile?.academicProfile?.major || "Undecided Major";
-  const subjects = profile?.academicProfile?.subjects || ["General Study"];
-  const studyStyle = profile?.learningPreferences?.studyStyle || "visual";
-  const weeklyHours = profile?.learningPreferences?.weeklyHours || "5-10";
-  const photoURL = currentUser?.photoURL || profile?.photoURL || "";
-
-  // Derived progress values
-  const targetHours = parseInt(weeklyHours.split('-')[1]) || parseInt(weeklyHours.replace('+', '')) || 20;
-  const studiedHours = Math.round(targetHours * 0.75 * 10) / 10;
-  const percentage = 75;
-  const strokeDashoffset = 339.29 - (339.29 * percentage) / 100;
-
-  // Academic Analytics values
-  const averageGpa = "3.72";
-  const gpaProgress = "+0.12";
-  const weeklyStudyHours = `${studiedHours}h`;
-  const quizAccuracy = "88%";
-  const completedWork = "24/30";
-
-  const sidebarItems = dashboardWindowItems;
 
 
   return (
@@ -424,7 +676,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
         isMobileMenuOpen={isMobileMenuOpen}
         onMobileMenuClose={() => setIsMobileMenuOpen(false)}
         currentUser={currentUser}
-        profile={profile}
+        profile={effectiveProfile}
         onLogout={handleLogout}
         onNewNote={handleNewNote}
         items={sidebarItems}
@@ -468,17 +720,26 @@ function DashboardPage({ initialActiveTab = 'home' }) {
             {/* Top Navigation Row */}
             <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search notes, topics, or AI chat..." />
 
+            {dashboardError && (
+              <section className="glass-panel p-md rounded-xl border border-error/20 text-error text-sm" role="alert">
+                {dashboardError.message || 'Could not load one or more dashboard sections.'}
+              </section>
+            )}
+
             {/* Welcome Hero Section */}
             <section className="dashboard-home-hero ai-gradient rounded-xl p-xl relative overflow-hidden text-white flex flex-col md:flex-row justify-between items-stretch md:items-center min-h-[220px] gap-lg">
               <div className="z-10 max-w-lg space-y-md flex-1">
                 <h2 className="font-display-lg text-headline-lg md:text-display-lg">Good Morning, {fullName.split(' ')[0]} {fullName.split(' ')[1]}</h2>
                 <p className="font-body-lg text-body-lg opacity-90">
-                  You're on a <span className="font-bold text-tertiary-fixed">12-day study streak</span>. You're just 4 sessions away from your weekly goal.
+                  You're on a <span className="font-bold text-tertiary-fixed">{metrics.streak}-day study streak</span>. {metrics.studyHoursRemaining > 0 ? `${formatHourValue(metrics.studyHoursRemaining)}h left for your weekly goal.` : 'Your weekly goal is complete.'}
                 </p>
                 <div className="flex flex-wrap gap-md pt-md">
                   <button 
                     onClick={() => {
-                      alert("Resuming Physics Problem Set #4...");
+                      const nextTask = tasks[0];
+                      if (nextTask?.source === 'flashcards') switchToTab('flashcards');
+                      else if (nextTask) switchToTab('study-planner');
+                      else switchToTab('my-notes');
                     }}
                     className="px-xl py-md bg-white text-primary font-label-md text-label-md rounded-xl hover:bg-surface-container-low active:scale-95 transition-all shadow-md"
                   >
@@ -512,7 +773,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                 </div>
                 <div className="overflow-hidden">
                   <p className="font-label-sm text-label-sm text-outline truncate">Streak</p>
-                  <h3 className="font-headline-md text-headline-md truncate">12 Days</h3>
+                  <h3 className="font-headline-md text-headline-md truncate">{metrics.streak} {metrics.streak === 1 ? 'Day' : 'Days'}</h3>
                 </div>
               </div>
               <div className="glass-panel p-lg rounded-xl flex items-center gap-md">
@@ -521,7 +782,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                 </div>
                 <div className="overflow-hidden">
                   <p className="font-label-sm text-label-sm text-outline truncate">Notes Created</p>
-                  <h3 className="font-headline-md text-headline-md truncate">{materials.filter(m => m.icon === 'edit_note').length + 139}</h3>
+                  <h3 className="font-headline-md text-headline-md truncate">{metrics.notesCreated}</h3>
                 </div>
               </div>
               <div className="glass-panel p-lg rounded-xl flex items-center gap-md">
@@ -530,7 +791,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                 </div>
                 <div className="overflow-hidden">
                   <p className="font-label-sm text-label-sm text-outline truncate">Quizzes Taken</p>
-                  <h3 className="font-headline-md text-headline-md truncate">28</h3>
+                  <h3 className="font-headline-md text-headline-md truncate">{metrics.quizzesTaken}</h3>
                 </div>
               </div>
               <div className="glass-panel p-lg rounded-xl flex items-center gap-md">
@@ -538,8 +799,8 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
                 </div>
                 <div className="overflow-hidden">
-                  <p className="font-label-sm text-label-sm text-outline truncate">GPA Progress</p>
-                  <h3 className="font-headline-md text-headline-md truncate">+0.12</h3>
+                  <p className="font-label-sm text-label-sm text-outline truncate">Target GPA</p>
+                  <h3 className="font-headline-md text-headline-md truncate">{metrics.targetGpa}</h3>
                 </div>
               </div>
             </div>
@@ -558,32 +819,28 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                         AI
                       </div>
                       <div>
-                        <h4 className="font-label-md text-label-md">Academent AI Tutor</h4>
+                        <h4 className="font-label-md text-label-md">Recent AI Tutor Activity</h4>
                         <p className="text-xs text-green-500 flex items-center gap-xs mt-[2px]">
-                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Firebase synced
                         </p>
                       </div>
                     </div>
                     <div className="flex gap-sm">
-                      <button 
-                        onClick={() => {
-                          if (confirm("Clear chat history?")) {
-                            setMessages([
-                              {
-                                id: createDashboardId('message'),
-                                sender: 'ai',
-                                text: `Hello ${fullName}! How can I help you study today?`
-                              }
-                            ]);
-                          }
-                        }}
-                        title="Clear History"
+                      <button
+                        type="button"
+                        onClick={() => switchToTab('ai-tutor')}
+                        title="Open AI Tutor"
                         className="p-sm hover:bg-surface-container rounded-lg text-outline hover:text-primary transition-colors flex items-center justify-center"
                       >
-                        <span className="material-symbols-outlined text-[20px]">history</span>
+                        <span className="material-symbols-outlined text-[20px]">open_in_new</span>
                       </button>
-                      <button className="p-sm hover:bg-surface-container rounded-lg text-outline hover:text-primary transition-colors flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[20px]">more_horiz</span>
+                      <button
+                        type="button"
+                        onClick={() => switchToTab('analytics')}
+                        title="Open analytics"
+                        className="p-sm hover:bg-surface-container rounded-lg text-outline hover:text-primary transition-colors flex items-center justify-center"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">insights</span>
                       </button>
                     </div>
                   </div>
@@ -632,7 +889,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                               {msg.actions.map((act, i) => (
                                 <button 
                                   key={i}
-                                  onClick={() => handleSendMessage(act)}
+                                  onClick={() => switchToTab('ai-tutor')}
                                   className="px-md py-sm bg-white/20 rounded-full text-xs hover:bg-white/30 active:scale-95 transition-all font-semibold"
                                 >
                                   {act}
@@ -643,19 +900,6 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                         </div>
                       </div>
                     ))}
-
-                    {isTyping && (
-                      <div className="flex gap-md max-w-[85%]">
-                        <div className="w-8 h-8 rounded-full ai-gradient flex items-center justify-center shrink-0 text-white text-[10px] font-bold">
-                          AI
-                        </div>
-                        <div className="ai-gradient text-white p-md rounded-xl rounded-tl-none shadow-sm shadow-primary/10 flex items-center gap-xs">
-                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                        </div>
-                      </div>
-                    )}
                     <div ref={chatBottomRef} />
                   </div>
 
@@ -692,14 +936,14 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                     <div className="flex items-center justify-between mb-lg">
                       <h4 className="font-headline-md text-lg font-bold text-primary">Today's Tasks</h4>
                       <span 
-                        onClick={() => alert("Task Manager coming soon!")}
+                        onClick={() => switchToTab('study-planner')}
                         className="text-primary font-label-md text-label-sm cursor-pointer hover:underline"
                       >
                         See all
                       </span>
                     </div>
                     <div className="space-y-md flex-1 overflow-y-auto custom-scrollbar max-h-[220px] pr-xs">
-                      {tasks.map(task => (
+                      {tasks.length ? tasks.map(task => (
                         <div 
                           key={task.id} 
                           className={`group p-md bg-surface-container-lowest border border-outline-variant/20 rounded-xl transition-all cursor-pointer ${
@@ -712,6 +956,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                             </span>
                             <button
                               onClick={() => toggleTaskCompleted(task.id)}
+                              disabled={isSavingTask}
                               className="p-0 border-none bg-transparent hover:scale-105 active:scale-90 transition-transform flex items-center justify-center text-outline group-hover:text-primary"
                             >
                               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: task.completed ? "'FILL' 1" : "'FILL' 0" }}>
@@ -729,14 +974,21 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                             <div className={`${task.barColor} h-full transition-all duration-350`} style={{ width: `${task.progress}%` }}></div>
                           </div>
                         </div>
-                      ))}
+                      )) : (
+                        <div className="min-h-[180px] flex flex-col items-center justify-center text-center text-outline gap-sm px-md">
+                          <span className="material-symbols-outlined text-3xl">task_alt</span>
+                          <p className="text-sm">No pending planner tasks.</p>
+                          <button type="button" className="text-primary font-bold text-sm hover:underline" onClick={() => switchToTab('study-planner')}>Plan study time</button>
+                        </div>
+                      )}
                     </div>
                     <button 
                       onClick={handleAddTask}
+                      disabled={isSavingTask}
                       className="w-full py-md mt-lg border-2 border-dashed border-outline-variant/40 rounded-xl text-outline hover:text-primary hover:border-primary/40 transition-all flex items-center justify-center gap-sm font-label-md text-label-md hover:bg-primary/5 active:scale-95"
                     >
                       <span className="material-symbols-outlined">add</span>
-                      Add Task
+                      {isSavingTask ? 'Saving...' : 'Add Task'}
                     </button>
                   </div>
 
@@ -809,9 +1061,9 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                     <h5 className="font-label-md text-label-md opacity-80">Productivity Score</h5>
                     <span className="material-symbols-outlined text-tertiary-fixed animate-pulse">bolt</span>
                   </div>
-                  <h3 className="font-display-lg text-4xl font-extrabold mb-sm relative z-10">92</h3>
+                  <h3 className="font-display-lg text-4xl font-extrabold mb-sm relative z-10">{metrics.productivityScore}</h3>
                   <p className="text-xs opacity-75 relative z-10 leading-relaxed">
-                    Your focus is 12% higher than last week. Keep it up!
+                    {metrics.productivityHelper}
                   </p>
                   {/* Decorative backgrounds */}
                   <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/5 rounded-full transition-transform group-hover:scale-125"></div>
@@ -821,72 +1073,48 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                 <div className="glass-panel p-lg rounded-xl flex flex-col">
                   <h5 className="font-label-md text-label-md mb-md text-on-surface-variant">Exam Countdown</h5>
                   <div className="space-y-md">
-                    <div className="p-md bg-surface-container-low rounded-xl flex items-center justify-between group hover:bg-surface-container-high transition-colors cursor-pointer">
-                      <div className="flex gap-md items-center overflow-hidden">
-                        <div className="w-10 h-10 rounded-lg bg-white flex flex-col items-center justify-center shadow-sm shrink-0 border border-outline-variant/15">
-                          <span className="text-[9px] font-bold text-error uppercase leading-tight">OCT</span>
-                          <span className="text-lg font-black leading-none text-on-surface">24</span>
+                    {examCountdowns.length ? examCountdowns.map((exam, index) => (
+                      <button key={exam.id} type="button" onClick={() => switchToTab('study-planner')} className="w-full p-md bg-surface-container-low rounded-xl flex items-center justify-between group hover:bg-surface-container-high transition-colors text-left">
+                        <div className="flex gap-md items-center overflow-hidden">
+                          <div className="w-10 h-10 rounded-lg bg-white flex flex-col items-center justify-center shadow-sm shrink-0 border border-outline-variant/15">
+                            <span className={`text-[9px] font-bold uppercase leading-tight ${index === 0 ? 'text-error' : 'text-primary'}`}>{exam.month}</span>
+                            <span className="text-lg font-black leading-none text-on-surface">{exam.day}</span>
+                          </div>
+                          <div className="overflow-hidden">
+                            <h6 className="font-label-md text-label-md truncate">{exam.title}</h6>
+                            <p className="text-xs text-outline truncate">{exam.detail}</p>
+                          </div>
                         </div>
-                        <div className="overflow-hidden">
-                          <h6 className="font-label-md text-label-md truncate">Midterm: Calculus II</h6>
-                          <p className="text-xs text-outline truncate">Section 4A ??? 10:00 AM</p>
-                        </div>
+                        <span className="material-symbols-outlined text-outline group-hover:text-primary shrink-0">chevron_right</span>
+                      </button>
+                    )) : (
+                      <div className="p-md bg-surface-container-low rounded-xl flex items-center gap-md text-outline">
+                        <span className="material-symbols-outlined">event_available</span>
+                        <p className="text-sm">No upcoming exams scheduled.</p>
                       </div>
-                      <span className="material-symbols-outlined text-outline group-hover:text-primary shrink-0">chevron_right</span>
-                    </div>
-
-                    <div className="p-md bg-surface-container-low rounded-xl flex items-center justify-between group hover:bg-surface-container-high transition-colors cursor-pointer">
-                      <div className="flex gap-md items-center overflow-hidden">
-                        <div className="w-10 h-10 rounded-lg bg-white flex flex-col items-center justify-center shadow-sm shrink-0 border border-outline-variant/15">
-                          <span className="text-[9px] font-bold text-primary uppercase leading-tight">NOV</span>
-                          <span className="text-lg font-black leading-none text-on-surface">08</span>
-                        </div>
-                        <div className="overflow-hidden">
-                          <h6 className="font-label-md text-label-md truncate">Biology Final Exam</h6>
-                          <p className="text-xs text-outline truncate">Hall C ??? 02:30 PM</p>
-                        </div>
-                      </div>
-                      <span className="material-symbols-outlined text-outline group-hover:text-primary shrink-0">chevron_right</span>
-                    </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Classroom Leaderboard */}
+                {/* Learning Scoreboard */}
                 <div className="glass-panel p-lg rounded-xl flex flex-col">
-                  <h5 className="font-label-md text-label-md mb-md text-on-surface-variant">Classroom Leaderboard</h5>
+                  <h5 className="font-label-md text-label-md mb-md text-on-surface-variant">Learning Scoreboard</h5>
                   <div className="space-y-md">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-md overflow-hidden">
-                        <span className="font-bold text-outline text-xs w-4">1</span>
-                        <img className="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3b96J4_qTZmvSlQNbr_A93zvT0vm8Yb2S7lDAFyrKSvgfe4PngkjYOOkfBq4YOciwg2JyevzztSeLS7saSujjTrX3kVUy4wVq2CYYe0QgLK3mPHJpSkDhb8wboYYx5Ya5S4UMxi0zstmcB9vIOODHwa50tNWNcMthRkJJwReCJky7m3CNLCDTHPlGfcqXzTOVHWzxQktt2KVCVFk7IvhAMbKrFHv8rYXd8Lo8doIWcdAarOxdu31yxSYLF-_60QBAoN4yld4AgyM" alt="1st Place" />
-                        <span className="font-label-sm text-label-sm truncate">Sarah Jenkins</span>
+                    {scoreboardItems.map((item) => (
+                      <div key={item.id} className={`flex items-center justify-between ${item.highlight ? 'bg-primary/5 py-sm px-sm rounded-lg border border-primary/10' : ''}`}>
+                        <div className="flex items-center gap-md overflow-hidden">
+                          <span className={`font-bold text-xs w-4 ${item.highlight ? 'text-primary' : 'text-outline'}`}>{item.rank}</span>
+                          {item.photoURL ? (
+                            <img className={`w-8 h-8 rounded-full object-cover shrink-0 ${item.highlight ? 'border border-primary/20' : ''}`} src={item.photoURL} alt={item.name} />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${item.highlight ? 'bg-primary text-white' : 'bg-surface-container-high text-primary'}`}>
+                              {item.highlight ? fullName.charAt(0).toUpperCase() : <span className="material-symbols-outlined text-[18px]">{item.icon}</span>}
+                            </div>
+                          )}
+                          <span className={`font-label-sm text-label-sm truncate ${item.highlight ? 'font-bold text-primary' : ''}`}>{item.highlight ? 'You' : item.name}</span>
+                        </div>
+                        <span className="font-bold text-xs text-primary shrink-0">{item.value}</span>
                       </div>
-                      <span className="font-bold text-xs text-primary shrink-0">12.4k XP</span>
-                    </div>
-
-                    <div className="flex items-center justify-between bg-primary/5 py-sm px-sm rounded-lg border border-primary/10">
-                      <div className="flex items-center gap-md overflow-hidden">
-                        <span className="font-bold text-primary text-xs w-4">2</span>
-                        {photoURL ? (
-                          <img className="w-8 h-8 rounded-full object-cover shrink-0 border border-primary/20" src={photoURL} alt="You" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0">
-                            {fullName.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <span className="font-label-sm text-label-sm font-bold truncate text-primary">You</span>
-                      </div>
-                      <span className="font-bold text-xs text-primary shrink-0">10.8k XP</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-md overflow-hidden">
-                        <span className="font-bold text-outline text-xs w-4">3</span>
-                        <img className="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe-3XzthoKUEe-toW0F0u5OAeqnwn24UcuCc-XjtJKlMuxLUG9ikcOeerg7d_yjxBNimlhr79NetZKsb-zmzbjMi6VVelPPbFvWgPpJntsawWeV-KHG-rJ8MaW0p3C5mlYXoJeFehXbCX7KhyC-UE3R9Dwwpl3098Dt9F5J8eEX0fTiWE-h0FukKwflvwpBJi_WCekiQpgOkhWwMr_v8-oKf6Ll_d_fGOBNCyCENgR-jrkk6Khn9hUV1pofTTd69hgePzmTbHlCd8" alt="3rd Place" />
-                        <span className="font-label-sm text-label-sm truncate">Mike Ross</span>
-                      </div>
-                      <span className="font-bold text-xs text-primary shrink-0">9.5k XP</span>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
@@ -899,11 +1127,11 @@ function DashboardPage({ initialActiveTab = 'home' }) {
               <h4 className="font-headline-md text-headline-md text-primary font-bold">Academic Analytics</h4>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-lg">
                 <div className="glass-panel p-lg rounded-xl relative overflow-hidden group">
-                  <p className="font-label-md text-label-sm text-outline mb-xs">Average GPA</p>
+                  <p className="font-label-md text-label-sm text-outline mb-xs">Target GPA</p>
                   <h3 className="font-display-lg text-3xl font-extrabold text-primary">{averageGpa}</h3>
                   <div className="mt-md flex items-center gap-xs text-green-500 font-bold">
                     <span className="material-symbols-outlined text-[16px]">trending_up</span>
-                    <span className="text-xs">{gpaProgress} this term</span>
+                    <span className="text-xs">{gpaProgress}</span>
                   </div>
                   <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full transition-transform group-hover:scale-125"></div>
                 </div>
@@ -923,7 +1151,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                   <h3 className="font-display-lg text-3xl font-extrabold text-tertiary-container">{quizAccuracy}</h3>
                   <div className="mt-md flex items-center gap-xs text-orange-500 font-bold">
                     <span className="material-symbols-outlined text-[16px]">verified</span>
-                    <span className="text-xs">Top 5% of students</span>
+                    <span className="text-xs">{metrics.quizHelper}</span>
                   </div>
                   <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-tertiary-fixed-dim/10 rounded-full transition-transform group-hover:scale-125"></div>
                 </div>
@@ -933,7 +1161,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                   <h3 className="font-display-lg text-3xl font-extrabold text-on-surface">{completedWork}</h3>
                   <div className="mt-md flex items-center gap-xs text-outline font-bold">
                     <span className="material-symbols-outlined text-[16px]">assignment</span>
-                    <span className="text-xs">80% Assignment Rate</span>
+                    <span className="text-xs">{metrics.completedWorkHelper}</span>
                   </div>
                   <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-surface-container-highest rounded-full transition-transform group-hover:scale-125"></div>
                 </div>
@@ -961,7 +1189,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
-                {materials.map((mat) => (
+                {materials.length ? materials.map((mat) => (
                   <div 
                     key={mat.id} 
                     className="glass-panel group p-lg rounded-xl hover:-translate-y-1 active:translate-y-0 transition-all cursor-pointer flex flex-col justify-between"
@@ -980,31 +1208,38 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                     </div>
                     <div className="flex gap-sm pt-2">
                       <button 
-                        onClick={() => handleMaterialAction(mat.name, mat.btn1)}
+                        onClick={() => handleMaterialAction(mat, mat.btn1)}
                         className="flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
                       >
                         {mat.btn1}
                       </button>
                       <button 
-                        onClick={() => handleMaterialAction(mat.name, mat.btn2)}
+                        onClick={() => handleMaterialAction(mat, mat.btn2)}
                         className="flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
                       >
                         {mat.btn2}
                       </button>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="glass-panel p-lg rounded-xl md:col-span-3 flex flex-col items-center justify-center text-center min-h-[220px] text-outline gap-sm">
+                    <span className="material-symbols-outlined text-4xl">folder_open</span>
+                    <h5 className="font-label-md text-label-md text-on-surface">No study materials yet</h5>
+                    <p className="text-sm max-w-md">Create notes or upload PDFs in My Notes to populate this dashboard from Firebase.</p>
+                    <button type="button" onClick={() => switchToTab('my-notes')} className="mt-sm px-md py-sm bg-primary text-white rounded-lg text-sm font-bold">Open My Notes</button>
+                  </div>
+                )}
               </div>
             </section>
           </main>
         ) : activeTab === 'my-notes' ? (
           <Suspense fallback={<LoadingEffect icon="folder_open" title="Loading notes" message="Opening your notes workspace." />}>
-            <NotePage profile={profile} currentUser={currentUser} />
+            <NotePage profile={effectiveProfile} currentUser={currentUser} />
           </Suspense>
         ) : activeTab === 'ai-tutor' ? (
           <Suspense fallback={<LoadingEffect icon="psychology" title="Loading AI Tutor" message="Preparing your study companion." />}>
             <AITutorPage
-              profile={profile}
+              profile={effectiveProfile}
               currentUser={currentUser}
               onOpenQuiz={(quizId) => {
                 setQuizToOpenId(quizId);
@@ -1014,16 +1249,16 @@ function DashboardPage({ initialActiveTab = 'home' }) {
           </Suspense>
         ) : activeTab === 'study-planner' ? (
           <Suspense fallback={<LoadingEffect icon="calendar_today" title="Loading planner" message="Opening your academic calendar." />}>
-            <StudyPlannerPage profile={profile} currentUser={currentUser} />
+            <StudyPlannerPage profile={effectiveProfile} currentUser={currentUser} />
           </Suspense>
         ) : activeTab === 'flashcards' ? (
           <Suspense fallback={<LoadingEffect icon="style" title="Loading flash cards" message="Preparing your study review workspace." />}>
-            <FlashCardsPage profile={profile} currentUser={currentUser} />
+            <FlashCardsPage profile={effectiveProfile} currentUser={currentUser} />
           </Suspense>
         ) : activeTab === 'quiz-generator' ? (
           <Suspense fallback={<LoadingEffect icon="quiz" title="Loading quiz generator" message="Preparing quizzes and saved progress." />}>
             <QuizGeneratorPage
-              profile={profile}
+              profile={effectiveProfile}
               currentUser={currentUser}
               initialQuizId={quizToOpenId}
               onInitialQuizOpened={() => setQuizToOpenId(null)}
@@ -1031,11 +1266,11 @@ function DashboardPage({ initialActiveTab = 'home' }) {
           </Suspense>
         ) : activeTab === 'analytics' ? (
           <Suspense fallback={<LoadingEffect icon="leaderboard" title="Loading analytics" message="Preparing your learning progress report." />}>
-            <AnalyticsPage profile={profile} currentUser={currentUser} />
+            <AnalyticsPage profile={effectiveProfile} currentUser={currentUser} />
           </Suspense>
         ) : activeTab === 'profile' ? (
           <Suspense fallback={<LoadingEffect icon="account_circle" title="Loading profile" message="Opening your profile and settings." />}>
-            <ProfileSettingsPage profile={profile} currentUser={currentUser} onProfileUpdated={setProfile} />
+            <ProfileSettingsPage profile={effectiveProfile} currentUser={currentUser} onProfileUpdated={setProfile} />
           </Suspense>
         ) : (
           /* Under Construction Panel for other Tabs */
