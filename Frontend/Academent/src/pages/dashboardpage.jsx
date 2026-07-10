@@ -461,8 +461,11 @@ function DashboardPage({ initialActiveTab = 'home' }) {
       return () => { cancelled = true; };
     }
 
-    setLoading(true);
-    setDashboardError(null);
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setDashboardError(null);
+    });
 
     const unsubscribe = subscribeDashboardData(
       uid,
