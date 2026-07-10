@@ -1888,3 +1888,236 @@ textarea:focus-visible {
 .dark .study-planner-page :where(.planner-sidebar, .planner-calendar-panel, .planner-modal, .planner-details-panel, .planner-confirm-dialog) {
   background: #302B4D !important;
 }
+
+/* Dropdown polish */
+.planner-custom-select {
+  isolation: isolate;
+}
+
+.planner-select-trigger {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(77, 43, 140, 0.055), rgba(238, 167, 39, 0.09)),
+    #ffffff;
+  box-shadow: 0 12px 28px rgba(77, 43, 140, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.planner-select-trigger::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(238, 167, 39, 0.12));
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.planner-select-trigger > * {
+  position: relative;
+  z-index: 1;
+}
+
+.planner-select-trigger > .material-symbols-outlined:first-child {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(77, 43, 140, 0.1);
+  color: var(--planner-primary);
+  font-size: 18px;
+}
+
+.planner-select-trigger > .material-symbols-outlined:last-child {
+  justify-self: end;
+  color: var(--planner-secondary);
+  transition: transform 160ms ease, color 160ms ease;
+}
+
+.planner-select-trigger:hover,
+.planner-select-trigger:focus-visible,
+.planner-select-trigger.is-open {
+  transform: translateY(-1px);
+  border-color: rgba(77, 43, 140, 0.32);
+  box-shadow: 0 16px 34px rgba(77, 43, 140, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.planner-select-trigger:hover::before,
+.planner-select-trigger:focus-visible::before,
+.planner-select-trigger.is-open::before {
+  opacity: 1;
+}
+
+.planner-select-trigger.is-open > .material-symbols-outlined:last-child {
+  transform: rotate(180deg);
+  color: var(--planner-primary);
+}
+
+.planner-select-trigger.has-value strong {
+  border: 1px solid rgba(242, 181, 68, 0.22);
+  background: rgba(242, 181, 68, 0.18);
+  color: #4d2b8c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+.planner-select-menu {
+  top: calc(100% + 9px);
+  gap: 6px;
+  padding: 8px;
+  border-color: rgba(77, 43, 140, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 24px 58px rgba(45, 28, 88, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(16px);
+  transform-origin: top right;
+  animation: plannerDropdownIn 160ms ease both;
+}
+
+.planner-select-menu input {
+  min-height: 40px;
+  border-color: rgba(77, 43, 140, 0.14);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(77, 43, 140, 0.045), rgba(238, 167, 39, 0.07)),
+    #fbf8ff;
+  color: #241a33;
+  font-weight: 750;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.planner-select-menu input:focus,
+.planner-select-menu input:focus-visible {
+  border-color: var(--planner-secondary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(133, 64, 157, 0.13);
+}
+
+.planner-select-menu button {
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: #3d3150;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.planner-select-menu button .material-symbols-outlined {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(77, 43, 140, 0.08);
+  color: var(--planner-primary);
+  font-size: 17px;
+}
+
+.planner-select-menu button:hover,
+.planner-select-menu button:focus-visible {
+  transform: translateX(2px);
+  border-color: rgba(77, 43, 140, 0.16);
+  background: rgba(77, 43, 140, 0.075);
+  color: var(--planner-primary);
+  outline: none;
+}
+
+.planner-select-menu button.selected {
+  border-color: rgba(242, 181, 68, 0.32);
+  background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(242, 181, 68, 0.2));
+  color: var(--planner-primary);
+}
+
+.planner-select-menu button.selected .material-symbols-outlined {
+  background: var(--planner-primary);
+  color: #ffffff;
+}
+
+.planner-select-empty {
+  border: 1px dashed rgba(77, 43, 140, 0.18);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+
+@keyframes plannerDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dark .study-planner-page .planner-select-trigger {
+  background:
+    linear-gradient(135deg, rgba(123, 92, 255, 0.14), rgba(242, 181, 68, 0.08)),
+    #211D38 !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .study-planner-page .planner-select-trigger:hover,
+.dark .study-planner-page .planner-select-trigger:focus-visible,
+.dark .study-planner-page .planner-select-trigger.is-open {
+  border-color: #7B5CFF !important;
+}
+
+.dark .study-planner-page .planner-select-trigger > .material-symbols-outlined:first-child {
+  background: rgba(161, 120, 255, 0.16) !important;
+  color: #A178FF !important;
+}
+
+.dark .study-planner-page .planner-select-trigger > .material-symbols-outlined:last-child {
+  color: #A178FF !important;
+}
+
+.dark .study-planner-page .planner-select-trigger.has-value strong {
+  border-color: rgba(242, 181, 68, 0.24);
+  background: rgba(242, 181, 68, 0.12) !important;
+  color: #FFE873 !important;
+}
+
+.dark .study-planner-page .planner-select-menu {
+  background: #302B4D !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .study-planner-page .planner-select-menu input {
+  background:
+    linear-gradient(135deg, rgba(123, 92, 255, 0.12), rgba(242, 181, 68, 0.07)),
+    #211D38 !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+}
+
+.dark .study-planner-page .planner-select-menu button {
+  color: #F7F5FF !important;
+}
+
+.dark .study-planner-page .planner-select-menu button .material-symbols-outlined {
+  background: rgba(161, 120, 255, 0.14) !important;
+  color: #A178FF !important;
+}
+
+.dark .study-planner-page .planner-select-menu button:hover,
+.dark .study-planner-page .planner-select-menu button:focus-visible {
+  background: #3A345A !important;
+  border-color: #4A4568 !important;
+}
+
+.dark .study-planner-page .planner-select-menu button.selected {
+  background: linear-gradient(135deg, rgba(123, 92, 255, 0.24), rgba(242, 181, 68, 0.16)) !important;
+  border-color: rgba(242, 181, 68, 0.28) !important;
+}
+
+.dark .study-planner-page .planner-select-menu button.selected .material-symbols-outlined {
+  background: linear-gradient(135deg, #7B5CFF, #A178FF) !important;
+  color: #F7F5FF !important;
+}

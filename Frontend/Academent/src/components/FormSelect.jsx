@@ -34,13 +34,13 @@ function FormSelect({
           {label}
         </label>
       )}
-      <div className="relative">
+      <div className="relative academent-select-shell">
         <select
           id={id}
           name={name || id}
           value={value}
           onChange={onChange}
-          className={`w-full px-md py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none ${className}`}
+          className={`academent-select-control w-full px-md py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md input-focus appearance-none ${className}`}
           {...props}
         >
           {options.map((opt) => (
@@ -49,7 +49,7 @@ function FormSelect({
             </option>
           ))}
         </select>
-        <span className="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
+        <span className="academent-select-icon material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
           expand_more
         </span>
       </div>

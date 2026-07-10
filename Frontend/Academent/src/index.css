@@ -767,3 +767,101 @@ textarea::placeholder {
 .dark :where([class*="card"] [class*="card"], [class*="panel"] [class*="panel"], [class*="card"] [class*="panel"], [class*="panel"] [class*="card"]) {
   box-shadow: none !important;
 }
+
+/* Academent shared dropdown polish */
+.academent-select-shell {
+  --select-surface: rgba(255, 255, 255, 0.94);
+  --select-border: rgb(var(--color-primary) / 0.16);
+  --select-text: rgb(var(--color-on-surface));
+  --select-muted: rgb(var(--color-on-surface-variant));
+  --select-icon-bg: rgb(var(--color-primary) / 0.09);
+  --select-icon-color: rgb(var(--color-primary));
+}
+
+.academent-select-control {
+  min-height: 48px;
+  border-color: var(--select-border) !important;
+  border-radius: 14px !important;
+  background:
+    linear-gradient(135deg, rgb(var(--color-primary) / 0.055), rgb(var(--color-tertiary-fixed-dim) / 0.09)),
+    var(--select-surface) !important;
+  color: var(--select-text) !important;
+  cursor: pointer;
+  font-weight: 700;
+  padding-right: 3.25rem !important;
+  box-shadow: 0 12px 28px rgb(35 22 65 / 0.07), inset 0 1px 0 rgb(255 255 255 / 0.76);
+}
+
+.academent-select-control:hover {
+  border-color: rgb(var(--color-primary) / 0.32) !important;
+  background:
+    linear-gradient(135deg, rgb(var(--color-primary) / 0.08), rgb(var(--color-tertiary-fixed-dim) / 0.12)),
+    var(--select-surface) !important;
+  box-shadow: 0 16px 34px rgb(35 22 65 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.82);
+}
+
+.academent-select-control:focus,
+.academent-select-control:focus-visible {
+  border-color: rgb(var(--color-primary)) !important;
+  outline: none;
+  box-shadow: 0 0 0 4px rgb(var(--color-primary) / 0.14), 0 16px 34px rgb(35 22 65 / 0.12) !important;
+}
+
+.academent-select-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.academent-select-control option {
+  background: rgb(var(--color-surface-container-lowest));
+  color: rgb(var(--color-on-surface));
+  font-weight: 700;
+}
+
+.academent-select-icon {
+  right: 10px !important;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--select-icon-bg);
+  color: var(--select-icon-color) !important;
+  font-size: 20px !important;
+  transform: translateY(-50%);
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.academent-select-shell:hover .academent-select-icon,
+.academent-select-shell:focus-within .academent-select-icon {
+  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-secondary)));
+  color: rgb(var(--color-on-primary)) !important;
+  transform: translateY(-50%) rotate(180deg);
+}
+
+:root.dark .academent-select-shell {
+  --select-surface: #211D38;
+  --select-border: #4A4568;
+  --select-text: #F7F5FF;
+  --select-muted: #D8D3EE;
+  --select-icon-bg: rgb(161 120 255 / 0.18);
+  --select-icon-color: #A178FF;
+}
+
+:root.dark .academent-select-control {
+  background:
+    linear-gradient(135deg, rgb(123 92 255 / 0.12), rgb(242 181 68 / 0.08)),
+    var(--select-surface) !important;
+  box-shadow: 0 14px 32px rgb(0 0 0 / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.05) !important;
+}
+
+:root.dark .academent-select-control:hover,
+:root.dark .academent-select-control:focus,
+:root.dark .academent-select-control:focus-visible {
+  border-color: #7B5CFF !important;
+}
+
+:root.dark .academent-select-control option {
+  background: #211D38;
+  color: #F7F5FF;
+}

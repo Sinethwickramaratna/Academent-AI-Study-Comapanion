@@ -115,12 +115,12 @@ function CustomSelect({ label, value, options, onChange, placeholder = 'Select a
   return (
     <label className="planner-field planner-custom-select">
       {label && <span className="planner-field-label">{label}</span>}
-      <button type="button" className={`planner-select-trigger ${selected ? 'has-value' : ''}`} onClick={() => setOpen((state) => !state)}>
+      <button type="button" className={`planner-select-trigger ${selected ? 'has-value' : ''} ${open ? 'is-open' : ''}`} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((state) => !state)}>
         <span className="material-symbols-outlined">{selected?.icon || icon}</span><strong>{selected?.label || placeholder}</strong><span className="material-symbols-outlined">expand_more</span>
       </button>
-      {open && <div className="planner-select-menu">
+      {open && <div className="planner-select-menu" role="listbox">
         {searchable && <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search options" autoFocus />}
-        {visibleOptions.length ? visibleOptions.map((option) => <button type="button" key={option.value} className={option.value === value ? 'selected' : ''} onClick={() => { onChange(option.value); setOpen(false); setQuery(''); }}><span className="material-symbols-outlined">{option.icon || 'radio_button_unchecked'}</span><span>{option.label}</span></button>) : <p className="planner-select-empty">No options found</p>}
+        {visibleOptions.length ? visibleOptions.map((option) => <button type="button" key={option.value} className={option.value === value ? 'selected' : ''} role="option" aria-selected={option.value === value} onClick={() => { onChange(option.value); setOpen(false); setQuery(''); }}><span className="material-symbols-outlined">{option.icon || 'radio_button_unchecked'}</span><span>{option.label}</span></button>) : <p className="planner-select-empty">No options found</p>}
       </div>}
     </label>
   );
@@ -338,7 +338,3 @@ function StudyPlannerPage({ profile, currentUser }) {
 }
 
 export default StudyPlannerPage;
-
-
-
-

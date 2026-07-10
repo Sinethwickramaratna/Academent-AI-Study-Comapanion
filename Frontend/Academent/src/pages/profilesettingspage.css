@@ -1274,3 +1274,74 @@
 .dark .profile-settings-page :where(.profile-field input, .profile-field select, .theme-selector, .profile-segmented, .privacy-actions button, .profile-button--ghost) {
   background: #211D38 !important;
 }
+
+/* Dropdown polish */
+.profile-settings-page .profile-field select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 44px;
+  background:
+    linear-gradient(135deg, rgba(77, 43, 140, 0.055), rgba(242, 181, 68, 0.09)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%234d2b8c' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),
+    #fbfaff;
+  background-repeat: no-repeat;
+  background-size: 100% 100%, 20px 20px;
+  background-position: 0 0, right 14px center;
+  box-shadow: 0 12px 28px rgba(45, 28, 88, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  font-weight: 850;
+}
+
+.profile-settings-page .profile-field select:hover {
+  transform: translateY(-1px);
+  border-color: rgba(77, 43, 140, 0.3);
+  background:
+    linear-gradient(135deg, rgba(77, 43, 140, 0.08), rgba(242, 181, 68, 0.12)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2385409d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),
+    #ffffff;
+  background-repeat: no-repeat;
+  background-size: 100% 100%, 20px 20px;
+  background-position: 0 0, right 14px center;
+  box-shadow: 0 16px 34px rgba(45, 28, 88, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.profile-settings-page .profile-field select:focus,
+.profile-settings-page .profile-field select:focus-visible {
+  border-color: var(--profile-secondary);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(133, 64, 157, 0.14), 0 16px 34px rgba(45, 28, 88, 0.14);
+}
+
+.profile-settings-page .profile-field select option {
+  background: #ffffff;
+  color: #241a33;
+  font-weight: 750;
+}
+
+.dark .profile-settings-page .profile-field select,
+.profile-settings-page--dark .profile-field select {
+  background:
+    linear-gradient(135deg, rgba(123, 92, 255, 0.13), rgba(242, 181, 68, 0.08)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23A178FF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),
+    #211D38 !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100%, 20px 20px !important;
+  background-position: 0 0, right 14px center !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .profile-settings-page .profile-field select:hover,
+.dark .profile-settings-page .profile-field select:focus,
+.dark .profile-settings-page .profile-field select:focus-visible,
+.profile-settings-page--dark .profile-field select:hover,
+.profile-settings-page--dark .profile-field select:focus,
+.profile-settings-page--dark .profile-field select:focus-visible {
+  border-color: #7B5CFF !important;
+}
+
+.dark .profile-settings-page .profile-field select option,
+.profile-settings-page--dark .profile-field select option {
+  background: #211D38;
+  color: #F7F5FF;
+}
