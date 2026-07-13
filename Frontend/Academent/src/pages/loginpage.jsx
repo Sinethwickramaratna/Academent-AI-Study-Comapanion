@@ -102,8 +102,8 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 						</div>
 						<div>
 							<p className="login-page__proofTitle">Trusted by 10k+ students</p>
-							<div className="login-page__stars" aria-label="Five star rating">
-								???????????????
+							<div className="login-page__stars material-symbols-outlined" aria-label="Five star rating" style={{ fontVariationSettings: '"FILL" 1' }}>
+								star star star star star
 							</div>
 						</div>
 					</div>
@@ -133,7 +133,7 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 						<label htmlFor="loginEmail" className="login-page__field">
 							<span>Email Address</span>
 							<div className="login-page__inputWrap">
-								<span className="login-page__icon" aria-hidden="true">@</span>
+								<span className="login-page__icon material-symbols-outlined" aria-hidden="true">mail</span>
 								<input
 									id="loginEmail"
 									autoComplete="email"
@@ -151,7 +151,7 @@ function LoginPage({ onCreateAccount, onLoginSuccess }) {
 							</div>
 
 							<div className="login-page__inputWrap">
-								<span className="login-page__icon" aria-hidden="true">???</span>
+								<span className="login-page__icon material-symbols-outlined" aria-hidden="true">lock</span>
 								<input
 									autoComplete="current-password"
 									id="password"
