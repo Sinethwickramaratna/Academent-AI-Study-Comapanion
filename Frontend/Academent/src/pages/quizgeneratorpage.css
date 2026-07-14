@@ -226,6 +226,22 @@
   box-shadow: 0 14px 32px rgba(77, 43, 140, 0.18);
 }
 
+.quiz-generate-icon {
+  color: #e4d8ff !important;
+}
+
+.quiz-button--primary:disabled {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(135deg, #6b4bb0, #9a5db0);
+  color: #fff;
+  box-shadow: none;
+}
+
+.quiz-button--primary:disabled .quiz-generate-icon {
+  color: #e4d8ff !important;
+}
+
 .quiz-button--ghost {
   border: 1px solid rgba(77, 43, 140, 0.12);
   background: rgba(255, 255, 255, 0.72);
@@ -399,13 +415,34 @@
   display: grid;
   place-items: center;
   min-height: 42px;
+  overflow: hidden;
   border: 1px solid rgba(77, 43, 140, 0.12);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.62);
-  color: #4d2b8c;
+  color: rgba(77, 43, 140, 0.78);
   font-size: 0.8rem;
   font-weight: 900;
   cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.quiz-difficulty-choice::after {
+  content: "";
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: 0 0 0 2px rgba(77, 43, 140, 0.18);
+  opacity: 0.45;
+  transition: background 180ms ease, box-shadow 180ms ease, opacity 180ms ease, transform 180ms ease;
+}
+
+.quiz-difficulty-choice span {
+  position: relative;
+  z-index: 1;
 }
 
 .quiz-difficulty-choice input {
@@ -413,10 +450,24 @@
   opacity: 0;
 }
 
+.quiz-difficulty-choice:hover {
+  border-color: rgba(77, 43, 140, 0.28);
+  background: rgba(77, 43, 140, 0.08);
+}
+
 .quiz-difficulty-choice:has(input:checked) {
-  border-color: rgba(77, 43, 140, 0.42);
-  background: rgba(77, 43, 140, 0.1);
-  box-shadow: 0 0 0 4px rgba(77, 43, 140, 0.07);
+  transform: translateY(-1px);
+  border-color: #f2b544;
+  background: linear-gradient(135deg, #4d2b8c, #85409d);
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(77, 43, 140, 0.22), 0 0 0 3px rgba(242, 181, 68, 0.22);
+}
+
+.quiz-difficulty-choice:has(input:checked)::after {
+  background: #ffe873;
+  box-shadow: 0 0 0 3px rgba(255, 232, 115, 0.26);
+  opacity: 1;
+  transform: scale(1.15);
 }
 
 .quiz-difficulty-picker p {
@@ -457,6 +508,10 @@
 
 .quiz-tree-node--root {
   color: #4d2b8c;
+}
+
+.quiz-tree-node--root + .quiz-tree-children {
+  margin-top: 0.35rem;
 }
 
 .quiz-tree-children {
@@ -1179,7 +1234,7 @@
   color: #D8D3EE !important;
 }
 
-.dark .quiz-page :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]) {
+.dark .quiz-page :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.quiz-generate-icon):not(.text-white):not([class*="danger"]) {
   color: #A178FF !important;
 }
 
@@ -1198,13 +1253,23 @@
 .dark .quiz-page :where(.ai-gradient, .gradient-bg, .primary-gradient, .primary-button, .btn-primary-gradient, .profile-button--primary, .quiz-button--primary, .flash-button--primary, .planner-create-button, .login-page__primary, .ai-send-button:not(:disabled), .ai-new-chat-button, [class*="button--primary"]) :where(span, .material-symbols-outlined, strong, p, small) {
   color: #F7F5FF !important;
 }
+
+.dark .quiz-page .quiz-generate-icon {
+  color: #e4d8ff !important;
+}
+
+.dark .quiz-page .quiz-modal .quiz-form-field > span,
+.dark .quiz-page .quiz-modal .quiz-difficulty-picker > legend {
+  color: #FFFFFF !important;
+}
+
 /* Academent dark surface smoothing */
 .dark .quiz-page :where([class*="content"], [class*="body"], [class*="copy"], [class*="meta"], [class*="group"], [class*="grid"], [class*="section"], [class*="header"], [class*="list"], [class*="details"], [class*="stats"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]) {
   background: transparent !important;
   box-shadow: none !important;
 }
 
-.dark .quiz-page :where([class*="row"], [class*="item"], [class*="chip"], [class*="option"], [class*="answer"], [class*="choice"], [class*="tree-row"], [class*="material-row"], [class*="note-card"], [class*="pdf-card"], [class*="task"]):not(button):not([role="button"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]):not([class*="primary"]):not([class*="danger"]):not(.is-active):not(.is-selected) {
+.dark .quiz-page :where([class*="row"], [class*="item"], [class*="chip"], [class*="option"], [class*="answer"], [class*="choice"], [class*="tree-row"], [class*="material-row"], [class*="note-card"], [class*="pdf-card"], [class*="task"]):not(.quiz-difficulty-choice):not(button):not([role="button"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]):not([class*="primary"]):not([class*="danger"]):not(.is-active):not(.is-selected) {
   background: transparent !important;
   box-shadow: none !important;
 }
@@ -1214,11 +1279,39 @@
   box-shadow: none !important;
 }
 
-.dark .quiz-page :where([class*="row"], [class*="item"], [class*="option"], [class*="answer"], [class*="choice"], [class*="chip"]):hover:not([class*="primary"]):not([class*="danger"]) {
+.dark .quiz-page :where([class*="row"], [class*="item"], [class*="option"], [class*="answer"], [class*="choice"], [class*="chip"]):not(.quiz-difficulty-choice):hover:not([class*="primary"]):not([class*="danger"]) {
   background-color: #3A345A !important;
 }
 
 .dark .quiz-page :where(.quiz-card, .quiz-setup-card, .quiz-question-card, .quiz-review-card) :where(.quiz-answer-option, .quiz-selected-item, .quiz-progress-block, .quiz-chip-bank button) {
   background: transparent !important;
   box-shadow: none !important;
+}
+.dark .quiz-page .quiz-difficulty-choice {
+  border-color: #4A4568 !important;
+  background: #211D38 !important;
+  color: #D8D3EE !important;
+  box-shadow: none !important;
+}
+
+.dark .quiz-page .quiz-difficulty-choice::after {
+  box-shadow: 0 0 0 2px rgba(216, 211, 238, 0.28);
+}
+
+.dark .quiz-page .quiz-difficulty-choice:hover {
+  border-color: rgba(161, 120, 255, 0.72) !important;
+  background: #3A345A !important;
+}
+
+.dark .quiz-page .quiz-difficulty-choice:has(input:checked) {
+  border-color: #FFE873 !important;
+  background: linear-gradient(135deg, #7B5CFF, #A178FF) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28), 0 0 0 3px rgba(255, 232, 115, 0.24) !important;
+}
+
+.dark .quiz-page .quiz-difficulty-choice:has(input:checked)::after {
+  background: #FFE873 !important;
+  box-shadow: 0 0 0 3px rgba(255, 232, 115, 0.3) !important;
+  opacity: 1;
 }

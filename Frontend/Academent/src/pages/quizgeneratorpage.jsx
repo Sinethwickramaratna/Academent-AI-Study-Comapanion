@@ -297,7 +297,7 @@ function CreateQuizModal({ semesters, onClose, onGenerate, isGenerating }) {
         <footer className="quiz-modal__actions">
           <button className="quiz-button quiz-button--ghost" type="button" onClick={onClose} disabled={isGenerating}>Cancel</button>
           <button className="quiz-button quiz-button--primary" type="button" disabled={!canGenerate} onClick={() => onGenerate({ title, difficulty, questionCount, selectedItems })}>
-            <span className="material-symbols-outlined">auto_awesome</span>
+            <span className="material-symbols-outlined quiz-generate-icon">auto_awesome</span>
             {isGenerating ? <LoadingEffect variant="inline" title="Generating" /> : 'Generate Quiz'}
           </button>
         </footer>
