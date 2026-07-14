@@ -130,6 +130,11 @@ const formatFileSize = (bytes = 0) => {
   return `${Math.round((size / 1024 / 1024) * 10) / 10} MB`;
 };
 
+const normalizeSearchTerm = (value) => String(value || '').trim().toLowerCase();
+const searchIncludes = (term, ...values) => !term || values
+  .flat(Infinity)
+  .some((value) => String(value || '').toLowerCase().includes(term));
+
 const getWeeklyTargetHours = (weeklyHours) => {
   const numbers = String(weeklyHours || '5-10').match(/\d+/g)?.map(Number) || [];
   return numbers.length ? numbers[numbers.length - 1] : 10;
@@ -240,6 +245,14 @@ const materialInfo = (material) => {
   }
   return details.slice(0, 2).join(' - ') || 'Saved in My Notes';
 };
+
+const mapDashboardMaterial = (material) => ({
+  ...material,
+  name: material.title,
+  info: materialInfo(material),
+  btn1: 'Summarize',
+  ...materialIcon(material.type),
+});
 
 const flashTotals = (collections = []) => {
   const totals = collections.reduce((sum, collection) => {
@@ -447,6 +460,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   const [quizToOpenId, setQuizToOpenId] = useState(null);
   const [inputMessage, setInputMessage] = useState('');
   const [isSavingTask, setIsSavingTask] = useState(false);
+  const [dashboardSearch, setDashboardSearch] = useState('');
   const chatBottomRef = useRef(null);
 
   useEffect(() => {
@@ -508,13 +522,17 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   const tasks = useMemo(() => buildDashboardTasks(dashboardData.plannerEvents, dashboardData.flashCardCollections), [dashboardData.flashCardCollections, dashboardData.plannerEvents]);
   const examCountdowns = useMemo(() => buildExamCountdowns(dashboardData.plannerEvents), [dashboardData.plannerEvents]);
   const messages = useMemo(() => buildTutorPreviewMessages(dashboardData.tutorConversations, fullName), [dashboardData.tutorConversations, fullName]);
-  const materials = useMemo(() => noteIndex.materials.slice(-6).reverse().slice(0, 3).map((material) => ({
-    ...material,
-    name: material.title,
-    info: materialInfo(material),
-    btn1: 'Summarize',
-    ...materialIcon(material.type),
-  })), [noteIndex.materials]);
+  const dashboardSearchTerm = normalizeSearchTerm(dashboardSearch);
+  const visibleMessages = useMemo(() => (dashboardSearchTerm ? messages.filter((message) => searchIncludes(dashboardSearchTerm, message.text, message.details?.title, message.details?.content, message.actions)) : messages), [dashboardSearchTerm, messages]);
+  const visibleTasks = useMemo(() => (dashboardSearchTerm ? tasks.filter((task) => searchIncludes(dashboardSearchTerm, task.title, task.tag, task.due, task.priority, task.source)) : tasks), [dashboardSearchTerm, tasks]);
+  const visibleSubjects = useMemo(() => (dashboardSearchTerm ? subjects.filter((subject) => searchIncludes(dashboardSearchTerm, subject)) : subjects), [dashboardSearchTerm, subjects]);
+  const allMaterials = useMemo(() => noteIndex.materials.map(mapDashboardMaterial), [noteIndex.materials]);
+  const materials = useMemo(() => {
+    if (dashboardSearchTerm) {
+      return allMaterials.filter((material) => searchIncludes(dashboardSearchTerm, material.name, material.info, material.path, material.moduleTitle, material.type)).slice(0, 6);
+    }
+    return allMaterials.slice(-6).reverse().slice(0, 3);
+  }, [allMaterials, dashboardSearchTerm]);
   const scoreboardItems = useMemo(() => buildScoreboard(fullName, photoURL, metrics), [fullName, metrics, photoURL]);
 
   const targetHours = metrics.targetHours;
@@ -722,7 +740,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
         {activeTab === 'home' ? (
           <main className="dashboard-home-window p-gutter md:p-margin-desktop space-y-xl">
             {/* Top Navigation Row */}
-            <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search notes, topics, or AI chat..." />
+            <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search notes, topics, or AI chat..." searchValue={dashboardSearch} onSearchChange={setDashboardSearch} />
 
             {dashboardError && (
               <section className="glass-panel p-md rounded-xl border border-error/20 text-error text-sm" role="alert">
@@ -851,7 +869,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
 
                   {/* Chat Messages */}
                   <div className="flex-1 overflow-y-auto p-lg space-y-xl custom-scrollbar bg-surface-container-lowest/20">
-                    {messages.map(msg => (
+                    {visibleMessages.length ? visibleMessages.map(msg => (
                       <div 
                         key={msg.id} 
                         className={`flex gap-md max-w-[85%] ${
@@ -903,7 +921,12 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                           )}
                         </div>
                       </div>
-                    ))}
+                    )) : (
+                      <div className="min-h-[240px] flex flex-col items-center justify-center text-center text-outline gap-sm px-md">
+                        <span className="material-symbols-outlined text-3xl">search_off</span>
+                        <p className="text-sm">No AI tutor activity matches your search.</p>
+                      </div>
+                    )}
                     <div ref={chatBottomRef} />
                   </div>
 
@@ -947,7 +970,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                       </span>
                     </div>
                     <div className="space-y-md flex-1 overflow-y-auto custom-scrollbar max-h-[220px] pr-xs">
-                      {tasks.length ? tasks.map(task => (
+                      {visibleTasks.length ? visibleTasks.map(task => (
                         <div 
                           key={task.id} 
                           className={`group p-md bg-surface-container-lowest border border-outline-variant/20 rounded-xl transition-all cursor-pointer ${
@@ -981,7 +1004,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                       )) : (
                         <div className="min-h-[180px] flex flex-col items-center justify-center text-center text-outline gap-sm px-md">
                           <span className="material-symbols-outlined text-3xl">task_alt</span>
-                          <p className="text-sm">No pending planner tasks.</p>
+                          <p className="text-sm">{dashboardSearchTerm ? 'No tasks match your search.' : 'No pending planner tasks.'}</p>
                           <button type="button" className="text-primary font-bold text-sm hover:underline" onClick={() => switchToTab('study-planner')}>Plan study time</button>
                         </div>
                       )}
@@ -1005,7 +1028,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                       
                       <p className="font-label-sm text-outline mb-xs">Enrolled Subjects</p>
                       <div className="flex flex-wrap gap-xs mb-md max-h-[120px] overflow-y-auto custom-scrollbar">
-                        {subjects.map((sub, idx) => (
+                        {visibleSubjects.map((sub, idx) => (
                           <span 
                             key={idx}
                             className="px-sm py-1 bg-surface-container text-primary font-bold text-[11px] rounded-lg border border-outline-variant/20 hover:border-primary/45 transition-colors cursor-default"
@@ -1175,7 +1198,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
             {/* Notes & Materials Section */}
             <section className="space-y-lg pt-4 pb-8">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-md">
-                <h4 className="font-headline-md text-headline-md text-primary font-bold">Recent Study Materials</h4>
+                <h4 className="font-headline-md text-headline-md text-primary font-bold">{dashboardSearchTerm ? 'Matching Study Materials' : 'Recent Study Materials'}</h4>
                 <div className="flex gap-sm">
                   <button 
                     onClick={handleUpload}
@@ -1228,8 +1251,8 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                 )) : (
                   <div className="glass-panel p-lg rounded-xl md:col-span-3 flex flex-col items-center justify-center text-center min-h-[220px] text-outline gap-sm">
                     <span className="material-symbols-outlined text-4xl">folder_open</span>
-                    <h5 className="font-label-md text-label-md text-on-surface">No study materials yet</h5>
-                    <p className="text-sm max-w-md">Create notes or upload PDFs in My Notes to populate this dashboard from Firebase.</p>
+                    <h5 className="font-label-md text-label-md text-on-surface">{dashboardSearchTerm ? 'No matching materials' : 'No study materials yet'}</h5>
+                    <p className="text-sm max-w-md">{dashboardSearchTerm ? 'Try a different note title, module, topic, or file type.' : 'Create notes or upload PDFs in My Notes to populate this dashboard from Firebase.'}</p>
                     <button type="button" onClick={() => switchToTab('my-notes')} className="mt-sm px-md py-sm bg-primary text-white rounded-lg text-sm font-bold">Open My Notes</button>
                   </div>
                 )}
@@ -1302,3 +1325,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
 }
 
 export default DashboardPage;
+
+
+
+

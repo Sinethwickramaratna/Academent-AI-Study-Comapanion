@@ -952,13 +952,15 @@
   display: grid;
   gap: 4px;
   padding: 12px;
+  border: 1px solid rgba(77, 43, 140, 0.12);
   border-radius: 12px;
-  background: #f9f6ff;
-  color: #40364f;
+  background: #F1EAFF;
+  color: #241a33;
+  box-shadow: 0 8px 20px rgba(45, 28, 88, 0.06);
 }
 
 .planner-details-list strong {
-  color: #7b7582;
+  color: #5e5072;
   font-size: 11px;
   text-transform: uppercase;
 }
@@ -2375,13 +2377,14 @@ textarea:focus-visible {
   background: rgba(161, 120, 255, 0.16) !important;
   color: #A178FF !important;
 }
-.dark .study-planner-page .planner-details-list span {
+
+.dark .study-planner-page .planner-details-panel .planner-details-list > span {
   background: #211D38 !important;
   border: 1px solid #4A4568 !important;
   color: #F7F5FF !important;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2) !important;
 }
 
-.dark .study-planner-page .planner-details-list strong {
+.dark .study-planner-page .planner-details-panel .planner-details-list > span > strong {
   color: #D8D3EE !important;
 }

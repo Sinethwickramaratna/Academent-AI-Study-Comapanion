@@ -623,8 +623,12 @@ function StudyMaterialTree({
   searchTerm,
 }) {
   const normalizedSearch = searchTerm.trim().toLowerCase();
+  const hasSearch = Boolean(normalizedSearch);
+  const searchMatches = (...values) => !hasSearch || values
+    .flat(Infinity)
+    .some((value) => String(value || '').toLowerCase().includes(normalizedSearch));
 
-  const renderMaterial = (item, path, semesterId, moduleId) => {
+  const renderMaterial = (item, path, semesterId, moduleId, forceVisible = false) => {
     const id = item.noteId || item.pdfId;
     const type = item.noteId ? 'note' : 'pdf';
     const title = item.title || 'Untitled material';
@@ -640,7 +644,7 @@ function StudyMaterialTree({
       url: item.url,
       icon: type === 'pdf' ? 'picture_as_pdf' : 'description',
     };
-    const matchesSearch = !normalizedSearch || `${title} ${path}`.toLowerCase().includes(normalizedSearch);
+    const matchesSearch = forceVisible || searchMatches(title, path, item.content, item.extractedText, item.url);
 
     if (!matchesSearch) return null;
 
@@ -653,32 +657,84 @@ function StudyMaterialTree({
     );
   };
 
-  const renderFolder = (folder, path, semesterId, moduleId) => {
+  const renderFolder = (folder, path, semesterId, moduleId, forceVisible = false) => {
     const key = `folder-${folder.folderId}`;
-    const isOpen = expandedIds.includes(key);
-    const folderPath = `${path} / ${folder.title}`;
+    const folderTitle = folder.title || 'Folder';
+    const folderPath = `${path} / ${folderTitle}`;
+    const ownMatch = forceVisible || searchMatches(folderTitle, path, folder.folderId);
+    const nextForceVisible = forceVisible || ownMatch;
+    const children = [
+      ...(folder.folders || []).map((child) => renderFolder(child, folderPath, semesterId, moduleId, nextForceVisible)),
+      ...(folder.pdfs || []).map((pdf) => renderMaterial(pdf, folderPath, semesterId, moduleId, nextForceVisible)),
+      ...(folder.notes || []).map((note) => renderMaterial(note, folderPath, semesterId, moduleId, nextForceVisible)),
+    ].filter(Boolean);
+
+    if (hasSearch && !ownMatch && !children.length) return null;
+
+    const isOpen = expandedIds.includes(key) || hasSearch;
 
     return (
       <div key={folder.folderId} className="ai-material-branch">
         <button type="button" className="ai-material-node" onClick={() => onToggleExpanded(key)}>
           <span className="material-symbols-outlined">{isOpen ? 'expand_more' : 'chevron_right'}</span>
           <span className="material-symbols-outlined">folder</span>
-          <span>{folder.title}</span>
+          <span>{folderTitle}</span>
         </button>
-        {isOpen && (
-          <div className="ai-material-children">
-            {(folder.folders || []).map((child) => renderFolder(child, folderPath, semesterId, moduleId))}
-            {(folder.pdfs || []).map((pdf) => renderMaterial(pdf, folderPath, semesterId, moduleId))}
-            {(folder.notes || []).map((note) => renderMaterial(note, folderPath, semesterId, moduleId))}
-          </div>
-        )}
+        {isOpen && children.length > 0 && <div className="ai-material-children">{children}</div>}
       </div>
     );
   };
 
   const filteredSemesters = semesters.filter((semester) => !semesterFilter || semester.semesterId === semesterFilter);
+  const tree = filteredSemesters.map((semester) => {
+    const semesterKey = `semester-${semester.semesterId}`;
+    const semesterTitle = semester.title || 'Semester';
+    const semesterOwnMatch = searchMatches(semesterTitle, semester.semesterId);
+    const semesterOpen = expandedIds.includes(semesterKey) || hasSearch;
+    const modules = (semester.modules || [])
+      .filter((module) => !moduleFilter || module.moduleId === moduleFilter)
+      .map((module) => {
+        const moduleKey = `module-${module.moduleId}`;
+        const moduleTitle = module.title || module.moduleId;
+        const modulePath = `${semesterTitle} / ${moduleTitle}`;
+        const moduleOwnMatch = semesterOwnMatch || searchMatches(moduleTitle, module.moduleId, semesterTitle);
+        const moduleOpen = expandedIds.includes(moduleKey) || hasSearch;
+        const children = [
+          ...(module.folders || []).map((folder) => renderFolder(folder, modulePath, semester.semesterId, module.moduleId, moduleOwnMatch)),
+          ...(module.pdfs || []).map((pdf) => renderMaterial(pdf, modulePath, semester.semesterId, module.moduleId, moduleOwnMatch)),
+          ...(module.notes || []).map((note) => renderMaterial(note, modulePath, semester.semesterId, module.moduleId, moduleOwnMatch)),
+        ].filter(Boolean);
 
-  if (!filteredSemesters.length) {
+        if (hasSearch && !moduleOwnMatch && !children.length) return null;
+
+        return (
+          <div key={module.moduleId} className="ai-material-branch">
+            <button type="button" className="ai-material-node" onClick={() => onToggleExpanded(moduleKey)}>
+              <span className="material-symbols-outlined">{moduleOpen ? 'expand_more' : 'chevron_right'}</span>
+              <span className="material-symbols-outlined">topic</span>
+              <span>{moduleTitle}</span>
+            </button>
+            {moduleOpen && children.length > 0 && <div className="ai-material-children">{children}</div>}
+          </div>
+        );
+      })
+      .filter(Boolean);
+
+    if (hasSearch && !semesterOwnMatch && !modules.length) return null;
+
+    return (
+      <div key={semester.semesterId} className="ai-material-branch">
+        <button type="button" className="ai-material-node ai-material-node--root" onClick={() => onToggleExpanded(semesterKey)}>
+          <span className="material-symbols-outlined">{semesterOpen ? 'expand_more' : 'chevron_right'}</span>
+          <span className="material-symbols-outlined">auto_stories</span>
+          <span>{semesterTitle}</span>
+        </button>
+        {semesterOpen && modules.length > 0 && <div className="ai-material-children">{modules}</div>}
+      </div>
+    );
+  }).filter(Boolean);
+
+  if (!tree.length) {
     return (
       <div className="ai-material-empty">
         <span className="material-symbols-outlined">source_environment</span>
@@ -687,54 +743,8 @@ function StudyMaterialTree({
     );
   }
 
-  return (
-    <div className="ai-material-tree">
-      {filteredSemesters.map((semester) => {
-        const semesterKey = `semester-${semester.semesterId}`;
-        const semesterOpen = expandedIds.includes(semesterKey);
-
-        return (
-          <div key={semester.semesterId} className="ai-material-branch">
-            <button type="button" className="ai-material-node ai-material-node--root" onClick={() => onToggleExpanded(semesterKey)}>
-              <span className="material-symbols-outlined">{semesterOpen ? 'expand_more' : 'chevron_right'}</span>
-              <span className="material-symbols-outlined">auto_stories</span>
-              <span>{semester.title}</span>
-            </button>
-            {semesterOpen && (
-              <div className="ai-material-children">
-                {(semester.modules || [])
-                  .filter((module) => !moduleFilter || module.moduleId === moduleFilter)
-                  .map((module) => {
-                    const moduleKey = `module-${module.moduleId}`;
-                    const moduleOpen = expandedIds.includes(moduleKey);
-                    const modulePath = `${semester.title} / ${module.title || module.moduleId}`;
-
-                    return (
-                      <div key={module.moduleId} className="ai-material-branch">
-                        <button type="button" className="ai-material-node" onClick={() => onToggleExpanded(moduleKey)}>
-                          <span className="material-symbols-outlined">{moduleOpen ? 'expand_more' : 'chevron_right'}</span>
-                          <span className="material-symbols-outlined">topic</span>
-                          <span>{module.title || module.moduleId}</span>
-                        </button>
-                        {moduleOpen && (
-                          <div className="ai-material-children">
-                            {(module.folders || []).map((folder) => renderFolder(folder, modulePath, semester.semesterId, module.moduleId))}
-                            {(module.pdfs || []).map((pdf) => renderMaterial(pdf, modulePath, semester.semesterId, module.moduleId))}
-                            {(module.notes || []).map((note) => renderMaterial(note, modulePath, semester.semesterId, module.moduleId))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+  return <div className="ai-material-tree">{tree}</div>;
 }
-
 function AttachmentDrawer({
   open,
   semesters,
@@ -1539,3 +1549,5 @@ function AITutorPage({ currentUser, profile, onOpenQuiz }) {
 }
 
 export default AITutorPage;
+
+

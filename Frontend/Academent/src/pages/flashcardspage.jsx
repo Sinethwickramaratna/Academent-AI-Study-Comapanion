@@ -72,6 +72,18 @@ const getCardLearningState = (card) => {
   return { label: 'New', icon: 'fiber_new', tone: 'new' };
 };
 const matches = (text, search) => String(text || '').toLowerCase().includes(search.toLowerCase());
+const cardMatchesSearch = (card, search) => matches([
+  card?.front,
+  card?.back,
+  card?.explanation,
+  card?.example,
+  card?.mnemonic,
+  card?.type,
+  card?.difficulty,
+  card?.sourceTitles?.join(' '),
+  card?.tags?.join(' '),
+  card?.keywords?.join(' '),
+].filter(Boolean).join(' '), search);
 
 function StudyMaterialTree({ semesters, selectedIds, expandedIds, search, onToggleExpanded, onToggleSelected }) {
   const hasSearch = Boolean(search.trim());
@@ -247,6 +259,8 @@ function FlashCardsWorkspace({ profile, currentUser }) {
   const photoURL = currentUser?.photoURL || profile?.photoURL || '';
   const activeCollection = flash.collections.find((collection) => collection.id === activeCollectionId) || flash.collections[0] || null;
   const cardsForCollection = useMemo(() => (activeCollection ? (flash.cardsByCollection[activeCollection.id] || []) : []), [activeCollection, flash.cardsByCollection]);
+  const updateSearch = (value) => { setSearch(value); setPage(1); };
+  const filteredCardsForCollection = useMemo(() => (search.trim() ? cardsForCollection.filter((card) => cardMatchesSearch(card, search)) : cardsForCollection), [cardsForCollection, search]);
 
   useEffect(() => { if (activeCollection?.id) loadCards(activeCollection.id).catch(() => {}); }, [activeCollection?.id, loadCards]);
 
@@ -259,13 +273,14 @@ function FlashCardsWorkspace({ profile, currentUser }) {
     });
     return sorted.filter((collection) => {
       const text = `${collection.title || ''} ${collection.description || ''} ${(collection.selectedSources || []).map((source) => source.title).join(' ')}`;
-      if (search && !matches(text, search)) return false;
+      const loadedCards = flash.cardsByCollection[collection.id] || [];
+      if (search && !matches(text, search) && !loadedCards.some((card) => cardMatchesSearch(card, search))) return false;
       if (filter === 'due') return Number(collection.analytics?.dueToday || 0) > 0 || Number(collection.analytics?.overdueCards || 0) > 0;
       if (filter === 'mastered') return Number(collection.analytics?.completionPercentage || 0) >= 80;
       if (filter === 'learning') return Number(collection.analytics?.learningCards || 0) > 0;
       return true;
     });
-  }, [flash.collections, filter, search, sort]);
+  }, [flash.cardsByCollection, flash.collections, filter, search, sort]);
 
   const pagedCollections = filteredCollections.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(filteredCollections.length / PAGE_SIZE));
@@ -321,7 +336,7 @@ function FlashCardsWorkspace({ profile, currentUser }) {
   }
 
   return <main className="p-gutter md:p-margin-desktop space-y-xl flash-page">
-    <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search flash cards, concepts, or tags..." />
+    <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search flash cards, concepts, or tags..." searchValue={search} onSearchChange={updateSearch} />
     <section className="flash-header">
       <div>
         <p className="flash-eyebrow">Dedicated study environment</p>
@@ -329,7 +344,7 @@ function FlashCardsWorkspace({ profile, currentUser }) {
         <p>Generate, review, and master AI flash cards from your notes and PDFs.</p>
       </div>
       <div className="flash-header-actions">
-        <label className="flash-search-field"><span className="material-symbols-outlined">search</span><input value={search} placeholder="Search flash cards" onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></label>
+        <label className="flash-search-field"><span className="material-symbols-outlined">search</span><input value={search} placeholder="Search flash cards" onChange={(event) => updateSearch(event.target.value)} /></label>
         <FormSelect id="flash-filter" value={filter} onChange={(event) => { setFilter(event.target.value); setPage(1); }} containerClassName="flash-custom-select" className="flash-select-control" options={[{ value: 'all', label: 'All' }, { value: 'due', label: 'Due' }, { value: 'learning', label: 'Learning' }, { value: 'mastered', label: 'Mastered' }]} />
         <FormSelect id="flash-sort" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }} containerClassName="flash-custom-select" className="flash-select-control" options={[{ value: 'recent', label: 'Recent' }, { value: 'title', label: 'Title' }, { value: 'progress', label: 'Progress' }, { value: 'cards', label: 'Cards' }]} />
         <button className="flash-button flash-button--primary" type="button" onClick={() => setIsGeneratorOpen(true)}><span className="material-symbols-outlined flash-symbol--white">auto_awesome</span>Create Flash Cards</button>
@@ -340,7 +355,7 @@ function FlashCardsWorkspace({ profile, currentUser }) {
 
     <section className="flash-kpi-grid" aria-label="Flash card statistics">{kpis.map((kpi) => <article key={kpi.label} className="flash-kpi-card"><div><span className="material-symbols-outlined">{kpi.icon}</span><p>{kpi.label}</p><h3>{kpi.value}</h3><small>{kpi.delta}</small></div><ProgressRing value={kpi.progress} size={48} color={kpi.progress > 80 ? '#24b47e' : '#4D2B8C'} /><MiniChart values={[kpi.progress, analytics.weeklyProgress, analytics.retentionRate, analytics.averageRecallScore]} /></article>)}</section>
     <div className="flash-workspace-grid"><div className="flash-main-column"><section><div className="flash-section-heading"><div><h3>Flash Card Collections</h3><p>{filteredCollections.length} collections from notes, PDFs, and generated cards.</p></div><span>{analytics.dueToday} cards due today</span></div>{flash.loading ? <div className="flash-skeleton-panel"><span /><span /><span /></div> : pagedCollections.length ? <><div className="flash-collection-grid">{pagedCollections.map((collection, index) => { const color = colors[index % colors.length]; const progress = Number(collection.analytics?.completionPercentage || 0); return <article key={collection.id} className={activeCollection?.id === collection.id ? 'flash-collection-card is-active' : 'flash-collection-card'} onClick={() => { setActiveCollectionId(collection.id); setPage(1); }}><div className="flash-collection-top"><span className="flash-collection-icon material-symbols-outlined" style={{ color }}>style</span><ProgressRing value={progress} size={58} color={color} /></div><h4>{collection.title}</h4><p>{collection.analytics?.totalFlashCards || collection.cardCount || 0} cards - Last studied {formatDate(collection.analytics?.lastStudyDate, 'Never')}</p><div className="flash-collection-meta"><span>{labelCase(collection.preferences?.difficulty)}</span><span><span className="material-symbols-outlined">schedule</span>{collection.analytics?.averageReviewTime || 0}s avg</span></div><div className="flash-collection-progress"><div><span>Progress</span><strong>{progress}%</strong></div><div className="flash-progress-track"><span style={{ width: `${progress}%` }} /></div></div><div className="flash-card-hover-actions" onClick={(event) => event.stopPropagation()}><button className="flash-card-action flash-card-action--study" type="button" onClick={() => startStudy(collection)}>Study</button><button className="flash-card-action flash-card-action--delete" type="button" onClick={() => setCollectionPendingDelete(collection)}>Delete</button><button className="flash-card-action flash-card-action--duplicate" type="button" onClick={() => flash.duplicateCollection(collection)}>Duplicate</button></div></article>; })}</div><div className="flash-pagination"><button className="flash-button flash-button--ghost" type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>Previous</button><span>Page {page} of {totalPages}</span><button className="flash-button flash-button--ghost" type="button" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)}>Next</button></div></> : <section className="flash-empty-state"><div className="flash-empty-illustration"><span className="material-symbols-outlined">style</span><span className="material-symbols-outlined flash-symbol--white">auto_awesome</span><span className="material-symbols-outlined">school</span></div><h3>No Flash Card Collections Yet</h3><p>Generate AI-powered flash cards from your notes or PDFs.</p><div><button className="flash-button flash-button--primary" type="button" onClick={() => setIsGeneratorOpen(true)}>Generate Flash Cards</button></div></section>}</section>
-    {activeCollection && <section className="flash-list-section"><div className="flash-section-heading"><div><h3>{activeCollection.title} Cards</h3><p>Review status, mastery, and spaced repetition signals.</p></div><button className="flash-button flash-button--primary" type="button" disabled={!cardsForCollection.length} onClick={() => startStudy(activeCollection)}><span className="material-symbols-outlined flash-symbol--white">play_arrow</span>Study</button></div><div className="flash-card-list">{cardsForCollection.length ? cardsForCollection.map((card) => <FlashCardRow key={card.id} card={card} activeCollection={activeCollection} onStudy={() => startStudy(activeCollection)} onView={setEditorCard} />) : <div className="flash-tree-empty"><p>Cards are lazy-loading for this collection.</p></div>}</div></section>}</div>
+    {activeCollection && <section className="flash-list-section"><div className="flash-section-heading"><div><h3>{activeCollection.title} Cards</h3><p>Review status, mastery, and spaced repetition signals.</p></div><button className="flash-button flash-button--primary" type="button" disabled={!cardsForCollection.length} onClick={() => startStudy(activeCollection)}><span className="material-symbols-outlined flash-symbol--white">play_arrow</span>Study</button></div><div className="flash-card-list">{filteredCardsForCollection.length ? filteredCardsForCollection.map((card) => <FlashCardRow key={card.id} card={card} activeCollection={activeCollection} onStudy={() => startStudy(activeCollection)} onView={setEditorCard} />) : <div className="flash-tree-empty"><p>{search.trim() ? 'No cards match your search.' : 'Cards are lazy-loading for this collection.'}</p></div>}</div></section>}</div>
     <aside className="flash-review-panel"><div className="flash-panel-heading"><h3>Review Calendar</h3><p>Upcoming spaced repetition reviews for the selected collection.</p></div>{reviewGroups.map((group) => <article key={group.label} className={group.urgent ? 'flash-review-group is-urgent' : 'flash-review-group'}><div><strong>{group.label}</strong><span>{group.count} cards</span></div><ul>{group.items.length ? group.items.map((item) => <li key={item}>{item}</li>) : <li>No cards scheduled</li>}</ul></article>)}</aside></div>
     {isGeneratorOpen && <GeneratorModal uid={flash.uid} semesters={notes.data.semesters || []} noteManagement={notes.data} working={flash.working} error={flash.error} onClose={() => setIsGeneratorOpen(false)} onGenerate={handleGenerate} />}
     {editorCard && <CardEditorModal card={editorCard} onClose={() => setEditorCard(null)} />}
@@ -353,4 +368,7 @@ function FlashCardsPage(props) {
 }
 
 export default FlashCardsPage;
+
+
+
 

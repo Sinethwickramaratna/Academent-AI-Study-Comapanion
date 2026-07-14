@@ -36,6 +36,31 @@ const countWorkspaceFiles = (workspace) => {
   ].length;
 };
 
+const normalizeSearchTerm = (value) => String(value || '').trim().toLowerCase();
+
+const hasSearchMatch = (term, ...values) => !term || values
+  .flat(Infinity)
+  .some((value) => String(value || '').toLowerCase().includes(term));
+
+const noteMatchesSearch = (note, term) => hasSearchMatch(term, note?.title, note?.content, note?.noteId);
+const pdfMatchesSearch = (pdf, term) => hasSearchMatch(term, pdf?.title, pdf?.originalName, pdf?.url, pdf?.extractedText, pdf?.pdfId);
+const folderOwnMatchesSearch = (folder, term) => hasSearchMatch(term, folder?.title, folder?.subtitle, folder?.folderId);
+const folderMatchesSearch = (folder, term) => !term
+  || folderOwnMatchesSearch(folder, term)
+  || (folder?.notes || []).some((note) => noteMatchesSearch(note, term))
+  || (folder?.pdfs || []).some((pdf) => pdfMatchesSearch(pdf, term))
+  || (folder?.folders || []).some((child) => folderMatchesSearch(child, term));
+const moduleOwnMatchesSearch = (module, term) => hasSearchMatch(term, module?.title, module?.subtitle, module?.moduleId);
+const moduleMatchesSearch = (module, term) => !term
+  || moduleOwnMatchesSearch(module, term)
+  || (module?.notes || []).some((note) => noteMatchesSearch(note, term))
+  || (module?.pdfs || []).some((pdf) => pdfMatchesSearch(pdf, term))
+  || (module?.folders || []).some((folder) => folderMatchesSearch(folder, term));
+const semesterOwnMatchesSearch = (semester, term) => hasSearchMatch(term, semester?.title, semester?.subtitle, semester?.semesterId);
+const semesterMatchesSearch = (semester, term) => !term
+  || semesterOwnMatchesSearch(semester, term)
+  || (semester?.modules || []).some((module) => moduleMatchesSearch(module, term));
+
 const mapSemesterForCard = (semester, index = 0) => ({
   ...semester,
   id: semester.semesterId,
@@ -82,6 +107,7 @@ function NotePage({ profile, currentUser }) {
   const [editingFolder, setEditingFolder] = useState(null);
   const [editingSemester, setEditingSemester] = useState(null);
   const [editingModule, setEditingModule] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const pdfInputRef = useRef(null);
 
   const semesters = notes.data.semesters || [];
@@ -97,6 +123,27 @@ function NotePage({ profile, currentUser }) {
   const isModuleWorkspace = Boolean(activeModuleId && !currentFolderId);
   const isFolderWorkspace = activeFolderTrail.length > 0;
   const currentWorkspaceTitle = currentFolder?.title || selectedModule?.title || selectedSemester?.title || 'My Notes';
+  const normalizedSearch = normalizeSearchTerm(searchQuery);
+  const hasSearch = Boolean(normalizedSearch);
+  const searchLabel = searchQuery.trim();
+  const activeWorkspaceOwnMatches = hasSearch && (
+    (isSemesterWorkspace && semesterOwnMatchesSearch(selectedSemester, normalizedSearch))
+    || (isModuleWorkspace && moduleOwnMatchesSearch(selectedModule, normalizedSearch))
+    || (isFolderWorkspace && folderOwnMatchesSearch(currentFolder, normalizedSearch))
+  );
+  const visibleSemesters = hasSearch ? semesters.filter((semester) => semesterMatchesSearch(semester, normalizedSearch)) : semesters;
+  const visibleModules = !hasSearch || semesterOwnMatchesSearch(selectedSemester, normalizedSearch)
+    ? selectedModules
+    : selectedModules.filter((module) => moduleMatchesSearch(module, normalizedSearch));
+  const visibleFolders = !hasSearch || activeWorkspaceOwnMatches
+    ? (selectedWorkspace.folders || [])
+    : (selectedWorkspace.folders || []).filter((folder) => folderMatchesSearch(folder, normalizedSearch));
+  const visiblePdfs = !hasSearch || activeWorkspaceOwnMatches
+    ? (selectedWorkspace.pdfs || [])
+    : (selectedWorkspace.pdfs || []).filter((pdf) => pdfMatchesSearch(pdf, normalizedSearch));
+  const visibleNotes = !hasSearch || activeWorkspaceOwnMatches
+    ? (selectedWorkspace.notes || [])
+    : (selectedWorkspace.notes || []).filter((note) => noteMatchesSearch(note, normalizedSearch));
 
   const closeModal = () => {
     setModalType(null);
@@ -333,6 +380,12 @@ function NotePage({ profile, currentUser }) {
       {action}
     </div>
   );
+  const renderSearchEmptyState = (label) => renderEmptyState({
+    icon: 'search_off',
+    title: `No matching ${label}`,
+    description: `No results found for "${searchLabel}" in this workspace.`,
+    action: <NotesActionButton icon="close" label="Clear Search" onClick={() => setSearchQuery('')} />,
+  });
   const renderWorkspaceActions = () => (
     <div className="notes-header-actions">
       {isSemesterWorkspace ? (
@@ -384,14 +437,14 @@ function NotePage({ profile, currentUser }) {
       {isSemesterWorkspace && (
         <div className="module-workspace-panel">
           <div className="module-workspace-panel__heading"><div><h3>Modules</h3><p>Open a module or manage it from the dropdown menu.</p></div></div>
-          {selectedModules.length ? (
+          {visibleModules.length ? (
             <div className="folder-vault-grid modules-vault-grid">
-              {selectedModules.map((module, index) => {
+              {visibleModules.map((module, index) => {
                 const moduleCard = mapModuleForCard(module, index);
                 return <FolderVaultCard key={module.moduleId} folder={moduleCard} kicker={module.moduleId} onClick={() => setActiveModuleId(module.moduleId)} onEdit={() => openEditModule(module)} onDelete={() => removeModule(module)} />;
               })}
             </div>
-          ) : renderEmptyState({
+          ) : hasSearch ? renderSearchEmptyState('modules') : renderEmptyState({
             icon: "view_module",
             title: "No modules yet",
             description: "Create your first module to start organizing notes for this semester.",
@@ -404,14 +457,14 @@ function NotePage({ profile, currentUser }) {
         <>
           <div className="module-workspace-panel">
             <div className="module-workspace-panel__heading"><div><h3>Folders</h3><p>Create nested folders for lectures, labs, weeks, or revision sets.</p></div></div>
-            {(selectedWorkspace.folders || []).length ? (
+            {visibleFolders.length ? (
               <div className="folder-vault-grid modules-vault-grid">
-                {(selectedWorkspace.folders || []).map((folder, index) => {
+                {visibleFolders.map((folder, index) => {
                   const folderCard = mapFolderForCard(folder, index);
                   return <FolderVaultCard key={folder.folderId} folder={folderCard} kicker="FOLDER" onClick={() => openFolder(folder)} onEdit={() => openEditFolder(folder)} onDelete={() => removeFolder(folder)} />;
                 })}
               </div>
-            ) : renderEmptyState({
+            ) : hasSearch ? renderSearchEmptyState('folders') : renderEmptyState({
               icon: "folder",
               title: "No folders yet",
               description: "Create a folder when you want to group lectures, labs, weeks, or revision sets.",
@@ -421,9 +474,9 @@ function NotePage({ profile, currentUser }) {
 
           <div className="module-workspace-panel">
             <div className="module-workspace-panel__heading"><div><h3>PDFs</h3><p>Upload lecture slides, readings, handouts, and scanned materials.</p></div></div>
-            {(selectedWorkspace.pdfs || []).length ? (
+            {visiblePdfs.length ? (
               <div className="module-file-grid">
-                {(selectedWorkspace.pdfs || []).map((pdf) => (
+                {visiblePdfs.map((pdf) => (
                   <article key={pdf.pdfId} className="module-pdf-card module-pdf-card--clickable" role="button" tabIndex={0} onClick={() => openPdf(pdf)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openPdf(pdf); }}>
                     <div className="module-pdf-card__icon"><span className="material-symbols-outlined">picture_as_pdf</span></div>
                     <div className="module-pdf-card__content"><h4>{pdf.title}</h4><p>{pdf.url}</p></div>
@@ -437,7 +490,7 @@ function NotePage({ profile, currentUser }) {
                   </article>
                 ))}
               </div>
-            ) : renderEmptyState({
+            ) : hasSearch ? renderSearchEmptyState('PDFs') : renderEmptyState({
               icon: "picture_as_pdf",
               title: "No PDFs uploaded",
               description: "Upload lecture slides, readings, or handouts to keep them beside your notes.",
@@ -447,9 +500,9 @@ function NotePage({ profile, currentUser }) {
 
           <div className="module-workspace-panel">
             <div className="module-workspace-panel__heading"><div><h3>Notes</h3><p>Capture quick summaries, formulas, reminders, and study prompts.</p></div></div>
-            {(selectedWorkspace.notes || []).length ? (
+            {visibleNotes.length ? (
               <div className="module-note-grid">
-                {(selectedWorkspace.notes || []).map((note) => (
+                {visibleNotes.map((note) => (
                   <article key={note.noteId} className="module-note-card module-note-card--clickable" role="button" tabIndex={0} onClick={() => setViewingNote(note)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setViewingNote(note); }}>
                     <div className="module-note-card__icon"><span className="material-symbols-outlined">description</span></div>
                     <div className="module-note-card__content"><h4>{note.title}</h4><p>{note.content}</p></div>
@@ -463,7 +516,7 @@ function NotePage({ profile, currentUser }) {
                   </article>
                 ))}
               </div>
-            ) : renderEmptyState({
+            ) : hasSearch ? renderSearchEmptyState('notes') : renderEmptyState({
               icon: "note_add",
               title: "No notes yet",
               description: "Create a note for summaries, formulas, reminders, or study prompts.",
@@ -476,7 +529,7 @@ function NotePage({ profile, currentUser }) {
   );
   return (
     <main className="p-gutter md:p-margin-desktop space-y-xl notes-page">
-      <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search your knowledge base..." />
+      <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search your knowledge base..." searchValue={searchQuery} onSearchChange={setSearchQuery} />
       {notes.loading && (
         <LoadingEffect
           icon="folder_open"
@@ -522,14 +575,14 @@ function NotePage({ profile, currentUser }) {
         <section>
           <NotesBreadcrumb items={[{ label: 'My Notes' }]} />
           <NotesSectionHeader title="My Notes" description="Your personal knowledge base" action={<NotesActionButton icon="create_new_folder" label="New Semester" onClick={() => setModalType('semester')} />} />
-          {semesters.length ? (
+          {visibleSemesters.length ? (
             <div className="folder-vault-grid">
-              {semesters.map((semester, index) => {
+              {visibleSemesters.map((semester, index) => {
                 const semesterCard = mapSemesterForCard(semester, index);
                 return <FolderVaultCard key={semester.semesterId} folder={semesterCard} kicker={`S${(index + 1).toString().padStart(2, '0')} NODE`} onClick={() => setActiveSemester(semester.semesterId)} onEdit={() => openEditSemester(semester)} onDelete={() => removeSemester(semester)} />;
               })}
             </div>
-          ) : renderEmptyState({
+          ) : hasSearch ? renderSearchEmptyState('semesters') : renderEmptyState({
             icon: "auto_stories",
             title: "Your notes space is ready",
             description: "Create a semester to begin building your study vault.",
@@ -551,3 +604,6 @@ function NotePage({ profile, currentUser }) {
 }
 
 export default NotePage;
+
+
+

@@ -20,6 +20,24 @@ const statusLabels = {
   completed: 'Completed',
 };
 
+const normalizeSearchTerm = (value) => String(value || '').trim().toLowerCase();
+const searchIncludes = (term, ...values) => !term || values
+  .flat(Infinity)
+  .some((value) => String(value || '').toLowerCase().includes(term));
+const quizMatchesSearch = (quiz, term) => searchIncludes(
+  term,
+  quiz.title,
+  quiz.difficulty,
+  difficultyLabels[quiz.difficulty],
+  quiz.status,
+  statusLabels[quiz.status],
+  quiz.totalQuestions,
+  quiz.score,
+  quiz.percentage,
+  (quiz.selectedMaterials || []).map((material) => [material.title, material.path, material.type, material.content]),
+  (quiz.questions || []).map((question) => [question.question, question.type, question.answer, question.options, question.answers]),
+);
+
 const toDateLabel = (value) => {
   const date = value?.toDate?.() || value;
   if (!(date instanceof Date)) return 'Just now';
@@ -555,8 +573,14 @@ function QuizGeneratorPage({ profile, currentUser, initialQuizId, onInitialQuizO
   const [resultState, setResultState] = useState(null);
   const [quizPendingDelete, setQuizPendingDelete] = useState(null);
   const [openedInitialQuizId, setOpenedInitialQuizId] = useState(null);
+  const [quizSearch, setQuizSearch] = useState('');
   const fullName = profile?.fullName || currentUser?.displayName || 'Student';
   const photoURL = currentUser?.photoURL || profile?.photoURL || '';
+  const quizSearchTerm = normalizeSearchTerm(quizSearch);
+  const visibleQuizzes = useMemo(
+    () => (quizSearchTerm ? quizStore.quizzes.filter((quiz) => quizMatchesSearch(quiz, quizSearchTerm)) : quizStore.quizzes),
+    [quizSearchTerm, quizStore.quizzes],
+  );
   useMemo(() => flattenStudyMaterials(notes.data.semesters || []), [notes.data.semesters]);
 
   const openQuiz = async (quiz) => {
@@ -617,7 +641,7 @@ function QuizGeneratorPage({ profile, currentUser, initialQuizId, onInitialQuizO
 
   return (
     <main className="p-gutter md:p-margin-desktop space-y-xl quiz-page">
-      <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search quizzes, modules, or notes..." />
+      <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search quizzes, modules, or notes..." searchValue={quizSearch} onSearchChange={setQuizSearch} />
 
       <NotesSectionHeader title="Quiz Generator" description="Create and practice quizzes from your notes and study materials." action={<NotesActionButton icon="add_circle" label="Create New Quiz" onClick={() => setIsCreateOpen(true)} />} />
 
@@ -636,9 +660,9 @@ function QuizGeneratorPage({ profile, currentUser, initialQuizId, onInitialQuizO
         </section>
       )}
 
-      {quizStore.quizzes.length ? (
+      {visibleQuizzes.length ? (
         <section className="quiz-card-grid">
-          {quizStore.quizzes.map((quiz) => {
+          {visibleQuizzes.map((quiz) => {
             const actionLabel = quiz.status === 'completed' ? 'Retake Quiz' : quiz.status === 'partially_attempted' ? 'Continue Quiz' : 'Attempt Quiz';
             const progress = quiz.status === 'completed' ? 100 : quiz.progressPercentage || 0;
 
@@ -674,10 +698,14 @@ function QuizGeneratorPage({ profile, currentUser, initialQuizId, onInitialQuizO
         </section>
       ) : !quizStore.loading && (
         <section className="quiz-empty-state">
-          <span className="material-symbols-outlined">quiz</span>
-          <h3>No quizzes generated yet</h3>
-          <p>Create your first AI-powered quiz from your notes and PDFs.</p>
-          <NotesActionButton icon="add_circle" label="Create New Quiz" onClick={() => setIsCreateOpen(true)} />
+          <span className="material-symbols-outlined">{quizSearchTerm ? 'search_off' : 'quiz'}</span>
+          <h3>{quizSearchTerm ? 'No matching quizzes' : 'No quizzes generated yet'}</h3>
+          <p>{quizSearchTerm ? `No quizzes match "${quizSearch.trim()}".` : 'Create your first AI-powered quiz from your notes and PDFs.'}</p>
+          {quizSearchTerm ? (
+            <NotesActionButton icon="close" label="Clear Search" onClick={() => setQuizSearch('')} />
+          ) : (
+            <NotesActionButton icon="add_circle" label="Create New Quiz" onClick={() => setIsCreateOpen(true)} />
+          )}
         </section>
       )}
 
@@ -688,3 +716,5 @@ function QuizGeneratorPage({ profile, currentUser, initialQuizId, onInitialQuizO
 }
 
 export default QuizGeneratorPage;
+
+
