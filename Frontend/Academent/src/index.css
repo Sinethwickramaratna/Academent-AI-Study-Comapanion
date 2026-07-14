@@ -632,7 +632,6 @@ textarea::placeholder {
 .dark .flash-choice-grid button,
 .dark .flash-toggle-list label,
 .dark .flash-ai-actions button,
-.dark .flash-study-card,
 .dark .flash-ai-input {
   border-color: var(--flash-border) !important;
   background: rgb(var(--color-surface-container-lowest) / 0.88) !important;
@@ -640,6 +639,12 @@ textarea::placeholder {
   box-shadow: var(--flash-shadow) !important;
 }
 
+
+.dark .flash-study-card {
+  border-color: var(--flash-border) !important;
+  color: rgb(var(--color-on-surface));
+  box-shadow: var(--flash-shadow) !important;
+}
 .dark .flash-search-field input,
 .dark .flash-select-control,
 .dark .flash-editor-body input,
@@ -761,7 +766,7 @@ textarea::placeholder {
   border-color: var(--dark-border) !important;
 }
 
-.dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="dropdown"], [class*="menu__content"], [class*="toolbar"], [class*="shell"], [class*="workspace"], [class*="empty-state"], [class*="list-section"]):not(.notes-page *):not(.quiz-attempt-shell):not(.quiz-card-grid):not(.quiz-card__top):not(.quiz-card__meta):not(.ai-chat-shell):not(.ai-chat-stage):not(.ai-empty-state):not(.ai-composer-shell):not(.ai-composer):not(.ai-panel-eyebrow):not(.ai-panel-muted):not(.ai-panel-list):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]):not([class*="button"]):not([class*="primary"]) {
+.dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="dropdown"], [class*="menu__content"], [class*="toolbar"], [class*="shell"], [class*="workspace"], [class*="empty-state"], [class*="list-section"]):not(.notes-page *):not(.planner-shell):not(.quiz-attempt-shell):not(.quiz-card-grid):not(.quiz-card__top):not(.quiz-card__meta):not(.ai-chat-shell):not(.ai-chat-stage):not(.ai-empty-state):not(.ai-composer-shell):not(.ai-composer):not(.ai-panel-eyebrow):not(.ai-panel-muted):not(.ai-panel-list):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]):not([class*="button"]):not([class*="primary"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-row__meta):not(.flash-card-hover-actions):not(.flash-study-card):not(.flash-study-card-inner) {
   background-color: var(--dark-card) !important;
   border-color: var(--dark-border) !important;
   color: var(--dark-text);
@@ -792,12 +797,12 @@ textarea::placeholder {
   background-color: var(--dark-hover) !important;
 }
 /* Academent dark surface smoothing */
-.dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="shell"], [class*="workspace"]) :where([class*="content"], [class*="body"], [class*="section"], [class*="header"], [class*="row"], [class*="item"], [class*="meta"], [class*="copy"], [class*="group"], [class*="grid"], [class*="list"]):not(button):not([role="button"]):not(.is-active):not(.is-selected):not([aria-selected="true"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]) {
+.dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="shell"], [class*="workspace"]) :where([class*="content"], [class*="body"], [class*="section"], [class*="header"], [class*="row"], [class*="item"], [class*="meta"], [class*="copy"], [class*="group"], [class*="grid"], [class*="list"]):not(button):not([role="button"]):not(.is-active):not(.is-selected):not([aria-selected="true"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not(.flash-card-row__top):not(.flash-card-row__meta):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-hover-actions) {
   background: transparent !important;
   box-shadow: none !important;
 }
 
-.dark :where([class*="card"] [class*="card"], [class*="panel"] [class*="panel"], [class*="card"] [class*="panel"], [class*="panel"] [class*="card"]) {
+.dark :where([class*="card"] [class*="card"], [class*="panel"] [class*="panel"], [class*="card"] [class*="panel"], [class*="panel"] [class*="card"]):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-row__meta):not(.flash-card-hover-actions) {
   box-shadow: none !important;
 }
 

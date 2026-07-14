@@ -114,6 +114,11 @@
 }
 
 .quiz-difficulty-badge--hard {
+  background: rgba(143, 23, 63, 0.14);
+  color: #8f173f;
+}
+
+.dark .quiz-page .quiz-difficulty-badge--hard {
   background: rgba(255, 105, 150, 0.18);
   color: #ffadc8;
 }
@@ -124,6 +129,11 @@
 }
 
 .quiz-date {
+  background: rgba(161, 130, 217, 0.16);
+  color: #5a3294;
+}
+
+.dark .quiz-page .quiz-date {
   background: rgb(33 29 56);
   color: #a182d9;
 }
@@ -167,6 +177,10 @@
 .quiz-score-pill {
   align-self: flex-start;
   background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(242, 181, 68, 0.16));
+  color: #4d2b8c;
+}
+
+.dark .quiz-page .quiz-score-pill {
   color: #c7afff;
 }
 
@@ -1359,6 +1373,9 @@
   box-shadow: 0 0 0 3px rgba(255, 232, 115, 0.3) !important;
   opacity: 1;
 }
+
+
+
 
 
 

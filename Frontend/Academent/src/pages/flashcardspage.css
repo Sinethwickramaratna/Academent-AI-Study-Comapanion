@@ -2110,8 +2110,8 @@
   justify-content: center;
   gap: 0.26rem;
   border: 1px solid transparent;
-  border-radius: 999px;
-  padding: 0.3rem 0.52rem;
+  border-radius: 11px;
+  padding: 0.42rem 0.68rem;
   font-size: 0.66rem;
   font-weight: 950;
   line-height: 1.1;
@@ -2432,9 +2432,17 @@
 
 .dark .flash-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]),
 .dark .flash-study-mode :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
-  background: #302B4D !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
+}
+
+.dark .flash-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-row__meta):not(.flash-card-hover-actions):not(.flash-study-card):not(.flash-study-card-inner),
+.dark .flash-study-mode :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-row__meta):not(.flash-card-hover-actions):not(.flash-study-card):not(.flash-study-card-inner) {
+  background: #302B4D !important;
+}
+
+.dark .flash-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-card-front):not(.flash-card-row__meta):not(.flash-card-row__top):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-hover-actions):not(.flash-study-card-inner),
+.dark .flash-study-mode :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-card-front):not(.flash-card-row__meta):not(.flash-card-row__top):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-hover-actions):not(.flash-study-card-inner) {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
 }
 
@@ -2477,8 +2485,8 @@
   color: #D8D3EE !important;
 }
 
-.dark .flash-page :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]),
-.dark .flash-study-mode :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]) {
+.dark .flash-page :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]):not(.flash-next-symbol--white):not(.flash-flip-symbol),
+.dark .flash-study-mode :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]):not(.flash-next-symbol--white):not(.flash-flip-symbol) {
   color: #A178FF !important;
 }
 
@@ -2501,8 +2509,8 @@
   color: #F7F5FF !important;
 }
 /* Academent dark surface smoothing */
-.dark .flash-page :where([class*="content"], [class*="body"], [class*="copy"], [class*="meta"], [class*="group"], [class*="grid"], [class*="section"], [class*="header"], [class*="list"], [class*="details"], [class*="stats"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]),
-.dark .flash-study-mode :where([class*="content"], [class*="body"], [class*="copy"], [class*="meta"], [class*="group"], [class*="grid"], [class*="section"], [class*="header"], [class*="list"], [class*="details"], [class*="stats"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]) {
+.dark .flash-page :where([class*="content"], [class*="body"], [class*="copy"], [class*="meta"], [class*="group"], [class*="grid"], [class*="section"], [class*="header"], [class*="list"], [class*="details"], [class*="stats"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-row__meta):not(.flash-card-hover-actions):not(.flash-study-card):not(.flash-study-card-inner),
+.dark .flash-study-mode :where([class*="content"], [class*="body"], [class*="copy"], [class*="meta"], [class*="group"], [class*="grid"], [class*="section"], [class*="header"], [class*="list"], [class*="details"], [class*="stats"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-row__meta):not(.flash-card-hover-actions) {
   background: transparent !important;
   box-shadow: none !important;
 }
@@ -2513,8 +2521,8 @@
   box-shadow: none !important;
 }
 
-.dark .flash-page :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="workspace"], [class*="shell"]) :where([class*="content"], [class*="body"], [class*="section"], [class*="header"], [class*="list"], [class*="row"], [class*="item"], [class*="group"], [class*="meta"], [class*="copy"]):not(button):not([role="button"]):not(.is-active):not(.is-selected):not([aria-selected="true"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]),
-.dark .flash-study-mode :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="workspace"], [class*="shell"]) :where([class*="content"], [class*="body"], [class*="section"], [class*="header"], [class*="list"], [class*="row"], [class*="item"], [class*="group"], [class*="meta"], [class*="copy"]):not(button):not([role="button"]):not(.is-active):not(.is-selected):not([aria-selected="true"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]) {
+.dark .flash-page :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="workspace"], [class*="shell"]) :where([class*="content"], [class*="body"], [class*="section"], [class*="header"], [class*="list"], [class*="row"], [class*="item"], [class*="group"], [class*="meta"], [class*="copy"]):not(button):not([role="button"]):not(.is-active):not(.is-selected):not([aria-selected="true"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not(.flash-card-row__top):not(.flash-card-row__meta):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-hover-actions):not(.flash-study-card):not(.flash-study-card-inner),
+.dark .flash-study-mode :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="workspace"], [class*="shell"]) :where([class*="content"], [class*="body"], [class*="section"], [class*="header"], [class*="list"], [class*="row"], [class*="item"], [class*="group"], [class*="meta"], [class*="copy"]):not(button):not([role="button"]):not(.is-active):not(.is-selected):not([aria-selected="true"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not(.flash-card-row__top):not(.flash-card-row__meta):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-hover-actions) {
   background: transparent !important;
   box-shadow: none !important;
 }
@@ -2527,6 +2535,223 @@
 .dark .flash-page :where(.flash-kpi-card, .flash-collection-card, .flash-review-panel, .flash-generator-panel, .flash-study-card) :where(.flash-tree-row, .flash-choice-grid button, .flash-toggle-list label, .flash-selected-sources, .flash-review-group) {
   background: transparent !important;
   box-shadow: none !important;
+}
+
+.dark .flash-page .flash-srs-grid span {
+  display: grid;
+  min-height: 48px;
+  align-content: center;
+  gap: 0.08rem;
+  overflow: hidden;
+  border: 1px solid rgba(77, 43, 140, 0.1);
+  border-radius: 11px;
+  background: rgb(33 29 56);
+  color: rgb(183 140 255);
+  padding: 0.42rem 0.58rem;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.dark .flash-page .flash-collection-meta span {
+  background: rgba(77, 43, 140, 0.07);
+  color: #c09fff;
+}
+
+.dark .flash-page .flash-collection-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  background: rgb(26 15 47 / 84%);
+  font-size: 1.75rem;
+  font-variation-settings: 'FILL' 1;
+}
+
+.dark .flash-page .flash-collection-progress > div:first-child > span {
+  color: #fff;
+}
+
+.dark .flash-page .flash-pin {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 11px;
+  background: rgb(30 20 51);
+  color: #4d2b8c;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.dark .flash-page .flash-card-mastery > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  color: rgb(255 255 255);
+  font-size: 0.66rem;
+  font-weight: 900;
+  line-height: 1.14;
+}
+
+.dark .flash-page .flash-difficulty--easy {
+  border-color: rgba(74, 222, 128, 0.34);
+  background: rgba(34, 197, 94, 0.16);
+  color: #bbf7d0;
+}
+
+.dark .flash-page .flash-ai-badge {
+  border-color: rgba(168, 139, 250, 0.36);
+  background: rgba(124, 58, 237, 0.2);
+  color: #ede9fe;
+}
+
+.dark .flash-page .flash-learning-status--due {
+  border-color: rgba(251, 191, 36, 0.38);
+  background: rgba(245, 158, 11, 0.18);
+  color: #fde68a;
+}
+
+.dark .flash-page .flash-ai-badge .material-symbols-outlined {
+  color: #ffffff !important;
+}
+
+.dark .flash-page .flash-learning-status--due .material-symbols-outlined {
+  color: #fde68a !important;
+}
+
+.dark .flash-page .flash-card-tags span {
+  border-radius: 999px;
+  background: rgba(133, 64, 157, 0.08);
+  color: #de9bf6;
+  padding: 0.16rem 0.42rem;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.dark .flash-study-mode .flash-study-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  align-content: center;
+  gap: 0.9rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid rgba(77, 43, 140, 0.12);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgb(155 22 232 / 95%), rgb(15 0 20));
+  box-shadow: 0 26px 70px rgba(35, 22, 65, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  padding: 2rem;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+.dark .flash-study-mode .flash-study-face > .material-symbols-outlined {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border-radius: 18px;
+  background: rgb(37 30 76);
+  color: #4d2b8c;
+  font-size: 2.1rem;
+  transform: translateZ(26px);
+}
+
+.dark .flash-page :where(.material-symbols-outlined.flash-symbol--white):not(.text-white):not([class*="danger"]),
+.dark .flash-study-mode :where(.material-symbols-outlined.flash-symbol--white):not(.text-white):not([class*="danger"]) {
+  color: #ffffff !important;
+}
+
+.dark .flash-study-mode .flash-answer-grid span {
+  margin-top: 0.25rem;
+  color: rgb(219 202 253);
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.dark .flash-study-mode .flash-rating {
+  gap: 0.65rem;
+}
+
+.dark .flash-study-mode .flash-rating p {
+  color: #F7F0FF !important;
+}
+
+.dark .flash-study-mode .flash-rating button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-width: 92px;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px;
+  color: #ffffff !important;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, filter 180ms ease;
+}
+
+.dark .flash-study-mode .flash-rating button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), transparent 46%);
+  opacity: 0.62;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.dark .flash-study-mode .flash-rating-again {
+  background: linear-gradient(135deg, #ef476f, #8f1238) !important;
+}
+
+.dark .flash-study-mode .flash-rating-hard {
+  background: linear-gradient(135deg, #f59e0b, #92400e) !important;
+}
+
+.dark .flash-study-mode .flash-rating-good {
+  background: linear-gradient(135deg, #8b5cf6, #4c1d95) !important;
+}
+
+.dark .flash-study-mode .flash-rating-easy {
+  background: linear-gradient(135deg, #22c55e, #166534) !important;
+}
+
+.dark .flash-study-mode .flash-rating button:hover:not(:disabled),
+.dark .flash-study-mode .flash-rating button:focus-visible:not(:disabled) {
+  transform: translateY(-3px) scale(1.03);
+  border-color: rgba(255, 255, 255, 0.34) !important;
+  box-shadow: 0 20px 38px rgba(0, 0, 0, 0.38), 0 0 0 3px rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  filter: saturate(1.12) brightness(1.08);
+}
+
+.dark .flash-study-mode .flash-rating button:hover:not(:disabled)::before,
+.dark .flash-study-mode .flash-rating button:focus-visible:not(:disabled)::before {
+  opacity: 0.92;
+  transform: translateX(8%);
+}
+
+.dark .flash-study-mode .flash-rating button:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.dark .flash-study-mode .flash-rating button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.3) brightness(0.72);
+  opacity: 0.72;
+}
+
+.dark .flash-study-mode .material-symbols-outlined.flash-flip-symbol {
+  color: #ffffff !important;
+}
+
+.flash-study-mode .material-symbols-outlined.flash-next-symbol--white {
+  color: #ffffff !important;
 }
 
 /* Dropdown polish */
@@ -2588,6 +2813,34 @@
   background-position: 0 0, right 0.9rem center;
 }
 
+.flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control),
+.flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control):hover,
+.flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control):focus,
+.flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control):focus-visible,
+.flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control)[aria-expanded="true"] {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 239, 95, 0.13)) !important;
+  background-color: rgba(255, 255, 255, 0.16) !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+  background-position: 0 0 !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  transform: none !important;
+}
+
+.flash-header .academent-select-shell:has(#flash-filter-trigger) .academent-select-icon,
+.flash-header .academent-select-shell:has(#flash-sort-trigger) .academent-select-icon,
+.flash-header .academent-select-shell:has(#flash-filter-trigger):hover .academent-select-icon,
+.flash-header .academent-select-shell:has(#flash-sort-trigger):hover .academent-select-icon,
+.flash-header .academent-select-shell:has(#flash-filter-trigger):focus-within .academent-select-icon,
+.flash-header .academent-select-shell:has(#flash-sort-trigger):focus-within .academent-select-icon,
+.flash-header .academent-select-shell:has(#flash-filter-trigger[aria-expanded="true"]) .academent-select-icon,
+.flash-header .academent-select-shell:has(#flash-sort-trigger[aria-expanded="true"]) .academent-select-icon {
+  background: var(--select-icon-bg) !important;
+  color: #FFE873 !important;
+  transform: translateY(-50%) !important;
+}
+
 .flash-select-control option,
 .flash-editor-body select option {
   background: #ffffff;
@@ -2609,6 +2862,38 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
 }
 
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-filter-trigger),
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-sort-trigger),
+.dark .flash-page .flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control),
+.dark .flash-page .flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control):hover,
+.dark .flash-page .flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control):focus,
+.dark .flash-page .flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control):focus-visible,
+.dark .flash-page .flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control)[aria-expanded="true"] {
+  background: none !important;
+  background-color: transparent !important;
+  border-color: rgba(255, 232, 115, 0.5) !important;
+  color: #F7F0FF !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  transform: none !important;
+}
+
+.dark .flash-page .flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control) .academent-custom-select__value,
+.dark .flash-page .flash-header :where(#flash-filter-trigger.flash-select-control, #flash-sort-trigger.flash-select-control)[aria-expanded="true"] .academent-custom-select__value {
+  color: #F7F0FF !important;
+}
+
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-filter-trigger) .academent-select-icon,
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-sort-trigger) .academent-select-icon,
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-filter-trigger):hover .academent-select-icon,
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-sort-trigger):hover .academent-select-icon,
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-filter-trigger):focus-within .academent-select-icon,
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-sort-trigger):focus-within .academent-select-icon,
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-filter-trigger[aria-expanded="true"]) .academent-select-icon,
+.dark .flash-page .flash-header .academent-select-shell:has(#flash-sort-trigger[aria-expanded="true"]) .academent-select-icon {
+  background: rgba(255, 232, 115, 0.14) !important;
+  color: #FFE873 !important;
+  transform: translateY(-50%) !important;
+}
 .dark .flash-page .flash-editor-body select,
 .dark .flash-study-mode .flash-editor-body select {
   background:
@@ -2628,3 +2913,4 @@
   background: #211D38;
   color: #F7F5FF;
 }
+

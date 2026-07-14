@@ -113,7 +113,7 @@ function CustomSelect({ label, value, options, onChange, placeholder = 'Select a
   const selected = options.find((option) => option.value === value);
   const visibleOptions = options.filter((option) => option.label.toLowerCase().includes(query.toLowerCase()));
   return (
-    <label className="planner-field planner-custom-select">
+    <label className={`planner-field planner-custom-select ${open ? 'is-open' : ''}`}>
       {label && <span className="planner-field-label">{label}</span>}
       <button type="button" className={`planner-select-trigger ${selected ? 'has-value' : ''} ${open ? 'is-open' : ''}`} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((state) => !state)}>
         <span className="material-symbols-outlined">{selected?.icon || icon}</span><strong>{selected?.label || placeholder}</strong><span className="material-symbols-outlined">expand_more</span>
