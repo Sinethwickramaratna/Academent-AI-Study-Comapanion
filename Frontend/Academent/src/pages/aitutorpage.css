@@ -887,6 +887,7 @@
 .ai-context-panel {
   position: relative;
   display: flex;
+  justify-self: end;
   width: var(--ai-context-panel-width, 300px);
   min-width: 0;
   flex-direction: column;
@@ -937,6 +938,12 @@
   gap: 0.5rem;
 }
 
+.ai-panel-list {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
 .ai-panel-list article {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -973,6 +980,12 @@
   color: var(--ai-muted);
   font-size: 0.74rem;
   font-weight: 700;
+}
+
+.ai-panel-eyebrow,
+.ai-panel-muted {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .ai-quick-actions button {
@@ -1216,6 +1229,14 @@ select:focus-visible,
 [role='button']:focus-visible {
   outline: 3px solid rgba(242, 181, 68, 0.5);
   outline-offset: 3px;
+}
+
+.ai-header-search input:focus,
+.ai-header-search input:focus-visible,
+.ai-header-search input:active {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 @media (prefers-contrast: more) {
@@ -1729,7 +1750,7 @@ select:focus-visible,
   color-scheme: dark;
 }
 
-.dark .ai-tutor-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-chat-shell):not(.ai-chat-stage):not(.ai-empty-state):not(.ai-composer-shell):not(.ai-composer):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
+.dark .ai-tutor-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-chat-shell):not(.ai-chat-stage):not(.ai-empty-state):not(.ai-composer-shell):not(.ai-composer):not(.ai-panel-eyebrow):not(.ai-panel-muted):not(.ai-panel-list):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
   background: #302B4D !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
@@ -1743,7 +1764,7 @@ select:focus-visible,
 }
 
 .dark .ai-tutor-page :where(input, textarea, select, [contenteditable="true"]) {
-  background: #211D38 !important;
+  background: transparent !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
   box-shadow: none !important;
@@ -1771,6 +1792,17 @@ select:focus-visible,
 
 .dark .ai-tutor-page :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]) {
   color: #A178FF !important;
+}
+
+.dark .ai-tutor-page .ai-panel-eyebrow,
+.dark .ai-tutor-page .ai-panel-muted,
+.dark .ai-tutor-page .ai-panel-list,
+:root.dark .ai-tutor-page .ai-panel-eyebrow,
+:root.dark .ai-tutor-page .ai-panel-muted,
+:root.dark .ai-tutor-page .ai-panel-list {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .dark .ai-tutor-page .ai-history-empty,

@@ -2036,3 +2036,29 @@
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+/* Keep workspace action dropdown above note panels */
+.notes-page .notes-section-header {
+  z-index: 20;
+  overflow: visible;
+}
+
+.notes-page .notes-section-header::after {
+  bottom: 18px;
+  pointer-events: none;
+}
+
+.notes-page .notes-header-actions,
+.notes-page .workspace-actions-menu {
+  position: relative;
+  z-index: 30;
+}
+
+.notes-page .workspace-actions-menu__content {
+  z-index: 40;
+}
+
+.notes-page .module-workspace-panel {
+  position: relative;
+  z-index: 0;
+}
