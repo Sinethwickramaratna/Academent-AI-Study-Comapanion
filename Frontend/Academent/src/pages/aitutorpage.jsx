@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import useNoteManagement from '../Services/useNoteManagement';
 import { createTutorConversation, deleteTutorConversation, loadTutorContextMaterials, saveTutorMessage, sendTutorMessage, subscribeTutorConversations, subscribeTutorMessages, updateTutorConversationAfterMessage } from '../Services/aiTutorService';
 import { createGeneratedQuizFromKnowledge } from '../Services/quizService';
+import FormSelect from '../components/FormSelect';
 import './aitutorpage.css';
 
 const conversationGroups = [
@@ -781,17 +782,8 @@ function AttachmentDrawer({
             <span className="material-symbols-outlined">search</span>
             <input value={searchTerm} placeholder="Search files" onChange={(event) => setSearchTerm(event.target.value)} />
           </label>
-          <select value={semesterFilter} onChange={(event) => {
-            setSemesterFilter(event.target.value);
-            setModuleFilter('');
-          }}>
-            <option value="">All semesters</option>
-            {semesters.map((semester) => <option key={semester.semesterId} value={semester.semesterId}>{semester.title}</option>)}
-          </select>
-          <select value={moduleFilter} onChange={(event) => setModuleFilter(event.target.value)}>
-            <option value="">All modules</option>
-            {availableModules.map((module) => <option key={module.moduleId} value={module.moduleId}>{module.title || module.moduleId}</option>)}
-          </select>
+          <FormSelect id="ai-semester-filter" value={semesterFilter} onChange={(event) => { setSemesterFilter(event.target.value); setModuleFilter(''); }} containerClassName="ai-drawer-select" className="ai-drawer-select-control" placeholder="All semesters" options={[{ value: '', label: 'All semesters' }, ...semesters.map((semester) => ({ value: semester.semesterId, label: semester.title }))]} />
+          <FormSelect id="ai-module-filter" value={moduleFilter} onChange={(event) => setModuleFilter(event.target.value)} containerClassName="ai-drawer-select" className="ai-drawer-select-control" placeholder="All modules" options={[{ value: '', label: 'All modules' }, ...availableModules.map((module) => ({ value: module.moduleId, label: module.title || module.moduleId }))]} />
         </div>
 
         <div className="ai-drawer-body">

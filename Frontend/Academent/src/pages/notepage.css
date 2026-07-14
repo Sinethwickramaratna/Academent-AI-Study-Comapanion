@@ -992,6 +992,15 @@
   z-index: 5;
 }
 
+.folder-card-menu:hover,
+.folder-card-menu:focus-within,
+.file-card-menu:hover,
+.file-card-menu:focus-within,
+.workspace-actions-menu:hover,
+.workspace-actions-menu:focus-within {
+  z-index: 45;
+}
+
 .folder-card-menu {
   position: absolute;
   top: 0.75rem;
@@ -1029,6 +1038,7 @@
 .file-card-menu__content,
 .workspace-actions-menu__content {
   position: absolute;
+  z-index: 50;
   right: 0;
   top: calc(100% + 0.4rem);
   display: grid;
@@ -1099,6 +1109,19 @@
 .module-note-card,
 .module-pdf-card {
   position: relative;
+  z-index: 0;
+  overflow: visible;
+}
+
+.module-note-card:hover,
+.module-note-card:focus-within,
+.module-pdf-card:hover,
+.module-pdf-card:focus-within,
+.module-note-card:has(.file-card-menu:hover),
+.module-note-card:has(.file-card-menu:focus-within),
+.module-pdf-card:has(.file-card-menu:hover),
+.module-pdf-card:has(.file-card-menu:focus-within) {
+  z-index: 35;
 }
 
 .notes-create-field input:disabled {
@@ -2061,4 +2084,15 @@
 .notes-page .module-workspace-panel {
   position: relative;
   z-index: 0;
+}
+
+.notes-page .module-workspace-panel:hover,
+.notes-page .module-workspace-panel:focus-within,
+.notes-page .module-workspace-panel:has(.folder-card-menu:hover),
+.notes-page .module-workspace-panel:has(.folder-card-menu:focus-within),
+.notes-page .module-workspace-panel:has(.file-card-menu:hover),
+.notes-page .module-workspace-panel:has(.file-card-menu:focus-within),
+.notes-page .module-workspace-panel:has(.workspace-actions-menu:hover),
+.notes-page .module-workspace-panel:has(.workspace-actions-menu:focus-within) {
+  z-index: 25;
 }

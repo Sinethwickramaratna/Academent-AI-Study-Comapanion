@@ -13,6 +13,7 @@ import {
 import { uploadProfilePhotoToCloudinary } from '../Services/profilePhotoService';
 import { deleteAllTutorConversations } from '../Services/aiTutorService';
 import { applyThemeMode, storeThemeMode } from '../utils/theme';
+import FormSelect from '../components/FormSelect';
 
 const subjectOptions = [
   'Biology',
@@ -729,18 +730,8 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
                 <span>Degree Program</span>
                 <input type="text" value={form.degree || form.major} onChange={(event) => setField('degree', event.target.value)} placeholder="e.g. Bachelor of Science" />
               </label>
-              <label className="profile-field">
-                <span>Current Semester</span>
-                <select value={form.semester} onChange={(event) => setField('semester', event.target.value)}>
-                  {semesterOptions.map((option) => <option value={option} key={option || 'empty-semester'}>{option || 'Select semester'}</option>)}
-                </select>
-              </label>
-              <label className="profile-field">
-                <span>Academic Year</span>
-                <select value={form.academicYear} onChange={(event) => setField('academicYear', event.target.value)}>
-                  {academicYearOptions.map((option) => <option value={option} key={option || 'empty-year'}>{option || 'Select academic year'}</option>)}
-                </select>
-              </label>
+              <FormSelect id="profile-semester" label="Current Semester" value={form.semester} onChange={(event) => setField('semester', event.target.value)} containerClassName="profile-field profile-custom-select-field" className="profile-custom-select-control" options={semesterOptions.map((option) => ({ value: option, label: option || 'Select semester' }))} />
+              <FormSelect id="profile-academic-year" label="Academic Year" value={form.academicYear} onChange={(event) => setField('academicYear', event.target.value)} containerClassName="profile-field profile-custom-select-field" className="profile-custom-select-control" options={academicYearOptions.map((option) => ({ value: option, label: option || 'Select academic year' }))} />
             </div>
 
             <div className="profile-actions">
@@ -780,12 +771,7 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
                 <span>Study Goal</span>
                 <input type="text" value={form.studyGoal} onChange={(event) => setField('studyGoal', event.target.value)} placeholder="e.g. Raise quiz score before finals" />
               </label>
-              <label className="profile-field">
-                <span>Preferred Study Time</span>
-                <select value={form.preferredStudyTime} onChange={(event) => setField('preferredStudyTime', event.target.value)}>
-                  {studyTimeOptions.map((option) => <option value={option} key={option || 'empty-study-time'}>{option || 'Choose a study time'}</option>)}
-                </select>
-              </label>
+              <FormSelect id="profile-study-time" label="Preferred Study Time" value={form.preferredStudyTime} onChange={(event) => setField('preferredStudyTime', event.target.value)} containerClassName="profile-field profile-custom-select-field" className="profile-custom-select-control" options={studyTimeOptions.map((option) => ({ value: option, label: option || 'Choose a study time' }))} />
             </div>
 
             <div className="profile-choice-row">
@@ -895,12 +881,7 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
                 </div>
               </div>
 
-              <label className="profile-field">
-                <span>Language</span>
-                <select value={form.language} onChange={(event) => setField('language', event.target.value)}>
-                  {languageOptions.map((option) => <option value={option} key={option}>{option}</option>)}
-                </select>
-              </label>
+              <FormSelect id="profile-language" label="Language" value={form.language} onChange={(event) => setField('language', event.target.value)} containerClassName="profile-field profile-custom-select-field" className="profile-custom-select-control" options={languageOptions.map((option) => ({ value: option, label: option }))} />
             </div>
 
             <div className="notification-grid">

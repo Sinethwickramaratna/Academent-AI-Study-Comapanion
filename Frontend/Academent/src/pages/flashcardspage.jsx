@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import TopBar from '../components/TopBar';
 import LoadingEffect from '../components/LoadingEffect';
+import FormSelect from '../components/FormSelect';
 import useNoteManagement from '../Services/useNoteManagement';
 import { FlashCardProvider, useFlashCards } from '../context/FlashCardContext';
 import { toDate } from '../Services/flashCardService';
@@ -321,7 +322,19 @@ function FlashCardsWorkspace({ profile, currentUser }) {
 
   return <main className="p-gutter md:p-margin-desktop space-y-xl flash-page">
     <TopBar fullName={fullName} photoURL={photoURL} searchPlaceholder="Search flash cards, concepts, or tags..." />
-    <section className="flash-header"><div><p className="flash-eyebrow">Dedicated study environment</p><h2>Flash Cards</h2><p>Generate, review, and master AI flash cards from your notes and PDFs.</p></div><div className="flash-header-actions"><label className="flash-search-field"><span className="material-symbols-outlined">search</span><input value={search} placeholder="Search flash cards" onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></label><select className="flash-select-control" value={filter} onChange={(event) => { setFilter(event.target.value); setPage(1); }}><option value="all">All</option><option value="due">Due</option><option value="learning">Learning</option><option value="mastered">Mastered</option></select><select className="flash-select-control" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }}><option value="recent">Recent</option><option value="title">Title</option><option value="progress">Progress</option><option value="cards">Cards</option></select><button className="flash-button flash-button--primary" type="button" onClick={() => setIsGeneratorOpen(true)}><span className="material-symbols-outlined">auto_awesome</span>Create Flash Cards</button></div></section>
+    <section className="flash-header">
+      <div>
+        <p className="flash-eyebrow">Dedicated study environment</p>
+        <h2>Flash Cards</h2>
+        <p>Generate, review, and master AI flash cards from your notes and PDFs.</p>
+      </div>
+      <div className="flash-header-actions">
+        <label className="flash-search-field"><span className="material-symbols-outlined">search</span><input value={search} placeholder="Search flash cards" onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></label>
+        <FormSelect id="flash-filter" value={filter} onChange={(event) => { setFilter(event.target.value); setPage(1); }} containerClassName="flash-custom-select" className="flash-select-control" options={[{ value: 'all', label: 'All' }, { value: 'due', label: 'Due' }, { value: 'learning', label: 'Learning' }, { value: 'mastered', label: 'Mastered' }]} />
+        <FormSelect id="flash-sort" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }} containerClassName="flash-custom-select" className="flash-select-control" options={[{ value: 'recent', label: 'Recent' }, { value: 'title', label: 'Title' }, { value: 'progress', label: 'Progress' }, { value: 'cards', label: 'Cards' }]} />
+        <button className="flash-button flash-button--primary" type="button" onClick={() => setIsGeneratorOpen(true)}><span className="material-symbols-outlined">auto_awesome</span>Create Flash Cards</button>
+      </div>
+    </section>
     {isGeneratingCards && <LoadingEffect icon="auto_awesome" title="Generating your flash cards" message="Using selected notes, PDFs, extracted knowledge, and spaced repetition scheduling." />}
     {(flash.error || notes.error) && <div className="flash-error-banner"><span className="material-symbols-outlined">error</span>{flash.error?.message || notes.error?.message}</div>}
 

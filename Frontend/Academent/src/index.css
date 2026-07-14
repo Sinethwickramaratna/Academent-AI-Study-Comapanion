@@ -899,4 +899,468 @@ textarea::placeholder {
   color: #F7F5FF;
 }
 
+
 /* codex tiny append check */
+
+/* Academent dropdown refresh */
+body .academent-select-shell {
+  position: relative;
+}
+
+body .academent-select-control {
+  line-height: 1.25 !important;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(12px);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease !important;
+}
+
+body .academent-select-control:hover {
+  transform: translateY(-1px);
+}
+
+body .academent-select-control:disabled {
+  transform: none;
+}
+
+body .academent-select-icon {
+  border: 1px solid rgb(var(--color-primary) / 0.1);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.54);
+}
+
+body .academent-select-shell:hover .academent-select-icon,
+body .academent-select-shell:focus-within .academent-select-icon {
+  border-color: transparent;
+}
+
+body :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select) {
+  --dropdown-arrow: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%234d2b8c%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E");
+  --dropdown-panel: rgba(77, 43, 140, 0.075);
+  --dropdown-surface: rgba(255, 255, 255, 0.94);
+  --dropdown-glow: rgba(45, 28, 88, 0.09);
+  appearance: none !important;
+  min-height: 46px;
+  cursor: pointer;
+  padding-right: 2.75rem !important;
+  color-scheme: light;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  background:
+    linear-gradient(90deg, transparent calc(100% - 2.7rem), var(--dropdown-panel) calc(100% - 2.7rem), var(--dropdown-panel) 100%),
+    var(--dropdown-arrow),
+    linear-gradient(135deg, rgba(77, 43, 140, 0.07), rgba(242, 181, 68, 0.1)),
+    var(--dropdown-surface) !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100%, 20px 20px, 100% 100%, 100% 100% !important;
+  background-position: 0 0, right 0.85rem center, 0 0, 0 0 !important;
+  box-shadow: 0 14px 32px var(--dropdown-glow), inset 0 1px 0 rgba(255, 255, 255, 0.82) !important;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease !important;
+}
+
+body :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select):hover {
+  transform: translateY(-1px);
+  border-color: rgba(77, 43, 140, 0.32) !important;
+  box-shadow: 0 18px 38px rgba(45, 28, 88, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+body :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select):focus,
+body :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select):focus-visible {
+  border-color: rgb(var(--color-secondary)) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgb(var(--color-secondary) / 0.14), 0 18px 38px rgba(45, 28, 88, 0.14) !important;
+}
+
+body :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select) option {
+  background: #ffffff;
+  color: #241a33;
+  font-weight: 750;
+}
+
+body .ai-drawer-filters select {
+  border-radius: 999px !important;
+}
+
+body .flash-header .flash-select-control {
+  --dropdown-arrow: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23ffffff%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E");
+  --dropdown-panel: rgba(255, 255, 255, 0.16);
+  --dropdown-surface: rgba(255, 255, 255, 0.12);
+  --dropdown-glow: rgba(24, 12, 48, 0.14);
+  min-width: 112px;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(12px);
+}
+
+html:root.dark body .academent-select-icon,
+body .dark .academent-select-icon {
+  border-color: rgb(161 120 255 / 0.14);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+html:root.dark body :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select),
+body .dark :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select),
+body .profile-settings-page--dark .profile-field select {
+  --dropdown-arrow: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23A178FF%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E");
+  --dropdown-panel: rgba(161, 120, 255, 0.16);
+  --dropdown-surface: #211D38;
+  --dropdown-glow: rgba(0, 0, 0, 0.24);
+  color-scheme: dark;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+}
+
+html:root.dark body .flash-header .flash-select-control,
+body .dark .flash-header .flash-select-control {
+  --dropdown-arrow: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23F7F5FF%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E");
+  --dropdown-panel: rgba(255, 255, 255, 0.14);
+  --dropdown-surface: rgba(255, 255, 255, 0.12);
+}
+
+html:root.dark body :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select) option,
+body .dark :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select) option,
+body .profile-settings-page--dark .profile-field select option {
+  background: #211D38;
+  color: #F7F5FF;
+}
+
+body .study-planner-page .planner-select-menu {
+  min-width: min(100%, 220px);
+  padding: 0.55rem !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: 0 26px 64px rgba(45, 28, 88, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86) !important;
+  backdrop-filter: blur(18px);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(77, 43, 140, 0.28) transparent;
+}
+
+body .study-planner-page .planner-select-menu button {
+  grid-template-columns: 26px minmax(0, 1fr) auto !important;
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+}
+
+body .study-planner-page .planner-select-menu button.selected::after {
+  content: "check";
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(77, 43, 140, 0.12);
+  color: var(--planner-primary);
+  font-family: "Material Symbols Outlined";
+  font-size: 16px;
+  font-feature-settings: "liga";
+  line-height: 1;
+}
+
+body .study-planner-page .planner-select-menu input {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+html:root.dark body .study-planner-page .planner-select-menu,
+body .dark .study-planner-page .planner-select-menu {
+  background: #302B4D !important;
+  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  scrollbar-color: rgba(161, 120, 255, 0.34) transparent;
+}
+
+html:root.dark body .study-planner-page .planner-select-menu button.selected::after,
+body .dark .study-planner-page .planner-select-menu button.selected::after {
+  background: rgba(161, 120, 255, 0.18);
+  color: #F7F5FF;
+}
+
+body .notes-page :where(.folder-card-menu__content, .file-card-menu__content, .workspace-actions-menu__content) {
+  min-width: 188px !important;
+  padding: 0.45rem !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: 0 26px 64px rgba(35, 22, 65, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.86) !important;
+  backdrop-filter: blur(18px);
+  visibility: hidden;
+  transform: translateY(-6px) scale(0.98) !important;
+  transform-origin: top right;
+  transition: opacity 160ms ease, visibility 160ms ease, transform 160ms ease !important;
+}
+
+body .notes-page :where(.folder-card-menu__content, .file-card-menu__content, .workspace-actions-menu__content)::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: 16px;
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid rgba(77, 43, 140, 0.16);
+  border-left: 1px solid rgba(77, 43, 140, 0.16);
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+body .notes-page .folder-card-menu:hover .folder-card-menu__content,
+body .notes-page .folder-card-menu:focus-within .folder-card-menu__content,
+body .notes-page .file-card-menu:hover .file-card-menu__content,
+body .notes-page .file-card-menu:focus-within .file-card-menu__content,
+body .notes-page .workspace-actions-menu:hover .workspace-actions-menu__content,
+body .notes-page .workspace-actions-menu:focus-within .workspace-actions-menu__content {
+  visibility: visible;
+  transform: translateY(0) scale(1) !important;
+}
+
+body .notes-page :where(.folder-card-menu__content button, .file-card-menu__content button, .workspace-actions-menu__content button, .file-card-menu__content a) {
+  min-height: 40px !important;
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+  padding: 0.6rem 0.7rem !important;
+}
+
+html:root.dark body .notes-page :where(.folder-card-menu__content, .file-card-menu__content, .workspace-actions-menu__content),
+body .dark .notes-page :where(.folder-card-menu__content, .file-card-menu__content, .workspace-actions-menu__content) {
+  background: #302B4D !important;
+  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+html:root.dark body .notes-page :where(.folder-card-menu__content, .file-card-menu__content, .workspace-actions-menu__content)::before,
+body .dark .notes-page :where(.folder-card-menu__content, .file-card-menu__content, .workspace-actions-menu__content)::before {
+  border-color: #4A4568;
+}
+
+/* Academent dropdown final polish */
+body :where(.academent-select-control, .profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select) {
+  background-clip: padding-box;
+}
+
+body :where(.profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select):disabled {
+  cursor: not-allowed;
+  opacity: 0.64;
+  transform: none;
+}
+
+body :where(.academent-select-control, .profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select) option:checked {
+  background: #f3ecff;
+  color: #4d2b8c;
+}
+
+html:root.dark body :where(.academent-select-control, .profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select) option:checked,
+body .dark :where(.academent-select-control, .profile-settings-page .profile-field select, .ai-drawer-filters select, .flash-select-control, .flash-editor-body select) option:checked {
+  background: #3A345A;
+  color: #FFE873;
+}
+
+body .study-planner-page .planner-custom-select,
+body .study-planner-page .planner-select-trigger {
+  min-width: 0;
+}
+
+body .study-planner-page .planner-select-menu {
+  overscroll-behavior: contain;
+}
+
+body .study-planner-page .planner-select-menu button span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .notes-page :where(.folder-card-menu__content, .file-card-menu__content, .workspace-actions-menu__content) {
+  max-width: min(240px, calc(100vw - 32px));
+  isolation: isolate;
+}
+
+body .notes-page :where(.folder-card-menu__content button, .file-card-menu__content button, .workspace-actions-menu__content button, .file-card-menu__content a) {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+/* Custom listbox dropdowns */
+body .academent-custom-select {
+  z-index: 20;
+}
+
+body .academent-custom-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+body .academent-custom-select__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .academent-custom-select__value.is-placeholder {
+  color: rgb(var(--color-on-surface-variant));
+}
+
+body .academent-select-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 80;
+  display: grid;
+  gap: 0.25rem;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.45rem;
+  border: 1px solid rgba(77, 43, 140, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 26px 64px rgba(45, 28, 88, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px);
+  transform-origin: top center;
+  animation: academentSelectMenuIn 150ms ease both;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(77, 43, 140, 0.28) transparent;
+}
+
+body .academent-select-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: #3d3150;
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 800;
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+body .academent-select-option > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .academent-select-option:hover,
+body .academent-select-option:focus-visible {
+  transform: translateX(2px);
+  border-color: rgba(77, 43, 140, 0.16);
+  background: rgba(77, 43, 140, 0.075);
+  color: #4d2b8c;
+  outline: none;
+}
+
+body .academent-select-option.is-selected {
+  border-color: rgba(242, 181, 68, 0.32);
+  background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(242, 181, 68, 0.2));
+  color: #4d2b8c;
+}
+
+body .academent-select-option .material-symbols-outlined {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  background: #4d2b8c;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+@keyframes academentSelectMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+html:root.dark body .academent-select-menu,
+body .dark .academent-select-menu {
+  border-color: #4A4568;
+  background: #302B4D;
+  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  scrollbar-color: rgba(161, 120, 255, 0.34) transparent;
+}
+
+html:root.dark body .academent-select-option,
+body .dark .academent-select-option {
+  color: #F7F5FF;
+}
+
+html:root.dark body .academent-select-option:hover,
+html:root.dark body .academent-select-option:focus-visible,
+body .dark .academent-select-option:hover,
+body .dark .academent-select-option:focus-visible {
+  border-color: #4A4568;
+  background: #3A345A;
+  color: #F7F5FF;
+}
+
+html:root.dark body .academent-select-option.is-selected,
+body .dark .academent-select-option.is-selected {
+  border-color: rgba(242, 181, 68, 0.28);
+  background: linear-gradient(135deg, rgba(123, 92, 255, 0.24), rgba(242, 181, 68, 0.16));
+  color: #FFE873;
+}
+
+html:root.dark body .academent-select-option .material-symbols-outlined,
+body .dark .academent-select-option .material-symbols-outlined {
+  background: linear-gradient(135deg, #7B5CFF, #A178FF);
+  color: #F7F5FF;
+}
+
+/* Page placement for custom dropdowns */
+body .academent-custom-select.is-open {
+  z-index: 120;
+}
+
+body .profile-settings-page .profile-custom-select-field {
+  gap: 7px;
+}
+
+body .profile-settings-page .profile-custom-select-field > label {
+  color: var(--profile-ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+body .profile-settings-page .profile-custom-select-control {
+  min-height: 46px;
+  border-radius: 14px !important;
+  font-weight: 850;
+}
+
+body .ai-drawer-filters .ai-drawer-select {
+  min-width: 0;
+}
+
+body .ai-drawer-filters .ai-drawer-select-control {
+  min-height: 42px;
+  border-radius: 999px !important;
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+body .flash-header .flash-custom-select {
+  min-width: 118px;
+}
+
+body .flash-header .flash-custom-select .academent-select-menu {
+  min-width: 150px;
+  right: 0;
+  left: auto;
+}
+
+body .flash-header {
+  overflow: visible !important;
+}
