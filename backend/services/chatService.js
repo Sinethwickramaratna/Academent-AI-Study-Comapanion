@@ -25,6 +25,47 @@ const ollama = new Ollama({
 });
 
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b';
+const DEFAULT_JSON_MAX_TOKENS = 6000;
+const MAX_JSON_RETRY_TOKENS = 24000;
+const MIN_QUIZ_QUESTIONS = 1;
+const MAX_QUIZ_QUESTIONS = 20;
+const QUIZ_OUTPUT_TOKENS_PER_QUESTION = {
+  easy: 450,
+  medium: 650,
+  hard: 850,
+};
+
+const QUIZ_RESPONSE_FORMAT = {
+  type: 'object',
+  properties: {
+    quiz: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          question_number: { type: 'number' },
+          type: {
+            type: 'string',
+            enum: ['MCQ', 'True/False', 'FILL_BLANK', 'CLOZE', 'SCENARIO', 'SHORT_ANSWER'],
+          },
+          question: { type: 'string' },
+          options: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          answer: { type: ['string', 'number', 'boolean'] },
+          answers: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          explanation: { type: 'string' },
+        },
+        required: ['question_number', 'type', 'question', 'explanation'],
+      },
+    },
+  },
+  required: ['quiz'],
+};
 
 function getOllamaErrorMessage(error) {
   const message = String(error?.message || error || '');
@@ -35,51 +76,116 @@ function getOllamaErrorMessage(error) {
 }
 
 
-function parseJsonResponse(text) {
-  const trimmed = text.trim();
+function extractJsonPayload(text) {
+  const trimmed = String(text || '').trim();
   const fencedJson = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fencedJson) return fencedJson[1].trim();
+
+  const objectStart = trimmed.indexOf('{');
+  const objectEnd = trimmed.lastIndexOf('}');
+  if (objectStart !== -1 && objectEnd > objectStart) {
+    return trimmed.slice(objectStart, objectEnd + 1);
+  }
+
+  const arrayStart = trimmed.indexOf('[');
+  const arrayEnd = trimmed.lastIndexOf(']');
+  if (arrayStart !== -1 && arrayEnd > arrayStart) {
+    return trimmed.slice(arrayStart, arrayEnd + 1);
+  }
+
+  return trimmed;
+}
+
+function parseJsonResponse(text) {
   try {
-    return JSON.parse(fencedJson ? fencedJson[1] : trimmed)
+    return JSON.parse(extractJsonPayload(text))
   } catch (error) {
     throw createAiResponseFormatError(error)
   }
 }
 
+function clampInteger(value, min, max, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, Math.floor(number)));
+}
+
+function normalizeQuizQuestionCount(numQuestions) {
+  return clampInteger(numQuestions, MIN_QUIZ_QUESTIONS, MAX_QUIZ_QUESTIONS, 10);
+}
+
+function normalizeQuizDifficulty(difficulty) {
+  const normalized = String(difficulty || 'medium').toLowerCase();
+  return ['easy', 'medium', 'hard'].includes(normalized) ? normalized : 'medium';
+}
+
+function getQuizMaxTokens(numQuestions, difficulty) {
+  const perQuestion = QUIZ_OUTPUT_TOKENS_PER_QUESTION[difficulty] || QUIZ_OUTPUT_TOKENS_PER_QUESTION.medium;
+  return Math.min(MAX_JSON_RETRY_TOKENS, Math.max(DEFAULT_JSON_MAX_TOKENS, 1500 + numQuestions * perQuestion));
+}
 async function createTextResponse(input, options = {}) {
+  let response;
+
   try {
-    const response = await ollama.chat({
+    response = await ollama.chat({
       model: OLLAMA_MODEL,
       messages: [{ role: 'user', content: input }],
       stream: true,
-      format: options.json ? 'json' : undefined,
+      format: options.jsonSchema || (options.json ? 'json' : undefined),
+      think: options.think ?? ((options.json || options.jsonSchema) ? false : undefined),
       options: {
         temperature: options.temperature ?? 1,
         top_p: options.top_p ?? 0.95,
-        num_predict: options.max_tokens ?? 3000,
+        num_predict: options.max_tokens ?? DEFAULT_JSON_MAX_TOKENS,
       },
     });
-
-    let text = '';
-
-    for await (const part of response) {
-      text += part.message?.content || '';
-    }
-
-    return text;
   } catch (error) {
     throw new Error(getOllamaErrorMessage(error));
   }
+
+  let text = '';
+  let doneReason = '';
+
+  try {
+    for await (const part of response) {
+      text += part.message?.content || '';
+      if (part.done) doneReason = part.done_reason || '';
+    }
+  } catch (error) {
+    throw new Error(getOllamaErrorMessage(error));
+  }
+
+  if ((options.json || options.jsonSchema) && /length/i.test(doneReason)) {
+    throw createAiResponseFormatError(new Error(`Ollama stopped before completing the JSON response (${doneReason}).`));
+  }
+
+  return text;
 }
 
-async function createJsonResponse(input) {
-  const text = await createTextResponse(input, {
-    temperature: 1,
+async function createJsonResponse(input, options = {}) {
+  const requestOptions = {
+    temperature: options.temperature ?? 0.4,
+    top_p: options.top_p ?? 0.9,
+    max_tokens: options.max_tokens ?? DEFAULT_JSON_MAX_TOKENS,
     json: true,
-  });
+    jsonSchema: options.jsonSchema,
+  };
 
-  return parseJsonResponse(text);
+  try {
+    return parseJsonResponse(await createTextResponse(input, requestOptions));
+  } catch (error) {
+    if (options.retry === false || error?.code !== 'AI_RESPONSE_FORMAT') throw error;
+
+    const retryOptions = {
+      ...requestOptions,
+      temperature: Math.min(requestOptions.temperature, 0.2),
+      top_p: Math.min(requestOptions.top_p, 0.8),
+      max_tokens: Math.min(Math.max(requestOptions.max_tokens * 2, DEFAULT_JSON_MAX_TOKENS), MAX_JSON_RETRY_TOKENS),
+    };
+
+    return parseJsonResponse(await createTextResponse(input, retryOptions));
+  }
 }
-
 /*function getResponseText(response) {
   if (response.output_text) {
     return response.output_text;
@@ -164,15 +270,19 @@ export async function extractKnowledge(content) {
 }
 
 export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
+  const questionCount = normalizeQuizQuestionCount(numQuestions);
+  const normalizedDifficulty = normalizeQuizDifficulty(difficulty);
   const baseRules = `
   You are an expert teacher and assessment designer.
 
   Using the knowledge below, generate a quiz.
 
   Quiz requirements:
-  - Number of questions: ${numQuestions}
+  - Number of questions: ${questionCount}
 
   Return ONLY valid JSON.
+  Do not include markdown code fences, comments, or extra text.
+  Keep each question concise and each explanation to one sentence under 30 words.
 
   Every question object MUST include an "explanation" field with a short, direct explanation using the supplied knowledge.
   Do not start explanations with phrases like "Why the correct answer is correct:" or similar lead-ins.
@@ -181,7 +291,7 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
     }
   `
 
-  if (difficulty === 'easy') {
+  if (normalizedDifficulty === 'easy') {
     return `
     ${baseRules}
 
@@ -221,7 +331,7 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
     `;
   }
 
-  if (difficulty === 'medium') {
+  if (normalizedDifficulty === 'medium') {
     return `
       ${baseRules}
 
@@ -289,7 +399,7 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
     `
   }
 
-  if (difficulty === 'hard') {
+  if (normalizedDifficulty === 'hard') {
     return `
       ${baseRules}
 
@@ -376,7 +486,9 @@ export function buildQuizPrompt(knowledge, numQuestions, difficulty) {
 }
 
 export async function generateQuiz(knowledge, numQuestions = 10, difficulty = 'easy') {
-  const prompt = buildQuizPrompt(knowledge, numQuestions, difficulty);
+  const questionCount = normalizeQuizQuestionCount(numQuestions);
+  const normalizedDifficulty = normalizeQuizDifficulty(difficulty);
+  const prompt = buildQuizPrompt(knowledge, questionCount, normalizedDifficulty);
 
   /*const result = await gemini.models.generateContent({
     model: 'gemini-2.5-flash',
@@ -386,10 +498,13 @@ export async function generateQuiz(knowledge, numQuestions = 10, difficulty = 'e
     },
   });*/
 
-  return createJsonResponse(prompt);
+  return createJsonResponse(prompt, {
+    temperature: 0.35,
+    top_p: 0.85,
+    max_tokens: getQuizMaxTokens(questionCount, normalizedDifficulty),
+    jsonSchema: QUIZ_RESPONSE_FORMAT,
+  });
 }
-
-
 export async function evaluateShortAnswer({ question, correctAnswer, userAnswer }) {
   const prompt = `
   You are an expert examiner. Evaluate the student's short answer.
