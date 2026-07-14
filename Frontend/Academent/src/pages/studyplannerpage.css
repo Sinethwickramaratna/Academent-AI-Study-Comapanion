@@ -1244,6 +1244,11 @@ textarea:focus-visible {
   box-shadow: 0 12px 24px rgba(242, 181, 68, 0.26);
 }
 
+.planner-create-button .material-symbols-outlined,
+.planner-mobile-fab .material-symbols-outlined,
+.planner-empty-state button .material-symbols-outlined {
+  color: #ffffff !important;
+}
 .planner-sidebar,
 .planner-calendar-panel,
 .planner-modal,
@@ -1474,17 +1479,49 @@ textarea:focus-visible {
 
 .planner-notes-selector {
   display: grid;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid rgba(77, 43, 140, 0.12);
-  border-radius: 14px;
-  background: #fbf8ff;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(77, 43, 140, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(77, 43, 140, 0.055), rgba(238, 167, 39, 0.075)),
+    #ffffff;
+  box-shadow: 0 16px 36px rgba(45, 28, 88, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  text-transform: none;
 }
 
 .planner-notes-heading {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(77, 43, 140, 0.1);
+}
+
+.planner-notes-heading > span {
+  position: relative;
+  min-width: 0;
+  padding-left: 42px;
+}
+
+.planner-notes-heading > span::before {
+  content: 'folder_open';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(77, 43, 140, 0.1);
+  color: var(--planner-primary);
+  font-family: 'Material Symbols Outlined';
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1;
+  transform: translateY(-50%);
 }
 
 .planner-notes-heading strong,
@@ -1493,72 +1530,153 @@ textarea:focus-visible {
 }
 
 .planner-notes-heading strong {
-  color: #2d2140;
-  font-size: 14px;
+  color: #241a33;
+  font-size: 15px;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .planner-notes-heading small,
 .planner-notes-heading em {
-  color: #7b7582;
+  color: #72677f;
   font-size: 12px;
   font-style: normal;
+  font-weight: 800;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.planner-notes-heading em {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(77, 43, 140, 0.08);
+  color: var(--planner-primary);
 }
 
 .planner-notes-tree {
   display: grid;
-  gap: 6px;
-  max-height: 280px;
+  gap: 8px;
+  max-height: 300px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 2px 8px 2px 2px;
+  scrollbar-color: rgba(77, 43, 140, 0.3) transparent;
 }
 
 .planner-tree-node {
+  position: relative;
   display: grid;
-  gap: 4px;
+  gap: 6px;
+}
+
+.planner-tree-children {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  margin-left: calc(24px + (var(--tree-depth, 0) * 14px));
+  padding-left: 14px;
+}
+
+.planner-tree-children::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  bottom: 2px;
+  width: 2px;
+  border-radius: 999px;
+  background: rgba(77, 43, 140, 0.12);
 }
 
 .planner-tree-toggle,
 .planner-material-row {
-  min-height: 38px;
+  min-height: 44px;
   display: grid;
-  grid-template-columns: 22px 22px minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 10px;
-  padding: 7px 8px;
-  background: #ffffff;
-  color: #40364f;
+  gap: 10px;
+  border: 1px solid rgba(77, 43, 140, 0.1);
+  border-radius: 14px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #3d3150;
   text-align: left;
+  text-transform: none;
+  box-shadow: 0 8px 20px rgba(45, 28, 88, 0.055);
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
 }
 
-.planner-tree-toggle.semester {
-  color: #4d2b8c;
-  background: #f1eaff;
-}
-
-.planner-tree-toggle.module {
-  margin-left: 12px;
-}
-
-.planner-tree-children {
-  display: grid;
-  gap: 4px;
-  margin-left: calc(18px + (var(--tree-depth, 0) * 12px));
-}
-
-.planner-material-row {
-  grid-template-columns: 18px 22px minmax(0, 1fr);
+.planner-tree-toggle {
+  grid-template-columns: 22px 30px minmax(0, 1fr);
   cursor: pointer;
 }
 
-.planner-material-row input {
+.planner-tree-toggle.semester {
+  border-color: rgba(77, 43, 140, 0.16);
+  background:
+    linear-gradient(135deg, rgba(77, 43, 140, 0.12), rgba(238, 167, 39, 0.1)),
+    #f8f3ff;
+  color: #4d2b8c;
+}
+
+.planner-tree-toggle.module {
+  margin-left: 8px;
+  background: #ffffff;
+}
+
+.planner-tree-toggle > .material-symbols-outlined:nth-child(2),
+.planner-material-row > .material-symbols-outlined {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(77, 43, 140, 0.09);
+  color: var(--planner-primary);
+  font-size: 18px;
+}
+
+.planner-tree-toggle.semester > .material-symbols-outlined:nth-child(2) {
+  background: rgba(77, 43, 140, 0.14);
+}
+
+.planner-material-row {
+  grid-template-columns: 20px 30px minmax(0, 1fr);
+  cursor: pointer;
+}
+
+.planner-material-row input[type="checkbox"] {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin: 0;
+  border-radius: 5px;
   accent-color: #4d2b8c;
 }
 
+.planner-material-row.is-selected {
+  border-color: rgba(8, 116, 67, 0.28);
+  background: #edf9f2;
+  color: #087443;
+}
+
+.planner-material-row.is-selected > .material-symbols-outlined {
+  background: rgba(8, 116, 67, 0.12);
+  color: #087443;
+}
+
 .planner-material-row:hover,
-.planner-tree-toggle:hover {
-  background: #fff4d8;
+.planner-tree-toggle:hover,
+.planner-material-row:focus-within,
+.planner-tree-toggle:focus-visible {
+  border-color: rgba(242, 181, 68, 0.34);
+  background: #fff8e8;
+  color: #4d2b8c;
+  box-shadow: 0 12px 24px rgba(45, 28, 88, 0.08);
+  transform: translateY(-1px);
+  outline: none;
 }
 
 .planner-material-row strong,
@@ -1568,48 +1686,70 @@ textarea:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .planner-selected-materials {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(77, 43, 140, 0.1);
 }
 
 .planner-selected-materials button {
+  max-width: 100%;
   min-height: 34px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  border: 1px solid rgba(242, 181, 68, 0.36);
+  border: 1px solid rgba(8, 116, 67, 0.2);
   border-radius: 999px;
-  padding: 6px 9px;
-  background: #fff4d8;
-  color: #4d2b8c;
+  padding: 6px 10px;
+  background: #edf9f2;
+  color: #087443;
   font-size: 12px;
   font-weight: 900;
+  text-transform: none;
+  box-shadow: 0 8px 18px rgba(8, 116, 67, 0.08);
+}
+
+.planner-selected-materials button:hover {
+  border-color: rgba(180, 35, 24, 0.24);
+  background: #fff1f0;
+  color: #b42318;
 }
 
 .planner-notes-empty {
   display: grid;
   place-items: center;
-  gap: 6px;
-  padding: 26px;
-  border-radius: 14px;
-  background: #ffffff;
+  gap: 7px;
+  padding: 30px;
+  border: 1px dashed rgba(77, 43, 140, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
   color: #6f667a;
   text-align: center;
 }
 
 .planner-notes-empty .material-symbols-outlined {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: rgba(77, 43, 140, 0.1);
   color: #85409d;
-  font-size: 36px;
+  font-size: 30px;
 }
 
 .planner-notes-empty p {
   margin: 0;
   max-width: 360px;
   font-size: 13px;
+  line-height: 1.45;
 }
 
 @keyframes plannerSkeleton {
@@ -1801,7 +1941,7 @@ textarea:focus-visible {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
 }
 
-.dark .study-planner-page :where([class*="sidebar"], [class*="side-card"], [class*="topbar"], [class*="toolbar"], [class*="nav"]):not([class*="hero"]):not([class*="avatar"]) {
+.dark .study-planner-page :where([class*="sidebar"], [class*="side-card"], [class*="topbar"], [class*="toolbar"], [class*="nav"]):not([class*="hero"]):not([class*="avatar"]):not(.planner-nav-buttons) {
   background: #211D38 !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
@@ -1834,6 +1974,9 @@ textarea:focus-visible {
   color: #D8D3EE !important;
 }
 
+.dark .study-planner-page .planner-field-label {
+  color: #ffffff !important;
+}
 .dark .study-planner-page :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]) {
   color: #A178FF !important;
 }
@@ -2124,4 +2267,121 @@ textarea:focus-visible {
 .dark .study-planner-page .planner-select-menu button.selected .material-symbols-outlined {
   background: linear-gradient(135deg, #7B5CFF, #A178FF) !important;
   color: #F7F5FF !important;
+}
+.dark .study-planner-page .planner-notes-selector {
+  background:
+    linear-gradient(135deg, rgba(123, 92, 255, 0.12), rgba(242, 181, 68, 0.07)),
+    #211D38 !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .study-planner-page .planner-notes-heading {
+  border-color: #4A4568 !important;
+}
+
+.dark .study-planner-page .planner-notes-heading > span::before {
+  background: rgba(161, 120, 255, 0.16) !important;
+  color: #A178FF !important;
+}
+
+.dark .study-planner-page .planner-notes-heading strong {
+  color: #F7F5FF !important;
+}
+
+.dark .study-planner-page .planner-notes-heading small,
+.dark .study-planner-page .planner-notes-heading em {
+  color: #D8D3EE !important;
+}
+
+.dark .study-planner-page .planner-notes-heading em {
+  background: rgba(161, 120, 255, 0.14) !important;
+}
+
+.dark .study-planner-page .planner-notes-tree {
+  scrollbar-color: rgba(161, 120, 255, 0.45) transparent;
+}
+
+.dark .study-planner-page .planner-tree-children::before {
+  background: #4A4568 !important;
+}
+
+.dark .study-planner-page :where(.planner-tree-toggle, .planner-material-row) {
+  background: #211D38 !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .study-planner-page .planner-tree-toggle.semester {
+  background:
+    linear-gradient(135deg, rgba(123, 92, 255, 0.2), rgba(242, 181, 68, 0.08)),
+    #2A2543 !important;
+  border-color: rgba(161, 120, 255, 0.38) !important;
+  color: #F7F5FF !important;
+}
+
+.dark .study-planner-page .planner-tree-toggle > .material-symbols-outlined:nth-child(2),
+.dark .study-planner-page .planner-material-row > .material-symbols-outlined {
+  background: rgba(161, 120, 255, 0.14) !important;
+  color: #A178FF !important;
+}
+
+.dark .study-planner-page .planner-material-row.is-selected {
+  background: rgba(8, 116, 67, 0.22) !important;
+  border-color: rgba(80, 210, 143, 0.34) !important;
+  color: #B9F6D3 !important;
+}
+
+.dark .study-planner-page .planner-material-row.is-selected > .material-symbols-outlined {
+  background: rgba(80, 210, 143, 0.16) !important;
+  color: #B9F6D3 !important;
+}
+
+.dark .study-planner-page .planner-material-row:hover,
+.dark .study-planner-page .planner-tree-toggle:hover,
+.dark .study-planner-page .planner-material-row:focus-within,
+.dark .study-planner-page .planner-tree-toggle:focus-visible {
+  background: #3A345A !important;
+  border-color: rgba(242, 181, 68, 0.32) !important;
+  color: #FFE873 !important;
+}
+
+.dark .study-planner-page .planner-selected-materials {
+  border-color: #4A4568 !important;
+}
+
+.dark .study-planner-page .planner-selected-materials button {
+  background: rgba(8, 116, 67, 0.22) !important;
+  border-color: rgba(80, 210, 143, 0.34) !important;
+  color: #B9F6D3 !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .study-planner-page .planner-selected-materials button:hover {
+  background: rgba(180, 35, 24, 0.22) !important;
+  border-color: rgba(255, 142, 133, 0.3) !important;
+  color: #FFD7D3 !important;
+}
+
+.dark .study-planner-page .planner-notes-empty {
+  background: #211D38 !important;
+  border-color: #4A4568 !important;
+  color: #D8D3EE !important;
+}
+
+.dark .study-planner-page .planner-notes-empty .material-symbols-outlined {
+  background: rgba(161, 120, 255, 0.16) !important;
+  color: #A178FF !important;
+}
+.dark .study-planner-page .planner-details-list span {
+  background: #211D38 !important;
+  border: 1px solid #4A4568 !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .study-planner-page .planner-details-list strong {
+  color: #D8D3EE !important;
 }

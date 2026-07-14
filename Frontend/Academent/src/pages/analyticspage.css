@@ -1190,3 +1190,89 @@
   background-color: #3A345A !important;
 }
 
+
+:root.dark .analytics-page,
+.dark .analytics-page {
+  --analytics-surface: #302B4D;
+  --analytics-surface-soft: #28243F;
+  --analytics-surface-muted: #211D38;
+  --analytics-track: #242039;
+  --analytics-track-border: #4A4568;
+}
+
+:root.dark .analytics-page .analytics-stat,
+.dark .analytics-page .analytics-stat,
+:root.dark .analytics-page .mini-calendar,
+.dark .analytics-page .mini-calendar,
+:root.dark .analytics-page .analytics-empty-inline,
+.dark .analytics-page .analytics-empty-inline {
+  background: var(--analytics-surface) !important;
+  border-color: var(--analytics-track-border) !important;
+  color: var(--analytics-ink) !important;
+  box-shadow: var(--analytics-shadow) !important;
+}
+
+:root.dark .analytics-page .analytics-tabs,
+.dark .analytics-page .analytics-tabs,
+:root.dark .analytics-page .study-chart__track,
+.dark .analytics-page .study-chart__track,
+:root.dark .analytics-page .quiz-status div,
+.dark .analytics-page .quiz-status div,
+:root.dark .analytics-page .score-bars__track,
+.dark .analytics-page .score-bars__track,
+:root.dark .analytics-page .module-progress,
+.dark .analytics-page .module-progress,
+:root.dark .analytics-page .planner-item > .material-symbols-outlined,
+.dark .analytics-page .planner-item > .material-symbols-outlined,
+:root.dark .analytics-page .mini-calendar__grid span,
+.dark .analytics-page .mini-calendar__grid span,
+:root.dark .analytics-page .activity-item:not(:last-child)::after,
+.dark .analytics-page .activity-item:not(:last-child)::after {
+  background: var(--analytics-track) !important;
+  border-color: var(--analytics-track-border) !important;
+}
+
+:root.dark .analytics-page .analytics-stat__icon,
+.dark .analytics-page .analytics-stat__icon,
+:root.dark .analytics-page .activity-item__icon,
+.dark .analytics-page .activity-item__icon,
+:root.dark .analytics-page .analytics-empty-inline > .material-symbols-outlined,
+.dark .analytics-page .analytics-empty-inline > .material-symbols-outlined {
+  background: var(--analytics-surface-soft) !important;
+}
+
+:root.dark .analytics-page .planner-item--overdue,
+.dark .analytics-page .planner-item--overdue {
+  background: rgba(244, 63, 94, 0.1) !important;
+  border-color: rgba(244, 63, 94, 0.24) !important;
+}
+
+:root.dark .analytics-page .mini-calendar__grid .is-today,
+.dark .analytics-page .mini-calendar__grid .is-today {
+  background: var(--academent-primary) !important;
+  color: #F7F5FF !important;
+}
+
+:root.dark .analytics-page .mini-calendar__grid .is-study,
+.dark .analytics-page .mini-calendar__grid .is-study {
+  background: rgba(6, 182, 212, 0.22) !important;
+  color: #67E8F9 !important;
+}
+
+:root.dark .analytics-page .mini-calendar__grid .is-exam,
+.dark .analytics-page .mini-calendar__grid .is-exam {
+  background: rgba(242, 181, 68, 0.22) !important;
+  color: #FFE873 !important;
+}
+
+:root.dark .analytics-page .mini-calendar__grid .is-assignment,
+.dark .analytics-page .mini-calendar__grid .is-assignment {
+  background: rgba(244, 63, 94, 0.2) !important;
+  color: #FDA4AF !important;
+}
+
+:root.dark .analytics-page .skeleton,
+.dark .analytics-page .skeleton {
+  background: linear-gradient(90deg, #242039 0%, #3A345A 45%, #242039 90%) !important;
+  background-size: 220% 100% !important;
+}
