@@ -110,7 +110,7 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
             <legend>Accent Color</legend>
             <div className="notes-accent-picker__options">
               {ACCENT_OPTIONS.map((accent) => (
-                <label key={accent.value} className="notes-accent-choice" style={{ "--choice-accent": accent.color }} title={accent.label}>
+                <label key={accent.value} className={`notes-accent-choice notes-accent-choice--${accent.value}`} style={{ "--choice-accent": accent.color }} title={accent.label}>
                   <input
                     type="radio"
                     name="accent"
@@ -118,7 +118,11 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
                     checked={values.accent === accent.value}
                     onChange={(event) => onChange("accent", event.target.value)}
                   />
-                  <span className="notes-accent-choice__swatch" />
+                  <span className="notes-accent-choice__swatch" style={{ "--choice-accent": accent.color, background: accent.color, backgroundColor: accent.color }} aria-hidden="true">
+                    <svg viewBox="0 0 26 26" focusable="false">
+                      <circle cx="13" cy="13" r="10.5" fill={accent.color} />
+                    </svg>
+                  </span>
                   <span className="notes-accent-choice__label">{accent.label}</span>
                 </label>
               ))}
@@ -130,7 +134,11 @@ function FolderCreateModal({ type, values, onChange, onClose, onSubmit, mode = "
                   checked={!selectedPreset}
                   onChange={() => onChange("accent", customAccent)}
                 />
-                <span className="notes-accent-custom__preview" aria-hidden="true" />
+                <span className="notes-accent-custom__preview" style={{ "--choice-accent": customAccent, background: customAccent, backgroundColor: customAccent }} aria-hidden="true">
+                  <svg viewBox="0 0 42 42" focusable="false">
+                    <rect x="5" y="5" width="32" height="32" rx="10" fill={customAccent} />
+                  </svg>
+                </span>
                 <span className="notes-accent-custom__text">
                   <span>Custom</span>
                   <span>{customAccent.toUpperCase()}</span>

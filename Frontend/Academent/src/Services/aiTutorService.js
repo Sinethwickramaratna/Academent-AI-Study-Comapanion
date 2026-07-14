@@ -14,6 +14,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
+import { getApiErrorMessage } from "./apiErrorUtils";
 import { getKnowledgeForMaterial } from "./quizService";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
@@ -211,7 +212,7 @@ export const sendTutorMessage = async ({ message, contextMaterials = [], history
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok || result.success === false) {
-    throw new Error(result.error || result.message || "AI Tutor request failed");
+    throw new Error(getApiErrorMessage(result, "AI Tutor could not complete the response. Please try again."));
   }
 
   return result.response || "";

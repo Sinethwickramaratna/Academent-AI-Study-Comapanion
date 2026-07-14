@@ -1729,7 +1729,7 @@ select:focus-visible,
   color-scheme: dark;
 }
 
-.dark .ai-tutor-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
+.dark .ai-tutor-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-chat-shell):not(.ai-chat-stage):not(.ai-empty-state):not(.ai-composer-shell):not(.ai-composer):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
   background: #302B4D !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
@@ -1773,10 +1773,33 @@ select:focus-visible,
   color: #A178FF !important;
 }
 
+.dark .ai-tutor-page .ai-history-empty,
+:root.dark .ai-tutor-page .ai-history-empty {
+  color: #ffffff !important;
+}
+
+.dark .ai-tutor-page .ai-new-chat-button .material-symbols-outlined,
+:root.dark .ai-tutor-page .ai-new-chat-button .material-symbols-outlined {
+  color: #ffffff !important;
+}
+
+.dark .ai-tutor-page .ai-hero-bot .material-symbols-outlined,
+.dark .ai-tutor-page .ai-hero-card .material-symbols-outlined,
+:root.dark .ai-tutor-page .ai-hero-bot .material-symbols-outlined,
+:root.dark .ai-tutor-page .ai-hero-card .material-symbols-outlined {
+  color: #ffffff !important;
+}
+
 .dark .ai-tutor-page :where(.dashboard-home-hero, .analytics-hero, .profile-hero, .flash-header, .quiz-results-hero, .notes-section-header, .ai-tutor-header, .planner-hero, [class*="hero"]) {
   background: linear-gradient(135deg, rgba(123, 92, 255, 0.98), rgba(161, 120, 255, 0.94), rgba(242, 181, 68, 0.84)) !important;
   color: #F7F5FF !important;
   box-shadow: 0 22px 54px rgba(0, 0, 0, 0.34) !important;
+}
+
+.dark .ai-tutor-page .ai-hero-illustration,
+:root.dark .ai-tutor-page .ai-hero-illustration {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .dark .ai-tutor-page :where(.ai-gradient, .gradient-bg, .primary-gradient, .primary-button, .btn-primary-gradient, .profile-button--primary, .quiz-button--primary, .flash-button--primary, .planner-create-button, .login-page__primary, .ai-send-button:not(:disabled), .ai-new-chat-button, [class*="button--primary"]) {
@@ -1794,9 +1817,15 @@ select:focus-visible,
   color: #F7F5FF !important;
 }
 
-.dark .ai-tutor-page :where(.ai-chat-stage, .ai-composer-shell, .ai-composer, .ai-context-panel, .ai-attachment-drawer) {
+.dark .ai-tutor-page :where(.ai-context-panel, .ai-attachment-drawer) {
   background: #302B4D !important;
   border-color: #4A4568 !important;
+}
+
+.dark .ai-tutor-page :where(.ai-chat-shell, .ai-chat-stage, .ai-empty-state, .ai-composer-shell, .ai-composer),
+:root.dark .ai-tutor-page :where(.ai-chat-shell, .ai-chat-stage, .ai-empty-state, .ai-composer-shell, .ai-composer) {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 /* Academent dark surface smoothing */
 .dark .ai-tutor-page :where([class*="content"], [class*="body"], [class*="copy"], [class*="meta"], [class*="group"], [class*="grid"], [class*="section"], [class*="header"], [class*="list"], [class*="details"], [class*="stats"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]) {

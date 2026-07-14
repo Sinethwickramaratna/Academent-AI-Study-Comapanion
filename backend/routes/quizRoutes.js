@@ -1,80 +1,79 @@
-import express from 'express';
-import { evaluateShortAnswer, extractKnowledge, generateQuiz } from '../services/chatService.js';
-import rateLimit from 'express-rate-limit';
+import express from 'express'
+import { evaluateShortAnswer, extractKnowledge, generateQuiz } from '../services/chatService.js'
+import rateLimit from 'express-rate-limit'
+import { getPublicErrorMessage } from '../utils/apiErrors.js'
 
-const router = express.Router();
+const router = express.Router()
 
-
-
-router.post('/generate-quiz', async (req, res) => {
+router.post('/generate-quiz', async function generateQuizRoute(req, res) {
   try {
-    const { knowledge, numQuestions, difficulty } = req.body;
-    
-    if(!difficulty) {
+    const { knowledge, numQuestions, difficulty } = req.body
+
+    if (!difficulty) {
       return res.status(400).json({
         success: false,
-        error: "Difficulty level is required (easy, medium, hard)",
-      });
+        error: 'Difficulty level is required (easy, medium, hard)',
+      })
     }
 
-    const quiz = await generateQuiz(knowledge, numQuestions, difficulty);
+    const quiz = await generateQuiz(knowledge, numQuestions, difficulty)
     res.json({
       success: true,
       difficulty,
       data: quiz,
-    });
+    })
   } catch (error) {
-    console.error('Error generating quiz:', error);
+    console.error('Error generating quiz:', error)
     res.status(500).json({
       success: false,
-      error: error.message || 'An error occurred while generating the quiz' ,
-    });
+      error: getPublicErrorMessage(error, 'An error occurred while generating the quiz'),
+    })
   }
-});
+})
 
-router.post('/extract-knowledge', async (req, res) => {
+router.post('/extract-knowledge', async function extractKnowledgeRoute(req, res) {
   try {
-    const { content } = req.body;
-    
-    const knowledge = await extractKnowledge(content);
+    const { content } = req.body
+
+    const knowledge = await extractKnowledge(content)
 
     res.json({
       success: true,
       data: knowledge,
-    });
+    })
   } catch (error) {
-    console.error('Error extracting knowledge:', error);
+    console.error('Error extracting knowledge:', error)
     res.status(500).json({
       success: false,
-      error: error.message || 'An error occurred while extracting knowledge' ,
-    });
+      error: getPublicErrorMessage(error, 'An error occurred while extracting knowledge'),
+    })
   }
-});
+})
 
-
-router.post('/evaluate-short-answer', async (req, res) => {
+router.post('/evaluate-short-answer', async function evaluateShortAnswerRoute(req, res) {
   try {
-    const { question, correctAnswer, userAnswer } = req.body;
+    const { question, correctAnswer, userAnswer } = req.body
 
     if (!question || !correctAnswer) {
       return res.status(400).json({
         success: false,
         error: 'Question and correctAnswer are required',
-      });
+      })
     }
 
-    const evaluation = await evaluateShortAnswer({ question, correctAnswer, userAnswer });
+    const evaluation = await evaluateShortAnswer({ question, correctAnswer, userAnswer })
 
     res.json({
       success: true,
       data: evaluation,
-    });
+    })
   } catch (error) {
-    console.error('Error evaluating short answer:', error);
+    console.error('Error evaluating short answer:', error)
     res.status(500).json({
       success: false,
-      error: error.message || 'An error occurred while evaluating the short answer',
-    });
+      error: getPublicErrorMessage(error, 'An error occurred while evaluating the short answer'),
+    })
   }
-});
-export default router;
+})
+
+export default router

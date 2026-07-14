@@ -1,4 +1,4 @@
-﻿.notes-page {
+.notes-page {
   position: relative;
 }
 
@@ -1365,10 +1365,8 @@
 }
 
 .dark .notes-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
-  background: #302B4D !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
 }
 
 .dark .notes-page :where([class*="sidebar"], [class*="side-card"], [class*="topbar"], [class*="toolbar"], [class*="nav"]):not([class*="hero"]):not([class*="avatar"]) {
@@ -1442,7 +1440,6 @@
 }
 
 .dark .notes-page :where([class*="row"], [class*="item"], [class*="chip"], [class*="option"], [class*="answer"], [class*="choice"], [class*="tree-row"], [class*="material-row"], [class*="note-card"], [class*="pdf-card"], [class*="task"]):not(button):not([role="button"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]):not([class*="primary"]):not([class*="danger"]):not(.is-active):not(.is-selected) {
-  background: transparent !important;
   box-shadow: none !important;
 }
 
@@ -1453,6 +1450,15 @@
 
 .dark .notes-page :where([class*="row"], [class*="item"], [class*="option"], [class*="answer"], [class*="choice"], [class*="chip"]):hover:not([class*="primary"]):not([class*="danger"]) {
   background-color: #3A345A !important;
+}
+
+.dark .notes-page .notes-breadcrumb,
+.dark .notes-page .notes-breadcrumb *,
+.dark .notes-page .notes-breadcrumb:hover,
+.dark .notes-page .notes-breadcrumb *:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .dark .notes-page :where(.folder-vault-card, .module-workspace-panel) :where(.module-note-card, .module-pdf-card, .file-card-menu__content, .workspace-actions-menu__content) {
@@ -1557,3 +1563,476 @@
   color: #ff9cb8 !important;
 }
 
+
+/* My Notes dark window polish */
+.dark .notes-page :where(.folder-card-menu, .file-card-menu, .workspace-actions-menu) {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .notes-page .folder-vault-card {
+  background:
+    radial-gradient(circle at 16% 8%, color-mix(in srgb, var(--folder-accent) 24%, transparent), transparent 40%),
+    linear-gradient(158deg, rgba(48, 43, 77, 0.94) 0%, rgba(33, 29, 56, 0.96) 56%, rgba(27, 24, 48, 0.98) 100%) !important;
+  border-color: color-mix(in srgb, var(--folder-accent) 26%, #4A4568) !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .notes-page .folder-vault-card:hover {
+  border-color: color-mix(in srgb, var(--folder-accent) 46%, #A178FF) !important;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.38), 0 0 28px color-mix(in srgb, var(--folder-accent) 18%, transparent) !important;
+}
+
+.dark .notes-page .module-workspace-panel {
+  background:
+    linear-gradient(145deg, rgba(48, 43, 77, 0.78), rgba(33, 29, 56, 0.82)),
+    radial-gradient(circle at 8% 0%, rgba(161, 120, 255, 0.11), transparent 34%) !important;
+  border-color: rgba(161, 120, 255, 0.2) !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.dark .notes-page .module-workspace-panel :where(.module-note-card, .module-pdf-card) {
+  background: linear-gradient(135deg, rgba(33, 29, 56, 0.72), rgba(48, 43, 77, 0.58)) !important;
+  border-color: rgba(161, 120, 255, 0.16) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.dark .notes-page .notes-create-modal {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(123, 92, 255, 0.16), transparent 34%),
+    linear-gradient(145deg, rgba(48, 43, 77, 0.96), rgba(33, 29, 56, 0.98)) !important;
+  border-color: rgba(161, 120, 255, 0.22) !important;
+  box-shadow: 0 28px 78px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .notes-page .folder-vault-card .folder-tab {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--folder-accent) 72%, #F7F5FF), color-mix(in srgb, var(--folder-accent) 86%, #211D38)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 8px 18px color-mix(in srgb, var(--folder-accent) 16%, transparent) !important;
+}
+
+.dark .notes-page .folder-vault-card .folder-body {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--folder-accent) 18%, #302B4D), rgba(33, 29, 56, 0.78)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent) !important;
+  border-color: color-mix(in srgb, var(--folder-accent) 38%, #4A4568) !important;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .notes-page .folder-vault-card .folder-grid {
+  background-color: transparent !important;
+  background-image: linear-gradient(color-mix(in srgb, var(--folder-accent) 42%, #D8D3EE) 1px, transparent 1px) !important;
+  opacity: 0.32;
+}
+
+.dark .notes-page .folder-vault-card .folder-open-icon {
+  background: color-mix(in srgb, var(--folder-accent) 18%, #211D38) !important;
+  border: 1px solid color-mix(in srgb, var(--folder-accent) 30%, #4A4568) !important;
+  color: color-mix(in srgb, var(--folder-accent) 74%, #F7F5FF) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .notes-page .folder-vault-card:hover .folder-open-icon {
+  background: color-mix(in srgb, var(--folder-accent) 26%, #302B4D) !important;
+}
+
+.dark .notes-page .folder-vault-card .folder-progress-track {
+  background: rgba(247, 245, 255, 0.09) !important;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .notes-page .folder-vault-card .folder-progress-fill {
+  background: linear-gradient(90deg, var(--folder-accent), color-mix(in srgb, var(--folder-accent) 42%, #F2B544)) !important;
+}
+
+.dark .notes-page .folder-vault-card .folder-card-menu__trigger {
+  background: rgba(33, 29, 56, 0.76) !important;
+  border-color: color-mix(in srgb, var(--folder-accent) 22%, #4A4568) !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22) !important;
+}
+
+.dark .notes-page :where(
+  .notes-section-header > div,
+  .notes-section-header > div > h2,
+  .notes-section-header > div > p,
+  .folder-card-content,
+  .folder-card-content *,
+  .folder-card-footer,
+  .folder-file-count,
+  .folder-file-count *,
+  .folder-card-scanline,
+  .folder-card-glow,
+  .module-workspace-panel__heading,
+  .module-workspace-panel__heading > div,
+  .module-workspace-panel__heading :where(h3, p),
+  .module-note-card__content,
+  .module-note-card__content *,
+  .module-pdf-card__content,
+  .module-pdf-card__content *,
+  .notes-empty-state > div,
+  .notes-empty-state > div *,
+  .note-viewer-body,
+  .note-viewer-body *,
+  .notes-create-modal__header,
+  .notes-create-modal__header > div,
+  .notes-create-modal__header > div *,
+  .notes-create-form,
+  .notes-create-field,
+  .notes-create-field > span,
+  .notes-create-modal__actions,
+  .notes-accent-picker,
+  .notes-accent-picker legend,
+  .notes-accent-custom__text,
+  .notes-accent-custom__text *
+) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .notes-page .notes-create-modal__header {
+  border-bottom-color: rgba(161, 120, 255, 0.16) !important;
+}
+
+.dark .notes-page .folder-vault-card :where(.folder-card-kicker, .folder-file-count .material-symbols-outlined) {
+  color: color-mix(in srgb, var(--folder-accent) 72%, #F7F5FF) !important;
+}
+
+.dark .notes-page .folder-vault-card .folder-card-title,
+.dark .notes-page :where(.module-note-card__content h4, .module-pdf-card__content h4, .notes-create-modal__header h3, .notes-empty-state h4) {
+  color: #F7F5FF !important;
+}
+
+.dark .notes-page .folder-vault-card :where(.folder-card-subtitle, .folder-file-count),
+.dark .notes-page :where(.module-workspace-panel__heading p, .module-note-card__content p, .module-pdf-card__content p, .notes-create-modal__header p, .notes-empty-state p, .note-viewer-body p) {
+  color: #D8D3EE !important;
+}
+
+.dark .notes-page .folder-vault-card .folder-icon {
+  color: color-mix(in srgb, var(--folder-accent) 76%, #F7F5FF) !important;
+}
+
+/* Direct fixes for My Notes text/layout wrappers */
+:root.dark .notes-page .folder-vault-card .folder-card-kicker,
+:root.dark .notes-page .folder-vault-card .folder-card-title,
+:root.dark .notes-page .folder-vault-card .folder-card-subtitle,
+:root.dark .notes-page .folder-vault-card .folder-card-footer,
+:root.dark .notes-page .module-workspace-panel .module-workspace-panel__heading,
+:root.dark .notes-page .module-workspace-panel .module-workspace-panel__heading > div,
+:root.dark .notes-page .module-workspace-panel .module-workspace-panel__heading h3,
+:root.dark .notes-page .module-workspace-panel .module-workspace-panel__heading p,
+:root.dark .notes-page .module-pdf-card .module-pdf-card__content,
+:root.dark .notes-page .module-pdf-card .module-pdf-card__content h4,
+:root.dark .notes-page .module-pdf-card .module-pdf-card__content p,
+:root.dark .notes-page .module-note-card .module-note-card__content,
+:root.dark .notes-page .module-note-card .module-note-card__content h4,
+:root.dark .notes-page .module-note-card .module-note-card__content p,
+:root.dark .notes-page .workspace-actions-menu,
+:root.dark .notes-page .file-card-menu,
+.dark .notes-page .folder-vault-card .folder-card-kicker,
+.dark .notes-page .folder-vault-card .folder-card-title,
+.dark .notes-page .folder-vault-card .folder-card-subtitle,
+.dark .notes-page .folder-vault-card .folder-card-footer,
+.dark .notes-page .module-workspace-panel .module-workspace-panel__heading,
+.dark .notes-page .module-workspace-panel .module-workspace-panel__heading > div,
+.dark .notes-page .module-workspace-panel .module-workspace-panel__heading h3,
+.dark .notes-page .module-workspace-panel .module-workspace-panel__heading p,
+.dark .notes-page .module-pdf-card .module-pdf-card__content,
+.dark .notes-page .module-pdf-card .module-pdf-card__content h4,
+.dark .notes-page .module-pdf-card .module-pdf-card__content p,
+.dark .notes-page .module-note-card .module-note-card__content,
+.dark .notes-page .module-note-card .module-note-card__content h4,
+.dark .notes-page .module-note-card .module-note-card__content p,
+.dark .notes-page .workspace-actions-menu,
+.dark .notes-page .file-card-menu {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+:root.dark .notes-page .workspace-actions-menu,
+:root.dark .notes-page .file-card-menu,
+.dark .notes-page .workspace-actions-menu,
+.dark .notes-page .file-card-menu {
+  border: 0 !important;
+  outline: 0 !important;
+}
+
+:root.dark .notes-page .folder-vault-card .folder-card-title,
+.dark .notes-page .folder-vault-card .folder-card-title,
+:root.dark .notes-page .module-pdf-card .module-pdf-card__content h4,
+.dark .notes-page .module-pdf-card .module-pdf-card__content h4,
+:root.dark .notes-page .module-note-card .module-note-card__content h4,
+.dark .notes-page .module-note-card .module-note-card__content h4,
+:root.dark .notes-page .module-workspace-panel .module-workspace-panel__heading h3,
+.dark .notes-page .module-workspace-panel .module-workspace-panel__heading h3 {
+  color: #F7F5FF !important;
+}
+
+:root.dark .notes-page .folder-vault-card .folder-card-kicker,
+.dark .notes-page .folder-vault-card .folder-card-kicker {
+  color: color-mix(in srgb, var(--folder-accent) 72%, #F7F5FF) !important;
+}
+
+:root.dark .notes-page .folder-vault-card .folder-card-subtitle,
+:root.dark .notes-page .folder-vault-card .folder-card-footer,
+:root.dark .notes-page .module-pdf-card .module-pdf-card__content p,
+:root.dark .notes-page .module-note-card .module-note-card__content p,
+:root.dark .notes-page .module-workspace-panel .module-workspace-panel__heading p,
+.dark .notes-page .folder-vault-card .folder-card-subtitle,
+.dark .notes-page .folder-vault-card .folder-card-footer,
+.dark .notes-page .module-pdf-card .module-pdf-card__content p,
+.dark .notes-page .module-note-card .module-note-card__content p,
+.dark .notes-page .module-workspace-panel .module-workspace-panel__heading p {
+  color: #D8D3EE !important;
+}
+
+
+/* Dark note/folder modal fields and accent picker */
+:root.dark .notes-page .notes-create-field,
+.dark .notes-page .notes-create-field {
+  color: #F7F5FF !important;
+}
+
+:root.dark .notes-page .notes-create-field > span,
+:root.dark .notes-page .notes-accent-picker legend,
+.dark .notes-page .notes-create-field > span,
+.dark .notes-page .notes-accent-picker legend {
+  color: #F7F5FF !important;
+}
+
+:root.dark .notes-page .notes-create-field input,
+:root.dark .notes-page .notes-create-field textarea,
+.dark .notes-page .notes-create-field input,
+.dark .notes-page .notes-create-field textarea {
+  background: rgba(33, 29, 56, 0.92) !important;
+  border-color: rgba(161, 120, 255, 0.32) !important;
+  color: #F7F5FF !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+:root.dark .notes-page .notes-create-field input:focus,
+:root.dark .notes-page .notes-create-field textarea:focus,
+.dark .notes-page .notes-create-field input:focus,
+.dark .notes-page .notes-create-field textarea:focus {
+  background: rgba(33, 29, 56, 0.98) !important;
+  border-color: #A178FF !important;
+  box-shadow: 0 0 0 4px rgba(161, 120, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+:root.dark .notes-page .notes-create-field input::placeholder,
+:root.dark .notes-page .notes-create-field textarea::placeholder,
+.dark .notes-page .notes-create-field input::placeholder,
+.dark .notes-page .notes-create-field textarea::placeholder {
+  color: rgba(216, 211, 238, 0.7) !important;
+}
+
+:root.dark .notes-page .notes-accent-picker__options,
+.dark .notes-page .notes-accent-picker__options {
+  background:
+    linear-gradient(135deg, rgba(33, 29, 56, 0.92), rgba(48, 43, 77, 0.82)),
+    radial-gradient(circle at 8% 8%, rgba(123, 92, 255, 0.18), transparent 38%) !important;
+  border-color: rgba(161, 120, 255, 0.22) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+:root.dark .notes-page .notes-accent-choice,
+.dark .notes-page .notes-accent-choice {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--choice-accent) 18%, #211D38), rgba(48, 43, 77, 0.78)) !important;
+  border-color: color-mix(in srgb, var(--choice-accent) 34%, #4A4568) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+:root.dark .notes-page .notes-accent-choice:hover,
+.dark .notes-page .notes-accent-choice:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--choice-accent) 28%, #302B4D), rgba(58, 52, 90, 0.88)) !important;
+  border-color: color-mix(in srgb, var(--choice-accent) 64%, #F7F5FF) !important;
+}
+
+:root.dark .notes-page .notes-accent-choice:has(input:checked),
+.dark .notes-page .notes-accent-choice:has(input:checked) {
+  border-color: color-mix(in srgb, var(--choice-accent) 74%, #F7F5FF) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--choice-accent) 20%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+:root.dark .notes-page .notes-accent-choice__swatch,
+.dark .notes-page .notes-accent-choice__swatch {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.36), transparent),
+    var(--choice-accent) !important;
+  border-color: rgba(247, 245, 255, 0.86) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--choice-accent) 60%, #F7F5FF), 0 0 20px color-mix(in srgb, var(--choice-accent) 52%, transparent) !important;
+}
+
+:root.dark .notes-page .notes-accent-custom,
+.dark .notes-page .notes-accent-custom {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--choice-accent) 18%, #211D38), rgba(48, 43, 77, 0.86)),
+    linear-gradient(90deg, color-mix(in srgb, var(--choice-accent) 24%, transparent), transparent 62%) !important;
+  border-color: color-mix(in srgb, var(--choice-accent) 38%, #4A4568) !important;
+}
+
+:root.dark .notes-page .notes-accent-custom__preview,
+.dark .notes-page .notes-accent-custom__preview {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.36), transparent),
+    var(--choice-accent) !important;
+  border-color: rgba(247, 245, 255, 0.86) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--choice-accent) 58%, #F7F5FF), 0 0 26px color-mix(in srgb, var(--choice-accent) 48%, transparent) !important;
+}
+
+:root.dark .notes-page .notes-accent-custom__text span:first-child,
+.dark .notes-page .notes-accent-custom__text span:first-child {
+  color: #F7F5FF !important;
+}
+
+:root.dark .notes-page .notes-accent-custom__text span:last-child,
+.dark .notes-page .notes-accent-custom__text span:last-child {
+  color: color-mix(in srgb, var(--choice-accent) 74%, #F7F5FF) !important;
+}
+
+:root.dark .notes-page .notes-accent-custom__button,
+.dark .notes-page .notes-accent-custom__button {
+  background: rgba(33, 29, 56, 0.72) !important;
+  border-color: color-mix(in srgb, var(--choice-accent) 42%, #4A4568) !important;
+  color: color-mix(in srgb, var(--choice-accent) 74%, #F7F5FF) !important;
+}
+
+/* Hard paint accent swatches after dark surface resets */
+.notes-page .notes-accent-choice__swatch,
+.notes-page .notes-accent-custom__preview,
+:root.dark .notes-page .notes-accent-choice__swatch,
+:root.dark .notes-page .notes-accent-custom__preview,
+.dark .notes-page .notes-accent-choice__swatch,
+.dark .notes-page .notes-accent-custom__preview {
+  display: block !important;
+  opacity: 1 !important;
+  background-color: var(--choice-accent, #12c4c4) !important;
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 52%),
+    radial-gradient(circle at 68% 72%, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0) 42%) !important;
+  border-color: rgba(247, 245, 255, 0.9) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 0 0 1px color-mix(in srgb, var(--choice-accent, #12c4c4) 64%, #F7F5FF),
+    0 0 22px color-mix(in srgb, var(--choice-accent, #12c4c4) 46%, transparent) !important;
+}
+
+.notes-page .notes-accent-choice--cyan .notes-accent-choice__swatch {
+  --choice-accent: #12c4c4;
+}
+
+.notes-page .notes-accent-choice--violet .notes-accent-choice__swatch {
+  --choice-accent: #7c4dff;
+}
+
+.notes-page .notes-accent-choice--emerald .notes-accent-choice__swatch {
+  --choice-accent: #24b47e;
+}
+
+.notes-page .notes-accent-choice--amber .notes-accent-choice__swatch {
+  --choice-accent: #f2a51a;
+}
+
+.notes-page .notes-accent-choice--rose .notes-accent-choice__swatch {
+  --choice-accent: #e15b8f;
+}
+
+/* Solid accent swatch colors */
+.notes-accent-choice__swatch,
+.notes-accent-custom__preview,
+.dark .notes-accent-choice__swatch,
+.dark .notes-accent-custom__preview,
+:root.dark .notes-accent-choice__swatch,
+:root.dark .notes-accent-custom__preview {
+  background-image: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.notes-accent-choice--cyan .notes-accent-choice__swatch,
+.dark .notes-accent-choice--cyan .notes-accent-choice__swatch,
+:root.dark .notes-accent-choice--cyan .notes-accent-choice__swatch {
+  background: #12c4c4 !important;
+  background-color: #12c4c4 !important;
+}
+
+.notes-accent-choice--violet .notes-accent-choice__swatch,
+.dark .notes-accent-choice--violet .notes-accent-choice__swatch,
+:root.dark .notes-accent-choice--violet .notes-accent-choice__swatch {
+  background: #7c4dff !important;
+  background-color: #7c4dff !important;
+}
+
+.notes-accent-choice--emerald .notes-accent-choice__swatch,
+.dark .notes-accent-choice--emerald .notes-accent-choice__swatch,
+:root.dark .notes-accent-choice--emerald .notes-accent-choice__swatch {
+  background: #24b47e !important;
+  background-color: #24b47e !important;
+}
+
+.notes-accent-choice--amber .notes-accent-choice__swatch,
+.dark .notes-accent-choice--amber .notes-accent-choice__swatch,
+:root.dark .notes-accent-choice--amber .notes-accent-choice__swatch {
+  background: #f2a51a !important;
+  background-color: #f2a51a !important;
+}
+
+.notes-accent-choice--rose .notes-accent-choice__swatch,
+.dark .notes-accent-choice--rose .notes-accent-choice__swatch,
+:root.dark .notes-accent-choice--rose .notes-accent-choice__swatch {
+  background: #e15b8f !important;
+  background-color: #e15b8f !important;
+}
+
+.notes-accent-custom__preview,
+.dark .notes-accent-custom__preview,
+:root.dark .notes-accent-custom__preview {
+  background: var(--choice-accent, #12c4c4) !important;
+  background-color: var(--choice-accent, #12c4c4) !important;
+}
+
+/* SVG fill layer for accent swatches */
+.notes-accent-choice__swatch,
+.notes-accent-custom__preview,
+.dark .notes-accent-choice__swatch,
+.dark .notes-accent-custom__preview,
+:root.dark .notes-accent-choice__swatch,
+:root.dark .notes-accent-custom__preview {
+  display: inline-grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+}
+
+.notes-accent-choice__swatch svg,
+.notes-accent-custom__preview svg,
+.dark .notes-accent-choice__swatch svg,
+.dark .notes-accent-custom__preview svg,
+:root.dark .notes-accent-choice__swatch svg,
+:root.dark .notes-accent-custom__preview svg {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  pointer-events: none;
+}
+
+.notes-accent-choice__swatch circle,
+.notes-accent-custom__preview rect,
+.dark .notes-accent-choice__swatch circle,
+.dark .notes-accent-custom__preview rect,
+:root.dark .notes-accent-choice__swatch circle,
+:root.dark .notes-accent-custom__preview rect {
+  opacity: 1 !important;
+  visibility: visible !important;
+}

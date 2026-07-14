@@ -2,6 +2,7 @@
 import { Ollama } from 'ollama';
 // import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import { createAiResponseFormatError } from '../utils/apiErrors.js'
 
 dotenv.config();
 
@@ -37,7 +38,11 @@ function getOllamaErrorMessage(error) {
 function parseJsonResponse(text) {
   const trimmed = text.trim();
   const fencedJson = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return JSON.parse(fencedJson ? fencedJson[1] : trimmed);
+  try {
+    return JSON.parse(fencedJson ? fencedJson[1] : trimmed)
+  } catch (error) {
+    throw createAiResponseFormatError(error)
+  }
 }
 
 async function createTextResponse(input, options = {}) {
@@ -116,7 +121,11 @@ async function createJsonResponse(input) {
     },
   });
 
-  return JSON.parse(text);
+  try {
+    return JSON.parse(fencedJson ? fencedJson[1] : trimmed)
+  } catch (error) {
+    throw createAiResponseFormatError(error)
+  }
 }
 
 */

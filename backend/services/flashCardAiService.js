@@ -1,6 +1,7 @@
 // import { GoogleGenAI } from '@google/genai';
 import { Ollama } from 'ollama';
 import dotenv from 'dotenv';
+import { createAiResponseFormatError } from '../utils/apiErrors.js'
 
 dotenv.config();
 
@@ -32,7 +33,11 @@ const TYPE_LABELS = {
 const parseJsonResponse = (text) => {
   const trimmed = String(text || '').trim();
   const fencedJson = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return JSON.parse(fencedJson ? fencedJson[1] : trimmed);
+  try {
+    return JSON.parse(fencedJson ? fencedJson[1] : trimmed)
+  } catch (error) {
+    throw createAiResponseFormatError(error)
+  }
 };
 
 const getOllamaErrorMessage = (error) => {

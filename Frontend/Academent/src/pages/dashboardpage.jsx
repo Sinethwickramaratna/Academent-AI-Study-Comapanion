@@ -6,6 +6,7 @@ import { logoutUser } from '../Services/authService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LoadingEffect from '../components/LoadingEffect';
 import TopBar from '../components/TopBar';
+import logo from '../assets/Logo/Logo.png';
 import { dashboardWindowItems, getDashboardRouteForTab, getDashboardTabForPath } from '../routes/windowRoutes';
 import { DEFAULT_DASHBOARD_DATA, subscribeDashboardData } from '../Services/dashboardService';
 import { markStudyPlannerEventCompleted, saveStudyPlannerEvent } from '../Services/studyPlannerService';
@@ -706,7 +707,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
         <header className="md:hidden flex items-center justify-between bg-surface-container-lowest border-b border-outline-variant/20 py-md px-gutter z-30 sticky top-0 shadow-sm">
           <div className="flex items-center gap-sm">
             <div className="w-8 h-8 rounded-lg ai-gradient flex items-center justify-center text-white">
-              <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>psychology</span>
+              <img alt="Academent AI Logo" className="w-7 h-7 object-contain" src={logo} />
             </div>
             <span className="font-headline-md text-primary font-black text-base leading-none">Academent AI</span>
           </div>

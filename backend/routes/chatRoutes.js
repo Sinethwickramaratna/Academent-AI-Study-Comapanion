@@ -1,36 +1,34 @@
-﻿import {generateResponse} from '../services/chatService.js';
+import { generateResponse } from '../services/chatService.js'
+import express from "express"
+import { getPublicErrorMessage } from '../utils/apiErrors.js'
 
-import express from "express";
+const router = express.Router()
 
-const router = express.Router();
-
-router.post("/", async (req, res) => {
+router.post("/", async function chatRoute(req, res) {
   try {
+    const { message, contextMaterials = [], history = [] } = req.body
 
-    const { message, contextMaterials = [], history = [] } = req.body;
-
-    if(!message){
+    if (!message) {
       return res.status(400).json({
         success: false,
         message: "Message is required",
-      });
+      })
     }
 
-    const reply = await generateResponse(message, { contextMaterials, history });
+    const reply = await generateResponse(message, { contextMaterials, history })
 
     res.status(200).json({
       success: true,
       response: reply,
-    });
-
-  }catch (error) {
-    console.error(error);
+    })
+  } catch (error) {
+    console.error(error)
 
     res.status(500).json({
       success: false,
-      message: error.message || "An error occurred while generating the response",
+      message: getPublicErrorMessage(error, "An error occurred while generating the response"),
     })
   }
-});
+})
 
-export default router;
+export default router

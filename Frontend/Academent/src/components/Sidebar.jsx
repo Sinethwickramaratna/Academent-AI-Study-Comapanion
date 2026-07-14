@@ -45,7 +45,7 @@ function Sidebar({
       {/* Logo and Premium Access */}
       <div className="mb-xxl flex items-center gap-sm px-sm mt-sm">
         <div className="w-15 h-15 rounded-xl bg-primary-fixed text-primary flex items-center justify-center font-bold text-sm shrink-0">
-          <img alt="Academent AI Logo" className="w-20 object-contain" src={logo} />
+          <img alt="Academent AI Logo" className="w-12 object-contain" src={logo} />
         </div>
         <div className="min-w-0 flex-1 overflow-hidden">
           <h1 className="font-headline-md text-lg font-black text-primary leading-none truncate">Academent AI</h1>

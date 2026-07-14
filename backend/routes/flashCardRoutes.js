@@ -1,24 +1,25 @@
-import express from 'express';
-import { generateFlashCards } from '../services/flashCardAiService.js';
+import express from 'express'
+import { generateFlashCards } from '../services/flashCardAiService.js'
+import { getPublicErrorMessage } from '../utils/apiErrors.js'
 
-const router = express.Router();
+const router = express.Router()
 
-router.post('/generate', async (req, res) => {
+router.post('/generate', async function generateFlashCardsRoute(req, res) {
   try {
-    const { sources, preferences } = req.body;
-    const data = await generateFlashCards({ sources, preferences });
+    const { sources, preferences } = req.body
+    const data = await generateFlashCards({ sources, preferences })
 
     res.json({
       success: true,
       data,
-    });
+    })
   } catch (error) {
-    console.error('Error generating flash cards:', error);
+    console.error('Error generating flash cards:', error)
     res.status(500).json({
       success: false,
-      error: error.message || 'An error occurred while generating flash cards',
-    });
+      error: getPublicErrorMessage(error, 'An error occurred while generating flash cards'),
+    })
   }
-});
+})
 
-export default router;
+export default router

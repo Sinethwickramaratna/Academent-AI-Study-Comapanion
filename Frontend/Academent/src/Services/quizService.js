@@ -13,6 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
+import { getApiErrorMessage } from "./apiErrorUtils";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
@@ -155,7 +156,7 @@ const callQuizApi = async (path, body) => {
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok || result.success === false) {
-    throw new Error(result.error || result.message || "Quiz API request failed");
+    throw new Error(getApiErrorMessage(result, "Quiz request could not be completed. Please try again."));
   }
 
   return result.data ?? result;

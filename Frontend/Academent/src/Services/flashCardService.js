@@ -12,6 +12,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
+import { getApiErrorMessage } from "./apiErrorUtils";
 import { getKnowledgeForMaterial } from "./quizService";
 import { applySm2Rating, createInitialSchedule, REVIEW_RATINGS } from "./spacedRepetitionService";
 
@@ -200,7 +201,7 @@ const createFlashCardApiError = (response, result = {}) => {
   const rateLimit = result.rateLimit || {};
   const retryAfterSeconds = Number(rateLimit.retryAfterSeconds) || parseRetryAfterSeconds(response.headers.get("Retry-After"));
   const resetAt = rateLimit.resetAt || (retryAfterSeconds ? new Date(Date.now() + retryAfterSeconds * 1000).toISOString() : null);
-  const message = result.error || result.message || "Flash card generation failed.";
+  const message = getApiErrorMessage(result, "Flash card generation could not be completed. Please try again.");
   const error = new Error(message);
 
   error.status = response.status;

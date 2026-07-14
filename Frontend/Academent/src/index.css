@@ -728,14 +728,14 @@ textarea::placeholder {
   border-color: var(--dark-border) !important;
 }
 
-.dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="dropdown"], [class*="menu__content"], [class*="toolbar"], [class*="shell"], [class*="workspace"], [class*="empty-state"], [class*="list-section"]):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]):not([class*="button"]):not([class*="primary"]) {
+.dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="dropdown"], [class*="menu__content"], [class*="toolbar"], [class*="shell"], [class*="workspace"], [class*="empty-state"], [class*="list-section"]):not(.notes-page *):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]):not([class*="button"]):not([class*="primary"]) {
   background-color: var(--dark-card) !important;
   border-color: var(--dark-border) !important;
   color: var(--dark-text);
 }
 
 
-.dark :where(aside, nav, [class*="sidebar"], [class*="side-nav"], [class*="topbar"], [class*="navigation"]):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]) {
+.dark :where(aside, [class*="sidebar"], [class*="side-nav"], [class*="topbar"], [class*="navigation"]):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]) {
   background-color: var(--dark-sidebar) !important;
   border-color: var(--dark-border) !important;
   color: var(--dark-text);
