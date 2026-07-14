@@ -118,11 +118,23 @@
   color: #8f173f;
 }
 
-.dark .quiz-page .quiz-difficulty-badge--hard {
-  background: rgba(255, 105, 150, 0.18);
-  color: #ffadc8;
+.dark .quiz-page .quiz-difficulty-badge--easy {
+  background: rgba(34, 197, 94, 0.16);
+  color: #bbf7d0;
+  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.34);
 }
 
+.dark .quiz-page .quiz-difficulty-badge--medium {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fde68a;
+  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.38);
+}
+
+.dark .quiz-page .quiz-difficulty-badge--hard {
+  background: rgba(244, 63, 94, 0.18);
+  color: #fecdd3;
+  box-shadow: inset 0 0 0 1px rgba(251, 113, 133, 0.36);
+}
 .quiz-type-badge {
   background: rgb(33 29 56);
   color: #7157a1;

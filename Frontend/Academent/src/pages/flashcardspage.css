@@ -155,6 +155,12 @@
   color: #fff;
   box-shadow: 0 16px 34px rgba(179, 38, 82, 0.2);
 }
+
+.flash-page :where(.material-symbols-outlined.flash-symbol--white),
+.flash-study-mode :where(.material-symbols-outlined.flash-symbol--white) {
+  color: #ffffff !important;
+}
+
 .flash-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2276,6 +2282,14 @@
   transition: transform 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
 }
 
+
+.flash-row-actions button:has(.flash-symbol--white) {
+  border-color: transparent;
+  background: #4d2b8c;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(77, 43, 140, 0.16);
+}
+
 .flash-row-actions .material-symbols-outlined {
   font-size: 1rem;
 }
@@ -2485,8 +2499,8 @@
   color: #D8D3EE !important;
 }
 
-.dark .flash-page :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]):not(.flash-next-symbol--white):not(.flash-flip-symbol),
-.dark .flash-study-mode :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]):not(.flash-next-symbol--white):not(.flash-flip-symbol) {
+.dark .flash-page :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]):not(.flash-symbol--white):not(.flash-next-symbol--white):not(.flash-flip-symbol),
+.dark .flash-study-mode :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]):not(.flash-symbol--white):not(.flash-next-symbol--white):not(.flash-flip-symbol) {
   color: #A178FF !important;
 }
 
@@ -2595,30 +2609,73 @@
   line-height: 1.14;
 }
 
-.dark .flash-page .flash-difficulty--easy {
+.dark .flash-page .flash-difficulty--easy,
+.dark .flash-page .flash-learning-status--learned {
   border-color: rgba(74, 222, 128, 0.34);
   background: rgba(34, 197, 94, 0.16);
   color: #bbf7d0;
 }
 
-.dark .flash-page .flash-ai-badge {
-  border-color: rgba(168, 139, 250, 0.36);
-  background: rgba(124, 58, 237, 0.2);
-  color: #ede9fe;
-}
-
+.dark .flash-page .flash-difficulty--medium,
 .dark .flash-page .flash-learning-status--due {
   border-color: rgba(251, 191, 36, 0.38);
   background: rgba(245, 158, 11, 0.18);
   color: #fde68a;
 }
 
+.dark .flash-page .flash-difficulty--hard {
+  border-color: rgba(251, 113, 133, 0.36);
+  background: rgba(244, 63, 94, 0.18);
+  color: #fecdd3;
+}
+
+.dark .flash-page .flash-ai-badge,
+.dark .flash-page .flash-learning-status--learning,
+.dark .flash-page .flash-difficulty--mixed {
+  border-color: rgba(168, 139, 250, 0.36);
+  background: rgba(124, 58, 237, 0.2);
+  color: #ede9fe;
+}
+
+.dark .flash-page .flash-learning-status--new {
+  border-color: rgba(96, 165, 250, 0.36);
+  background: rgba(59, 130, 246, 0.18);
+  color: #bfdbfe;
+}
+
 .dark .flash-page .flash-ai-badge .material-symbols-outlined {
   color: #ffffff !important;
 }
 
+.dark .flash-page .flash-row-actions button:has(.flash-symbol--white) {
+  border-color: transparent !important;
+  background: #4d2b8c !important;
+  color: #ffffff !important;
+}
+
+.dark .flash-page .flash-row-actions .material-symbols-outlined.flash-symbol--white,
+.dark .flash-page .flash-ai-badge .material-symbols-outlined.flash-symbol--white,
+.dark .flash-page .flash-button .material-symbols-outlined.flash-symbol--white,
+.dark .flash-page .flash-empty-illustration .material-symbols-outlined.flash-symbol--white,
+.dark .flash-study-mode .material-symbols-outlined.flash-symbol--white {
+  color: #ffffff !important;
+}
+
+
+.dark .flash-page .flash-learning-status--learned .material-symbols-outlined {
+  color: #bbf7d0 !important;
+}
+
 .dark .flash-page .flash-learning-status--due .material-symbols-outlined {
   color: #fde68a !important;
+}
+
+.dark .flash-page .flash-learning-status--learning .material-symbols-outlined {
+  color: #ede9fe !important;
+}
+
+.dark .flash-page .flash-learning-status--new .material-symbols-outlined {
+  color: #bfdbfe !important;
 }
 
 .dark .flash-page .flash-card-tags span {

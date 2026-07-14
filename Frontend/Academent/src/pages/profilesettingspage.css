@@ -1345,3 +1345,25 @@
   background: #211D38;
   color: #F7F5FF;
 }
+
+:root.dark .profile-settings-page .profile-hero,
+.dark .profile-settings-page .profile-hero,
+.profile-settings-page--dark .profile-hero,
+:root.dark .profile-settings-page .profile-hero__copy,
+.dark .profile-settings-page .profile-hero__copy,
+.profile-settings-page--dark .profile-hero__copy {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+:root.dark .profile-settings-page .material-symbols-outlined,
+.dark .profile-settings-page .material-symbols-outlined,
+.profile-settings-page--dark .material-symbols-outlined {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
+}

@@ -147,6 +147,7 @@
 
 .analytics-stat,
 .analytics-card {
+  margin-top:50px;
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--analytics-border);
   border-radius: 18px;
@@ -432,11 +433,12 @@
 .module-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(180px, 1fr));
-  gap: 14px;
+  gap: 18px;
+  padding-top: 10px;
 }
 
 .module-card {
-  padding: 16px;
+  padding: 18px;
   border: 1px solid var(--module-border);
   border-radius: 16px;
   background: var(--module-bg);
@@ -446,7 +448,7 @@
 .module-meta {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
 }
 
 .module-card h3 {
@@ -464,7 +466,7 @@
 }
 
 .module-meta {
-  margin: 16px 0 12px;
+  margin: 22px 0 14px;
   color: var(--analytics-muted);
   font-size: 12px;
   font-weight: 700;
@@ -1200,6 +1202,27 @@
   --analytics-track-border: #4A4568;
 }
 
+:root.dark .analytics-page .difficulty-badges .easy,
+.dark .analytics-page .difficulty-badges .easy {
+  background: rgba(34, 197, 94, 0.16) !important;
+  color: #bbf7d0 !important;
+  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.34) !important;
+}
+
+:root.dark .analytics-page .difficulty-badges .medium,
+.dark .analytics-page .difficulty-badges .medium {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fde68a !important;
+  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.38) !important;
+}
+
+:root.dark .analytics-page .difficulty-badges .hard,
+.dark .analytics-page .difficulty-badges .hard {
+  background: rgba(244, 63, 94, 0.18) !important;
+  color: #fecdd3 !important;
+  box-shadow: inset 0 0 0 1px rgba(251, 113, 133, 0.36) !important;
+}
+
 :root.dark .analytics-page .analytics-stat,
 .dark .analytics-page .analytics-stat,
 :root.dark .analytics-page .mini-calendar,
@@ -1275,4 +1298,103 @@
 .dark .analytics-page .skeleton {
   background: linear-gradient(90deg, #242039 0%, #3A345A 45%, #242039 90%) !important;
   background-size: 220% 100% !important;
+}
+
+:root.dark .analytics-page .analytics-hero,
+.dark .analytics-page .analytics-hero,
+:root.dark .analytics-page .analytics-hero :where(*),
+.dark .analytics-page .analytics-hero :where(*) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+:root.dark .analytics-page .analytics-hero .analytics-range,
+.dark .analytics-page .analytics-hero .analytics-range {
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid rgba(247, 245, 255, 0.28) !important;
+  border-radius: 16px;
+  background: rgba(48, 43, 77, 0.78) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+}
+
+:root.dark .analytics-page .analytics-hero .analytics-range button,
+.dark .analytics-page .analytics-hero .analytics-range button,
+:root.dark .analytics-page .analytics-hero .analytics-export,
+.dark .analytics-page .analytics-hero .analytics-export {
+  min-height: 42px;
+  border: 1px solid rgba(247, 245, 255, 0.24) !important;
+  border-radius: 12px;
+  background: rgba(33, 29, 56, 0.92) !important;
+  color: #F7F5FF !important;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+:root.dark .analytics-page .analytics-hero .analytics-range button:hover,
+.dark .analytics-page .analytics-hero .analytics-range button:hover,
+:root.dark .analytics-page .analytics-hero .analytics-range button.is-active,
+.dark .analytics-page .analytics-hero .analytics-range button.is-active {
+  border-color: #FFE873 !important;
+  background: rgba(255, 232, 115, 0.16) !important;
+  color: #FFE873 !important;
+  box-shadow: inset 0 -2px 0 #FFE873 !important;
+}
+
+:root.dark .analytics-page .analytics-hero .analytics-export,
+.dark .analytics-page .analytics-hero .analytics-export {
+  border-color: rgba(255, 232, 115, 0.7) !important;
+  background: linear-gradient(135deg, #FFE873, #F2B544) !important;
+  color: #321B0A !important;
+}
+
+:root.dark .analytics-page .analytics-hero .analytics-export:hover,
+.dark .analytics-page .analytics-hero .analytics-export:hover {
+  border-color: #FFE873 !important;
+  color: #321B0A !important;
+  box-shadow: 0 10px 22px rgba(242, 181, 68, 0.22) !important;
+}
+
+:root.dark .analytics-page .analytics-hero .analytics-kicker,
+.dark .analytics-page .analytics-hero .analytics-kicker {
+  background: rgba(255, 232, 115, 0.18) !important;
+  background-color: rgba(255, 232, 115, 0.18) !important;
+  color: #FFE873 !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 232, 115, 0.22) !important;
+}
+
+:root.dark .analytics-page .analytics-change,
+.dark .analytics-page .analytics-change {
+  border: 1px solid rgba(247, 245, 255, 0.18) !important;
+  background: rgba(48, 43, 77, 0.92) !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+}
+
+:root.dark .analytics-page .analytics-change .material-symbols-outlined,
+.dark .analytics-page .analytics-change .material-symbols-outlined {
+  color: currentColor !important;
+}
+
+:root.dark .analytics-page .analytics-change--up,
+.dark .analytics-page .analytics-change--up {
+  border-color: rgba(52, 211, 153, 0.46) !important;
+  background: rgba(16, 185, 129, 0.22) !important;
+  color: #6EE7B7 !important;
+}
+
+:root.dark .analytics-page .analytics-change--down,
+.dark .analytics-page .analytics-change--down {
+  border-color: rgba(251, 113, 133, 0.48) !important;
+  background: rgba(244, 63, 94, 0.24) !important;
+  color: #FDA4AF !important;
+}
+
+:root.dark .analytics-page .analytics-change--neutral,
+.dark .analytics-page .analytics-change--neutral {
+  border-color: rgba(203, 213, 225, 0.4) !important;
+  background: rgba(100, 116, 139, 0.28) !important;
+  color: #E2E8F0 !important;
 }
