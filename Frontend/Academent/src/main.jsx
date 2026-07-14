@@ -10,8 +10,11 @@ import { AuthProvider } from './context/AuthContext'
 import './index.css'
 // Import the core App component
 import App from './App.jsx'
+import { applyThemeMode, getStoredThemeMode } from './utils/theme'
 
 // Find the HTML root element and render the application tree
+applyThemeMode(getStoredThemeMode())
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     {/* AuthProvider supplies current user & loading state to the rest of the application */}

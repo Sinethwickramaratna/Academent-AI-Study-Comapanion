@@ -599,6 +599,10 @@
   color: #F7F5FF !important;
 }
 
+.dark .login-page .login-page__textButton:hover {
+  background-color: transparent !important;
+}
+
 .dark .login-page :where(h1, h2, h3, h4, h5, h6, strong, label, .text-on-surface, .text-slate-900, .text-gray-900, .text-black) {
   color: #F7F5FF !important;
 }
