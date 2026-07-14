@@ -109,14 +109,14 @@ function SignupPage({ onSignIn, onSignupComplete }) {
 
 
   return (
-    <div className="min-h-screen w-full flex items-stretch overflow-hidden bg-background font-body-md">
+    <div className="signup-page min-h-screen w-full flex items-stretch overflow-hidden bg-background font-body-md">
       {/* Left Branding & Illustration Section (50%) */}
-      <section className="hidden lg:flex w-[50%] relative gradient-bg overflow-hidden flex-col justify-between p-xxl">
+      <section className="signup-page__hero hidden lg:flex w-[50%] relative gradient-bg overflow-hidden flex-col justify-between p-xxl">
         {/* WebGL Shader Background */}
         <WebGLBackground opacity={0.3} />
 
         {/* Abstract Background Grid Pattern */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <div className="signup-page__grid absolute inset-0 opacity-10 pointer-events-none">
           <svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern height="40" id="grid" patternUnits="userSpaceOnUse" width="40">
@@ -128,7 +128,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
         </div>
 
         {/* Header Logo */}
-        <div className="relative z-10 flex items-center gap-3">
+        <div className="signup-page__brand relative z-10 flex items-center gap-3">
           <img
             alt="Academent AI Logo"
             className="h-10 w-10 bg-white rounded-lg p-2 object-contain"
@@ -140,7 +140,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
         </div>
 
         {/* Main Content */}
-        <div className="relative z-10 max-w-2xl mt-xl mb-[10px]">
+        <div className="signup-page__heroContent relative z-10 max-w-2xl mt-xl mb-[10px]">
           <h1 className="font-display-lg text-display-lg text-white mb-lg leading-tight">
             Start Learning<br />
             <span className="text-tertiary-fixed-dim">Smarter Today</span>
@@ -176,7 +176,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
           </ul>
 
           {/* Illustration Area */}
-          <div className="relative mt-xxl">
+          <div className="signup-page__illustrationWrap relative mt-xxl">
             <img
               alt="AI Learning Hub Illustration"
               className="w-4/5 h-auto drop-shadow-2xl"
@@ -184,7 +184,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
             />
             {/* Floating Cards */}
             <div
-              className="absolute -top-10 -right-4 glass-card p-md rounded-2xl shadow-xl floating-card animate-fade-in-up"
+              className="signup-page__floatingCard absolute -top-10 -right-4 glass-card p-md rounded-2xl shadow-xl floating-card animate-fade-in-up"
               style={{ animationDelay: '0.1s' }}
             >
               <div className="flex items-center gap-3">
@@ -206,7 +206,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
             </div>
 
             <div
-              className="absolute top-1/2 -left-12 glass-card p-md rounded-2xl shadow-xl floating-card animate-fade-in-up"
+              className="signup-page__floatingCard absolute top-1/2 -left-12 glass-card p-md rounded-2xl shadow-xl floating-card animate-fade-in-up"
               style={{ animationDelay: '0.3s' }}
             >
               <div className="flex items-center gap-3">
@@ -230,7 +230,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
             </div>
 
             <div
-              className="absolute bottom-10 right-20 glass-card p-md rounded-2xl shadow-xl floating-card animate-fade-in-up"
+              className="signup-page__floatingCard absolute bottom-10 right-20 glass-card p-md rounded-2xl shadow-xl floating-card animate-fade-in-up"
               style={{ animationDelay: '0.5s' }}
             >
               <div className="flex items-center gap-3">
@@ -259,17 +259,17 @@ function SignupPage({ onSignIn, onSignupComplete }) {
         </p>
       </section>
 
-      {/* Right Sign-up Form Section (40%) */}
-      <section className="w-full lg:w-[50%] bg-surface flex flex-col items-center justify-center p-gutter md:p-xxl overflow-y-auto">
-        <div className="lg:hidden flex items-center gap-3 mb-xl">
+      {/* Right Sign-up Form Section (50%) */}
+      <section className="signup-page__formShell w-full lg:w-[50%] bg-surface flex flex-col items-center justify-center p-gutter md:p-xxl overflow-y-auto">
+        <div className="signup-page__mobileBrand lg:hidden flex items-center gap-3 mb-xl">
           <img alt="Academent AI Logo" className="h-8 w-8 object-contain" src={logo} />
           <span className="font-headline-md text-headline-md font-extrabold text-primary">
             Academent AI
           </span>
         </div>
 
-        <form onSubmit={handleMainCTA} className="w-full max-w-[500px] animate-fade-in-up">
-          <div className="mb-xl">
+        <form onSubmit={handleMainCTA} className="signup-page__card w-full max-w-[500px] animate-fade-in-up">
+          <div className="signup-page__headingBlock mb-xl">
             <h2 className="font-headline-lg text-headline-lg text-on-surface mb-xs">
               Create your account
             </h2>
@@ -316,7 +316,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-12 bg-surface-container-low rounded-2xl"
-                placeholder="????????????????????????"
+                placeholder="Enter your password"
               />
 
               {/* Password Strength */}
@@ -336,7 +336,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
 
           <div className="mt-xl space-y-md">
             {errorMessage && (
-              <div className="rounded-2xl bg-error/10 px-md py-sm text-error font-label-md text-label-md">
+              <div className="signup-page__error rounded-2xl bg-error/10 px-md py-sm text-error font-label-md text-label-md">
                 {errorMessage}
               </div>
             )}
@@ -344,7 +344,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
             <button
               disabled={isSubmitting}
               type="submit"
-              className={`w-full h-14 text-white rounded-3xl font-headline-md text-headline-md shadow-lg flex items-center justify-center transition-all ${
+              className={`signup-page__primary w-full h-14 text-white rounded-3xl font-headline-md text-headline-md shadow-lg flex items-center justify-center transition-all ${
                 isSubmitted ? 'bg-[#e49f1d]' : 'btn-primary-gradient'
               }`}
             >
@@ -361,7 +361,7 @@ function SignupPage({ onSignIn, onSignupComplete }) {
               onClick={handleGoogleSignup}
               type="button"
               disabled={isSubmitting || isSubmitted}
-              className="w-full h-14 bg-white border border-outline-variant rounded-3xl font-label-md text-label-md text-on-surface flex items-center justify-center gap-3 hover:bg-surface-container-low transition-all btn-social disabled:opacity-50"
+              className="signup-page__google w-full h-14 bg-white border border-outline-variant rounded-3xl font-label-md text-label-md text-on-surface flex items-center justify-center gap-3 hover:bg-surface-container-low transition-all btn-social disabled:opacity-50"
             >
               <img
                 alt="Google Logo"
@@ -372,18 +372,18 @@ function SignupPage({ onSignIn, onSignupComplete }) {
             </button>
           </div>
 
-          <p className="mt-xl text-center font-body-md text-body-md text-on-surface-variant font-medium">
+          <p className="signup-page__signin mt-xl text-center font-body-md text-body-md text-on-surface-variant font-medium">
             Already have an account?{' '}
             <button
               type="button"
               onClick={onSignIn}
-              className="text-primary font-bold hover:underline"
+              className="signup-page__textButton text-primary font-bold hover:underline"
             >
               Sign In
             </button>
           </p>
 
-          <div className="mt-xxl pt-lg border-t border-outline-variant/20 flex justify-center gap-xl text-on-surface-variant opacity-60">
+          <div className="signup-page__footerLinks mt-xxl pt-lg border-t border-outline-variant/20 flex justify-center gap-xl text-on-surface-variant opacity-60">
             <a className="font-label-sm text-label-sm hover:text-primary font-medium" href="#">
               Privacy Policy
             </a>

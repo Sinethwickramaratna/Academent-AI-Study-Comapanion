@@ -120,3 +120,162 @@
 :root.dark .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #4A4568 !important;
 }
+
+/* Signup page dark login match */
+.signup-page {
+  min-height: 100svh;
+}
+
+.signup-page__formShell,
+.signup-page__card {
+  position: relative;
+}
+
+.signup-page__card {
+  z-index: 1;
+}
+
+:root.dark .signup-page,
+.dark .signup-page {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(123, 92, 255, 0.14), transparent 28rem),
+    radial-gradient(circle at 84% 12%, rgba(242, 181, 68, 0.08), transparent 24rem),
+    linear-gradient(180deg, #211D38 0%, #1B1830 100%) !important;
+  color: #F7F5FF !important;
+  color-scheme: dark;
+}
+
+:root.dark .signup-page__hero,
+.dark .signup-page__hero {
+  background:
+    radial-gradient(circle at 78% 12%, rgba(242, 181, 68, 0.22), transparent 18rem),
+    radial-gradient(circle at 10% 82%, rgba(161, 120, 255, 0.24), transparent 22rem),
+    linear-gradient(135deg, #211D38 0%, #302B4D 58%, #4A3A24 120%) !important;
+  box-shadow: none !important;
+}
+
+:root.dark .signup-page__grid,
+.dark .signup-page__grid {
+  opacity: 0.04 !important;
+}
+
+:root.dark .signup-page__brand,
+:root.dark .signup-page__heroContent,
+:root.dark .signup-page__illustrationWrap,
+.dark .signup-page__brand,
+.dark .signup-page__heroContent,
+.dark .signup-page__illustrationWrap {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:root.dark .signup-page__formShell,
+.dark .signup-page__formShell {
+  background: #302B4D !important;
+  color: #F7F5FF !important;
+}
+
+:root.dark .signup-page__card,
+.dark .signup-page__card {
+  padding: 32px;
+  border: 1px solid #4A4568 !important;
+  border-radius: 24px;
+  background: #302B4D !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+:root.dark .signup-page__headingBlock h2,
+:root.dark .signup-page__card label,
+.dark .signup-page__headingBlock h2,
+.dark .signup-page__card label {
+  color: #F7F5FF !important;
+}
+
+:root.dark .signup-page__headingBlock p,
+:root.dark .signup-page__signin,
+:root.dark .signup-page__card .text-on-surface-variant,
+.dark .signup-page__headingBlock p,
+.dark .signup-page__signin,
+.dark .signup-page__card .text-on-surface-variant {
+  color: #D8D3EE !important;
+}
+
+:root.dark .signup-page__card input,
+.dark .signup-page__card input {
+  min-height: 56px;
+  border-color: #4A4568 !important;
+  background: #211D38 !important;
+  color: #F7F5FF !important;
+  box-shadow: none !important;
+}
+
+:root.dark .signup-page__card input:focus,
+.dark .signup-page__card input:focus {
+  border-color: #7B5CFF !important;
+  background: #211D38 !important;
+  box-shadow: 0 0 0 4px rgba(123, 92, 255, 0.14) !important;
+}
+
+:root.dark .signup-page__primary,
+.dark .signup-page__primary {
+  background: linear-gradient(135deg, #7B5CFF 0%, #A178FF 62%, #F2B544 120%) !important;
+  border-color: transparent !important;
+  color: #F7F5FF !important;
+}
+
+:root.dark .signup-page__google,
+.dark .signup-page__google {
+  background: #302B4D !important;
+  border-color: #4A4568 !important;
+  color: #F7F5FF !important;
+}
+
+:root.dark .signup-page__mobileBrand span,
+:root.dark .signup-page__textButton,
+:root.dark .signup-page__footerLinks a,
+.dark .signup-page__mobileBrand span,
+.dark .signup-page__textButton,
+.dark .signup-page__footerLinks a {
+  color: #A178FF !important;
+}
+
+:root.dark .signup-page__footerLinks,
+.dark .signup-page__footerLinks {
+  border-color: rgba(74, 69, 104, 0.72) !important;
+  opacity: 1 !important;
+}
+
+:root.dark .signup-page__floatingCard,
+.dark .signup-page__floatingCard {
+  background: rgba(33, 29, 56, 0.86) !important;
+  border-color: rgba(216, 211, 238, 0.22) !important;
+  color: #F7F5FF !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24) !important;
+}
+
+:root.dark .signup-page__floatingCard p,
+.dark .signup-page__floatingCard p {
+  color: #F7F5FF !important;
+}
+
+:root.dark .signup-page__floatingCard p + p,
+.dark .signup-page__floatingCard p + p {
+  color: #D8D3EE !important;
+}
+
+:root.dark .signup-page__error,
+.dark .signup-page__error {
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  background: rgba(220, 38, 38, 0.12) !important;
+  color: #FCA5A5 !important;
+}
+
+@media (max-width: 640px) {
+  :root.dark .signup-page__card,
+  .dark .signup-page__card {
+    padding: 24px;
+  }
+}

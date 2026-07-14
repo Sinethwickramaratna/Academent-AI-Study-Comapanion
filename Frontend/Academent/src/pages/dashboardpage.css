@@ -202,7 +202,7 @@
   --flash-ink: #F7F5FF;
   --flash-muted: #D8D3EE;
   --flash-border: #4A4568;
-  --flash-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+  --flash-shadow: 0 18px 48px rgba(0, 0, 0, 0.278);
   background:
     radial-gradient(circle at 12% 8%, rgba(123, 92, 255, 0.14), transparent 28rem),
     radial-gradient(circle at 84% 12%, rgba(242, 181, 68, 0.08), transparent 24rem),
@@ -213,10 +213,10 @@
 
 .dark .dashboard :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]),
 .dark .dashboard-home-window :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
-  background: #302B4D !important;
+  background: #231f37 !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.334) !important;
 }
 
 .dark .dashboard :where([class*="sidebar"], [class*="side-card"], [class*="topbar"], [class*="toolbar"], [class*="nav"]):not([class*="hero"]):not([class*="avatar"]),
@@ -228,7 +228,7 @@
 
 .dark .dashboard :where(input, textarea, select, [contenteditable="true"]),
 .dark .dashboard-home-window :where(input, textarea, select, [contenteditable="true"]) {
-  background: #211D38 !important;
+  background: #131120 !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
   box-shadow: none !important;
@@ -243,7 +243,7 @@
 
 .dark .dashboard :where(button:not([class*="primary"]):not([class*="danger"]):hover, [role="button"]:hover, .is-active, .is-selected, [aria-selected="true"]),
 .dark .dashboard-home-window :where(button:not([class*="primary"]):not([class*="danger"]):hover, [role="button"]:hover, .is-active, .is-selected, [aria-selected="true"]) {
-  background-color: #3A345A !important;
+  background-color: #221f36 !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
 }
@@ -260,7 +260,7 @@
 
 .dark .dashboard :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]),
 .dark .dashboard-home-window :where(a, .text-primary, .material-symbols-outlined, [class*="icon"]):not(.text-white):not([class*="danger"]) {
-  color: #A178FF !important;
+  color: #ffffff !important;
 }
 
 .dark .dashboard :where(.dashboard-home-hero, .analytics-hero, .profile-hero, .flash-header, .quiz-results-hero, .notes-section-header, .ai-tutor-header, .planner-hero, [class*="hero"]),
@@ -302,6 +302,6 @@
 
 .dark .dashboard :where([class*="row"], [class*="item"], [class*="option"], [class*="answer"], [class*="choice"], [class*="chip"]):hover:not([class*="primary"]):not([class*="danger"]),
 .dark .dashboard-home-window :where([class*="row"], [class*="item"], [class*="option"], [class*="answer"], [class*="choice"], [class*="chip"]):hover:not([class*="primary"]):not([class*="danger"]) {
-  background-color: #3A345A !important;
+  background-color: #1f1c31 !important;
 }
 
