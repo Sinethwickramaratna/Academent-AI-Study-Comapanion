@@ -884,6 +884,18 @@
   font-weight: 800;
 }
 
+.dark .ai-tutor-page .ai-composer-meta,
+:root.dark .ai-tutor-page .ai-composer-meta {
+  color: #ffffff !important;
+}
+
+.dark .ai-tutor-page .ai-attach-button .material-symbols-outlined,
+.dark .ai-tutor-page .ai-send-button .material-symbols-outlined,
+:root.dark .ai-tutor-page .ai-attach-button .material-symbols-outlined,
+:root.dark .ai-tutor-page .ai-send-button .material-symbols-outlined {
+  color: #ffffff !important;
+}
+
 .ai-context-panel {
   position: relative;
   display: flex;
@@ -1153,8 +1165,60 @@
   padding-left: 0.6rem;
 }
 
-.ai-material-file input {
-  accent-color: var(--ai-primary);
+.ai-material-file input[type="checkbox"] {
+  appearance: none;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 2px solid rgba(77, 43, 140, 0.36);
+  border-radius: 5px;
+  background: #ffffff !important;
+  cursor: pointer;
+}
+
+
+.ai-material-file input[type="checkbox"]:checked {
+  border-color: var(--ai-primary);
+  background: var(--ai-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E") center / 13px 13px no-repeat !important;
+}
+
+
+.dark .ai-tutor-page .ai-material-file input[type="checkbox"],
+:root.dark .ai-tutor-page .ai-material-file input[type="checkbox"] {
+  border-color: #A178FF !important;
+  background: #211D38 !important;
+}
+
+.dark .ai-tutor-page .ai-material-file input[type="checkbox"]:checked,
+:root.dark .ai-tutor-page .ai-material-file input[type="checkbox"]:checked {
+  border-color: #A178FF !important;
+  background: #A178FF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E") center / 13px 13px no-repeat !important;
+}
+
+.ai-material-file:has(input:checked) {
+  border: 1px solid rgba(77, 43, 140, 0.38);
+  background: rgba(77, 43, 140, 0.1);
+  color: var(--ai-primary);
+  box-shadow: inset 0 0 0 1px rgba(77, 43, 140, 0.12);
+}
+
+.ai-material-file:has(input:checked) .material-symbols-outlined {
+  color: var(--ai-primary);
+}
+
+.dark .ai-tutor-page .ai-material-file:has(input:checked),
+:root.dark .ai-tutor-page .ai-material-file:has(input:checked) {
+  border-color: #A178FF !important;
+  background: rgba(123, 92, 255, 0.22) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(161, 120, 255, 0.42) !important;
+}
+
+.dark .ai-tutor-page .ai-material-file:has(input:checked) .material-symbols-outlined,
+:root.dark .ai-tutor-page .ai-material-file:has(input:checked) .material-symbols-outlined {
+  color: #ffffff !important;
 }
 
 .ai-material-empty,
@@ -1854,11 +1918,40 @@ select:focus-visible,
   border-color: #4A4568 !important;
 }
 
-.dark .ai-tutor-page :where(.ai-chat-shell, .ai-chat-stage, .ai-empty-state, .ai-composer-shell, .ai-composer),
-:root.dark .ai-tutor-page :where(.ai-chat-shell, .ai-chat-stage, .ai-empty-state, .ai-composer-shell, .ai-composer) {
+.dark .ai-tutor-page :where(.ai-chat-shell, .ai-chat-stage, .ai-empty-state, .ai-composer),
+:root.dark .ai-tutor-page :where(.ai-chat-shell, .ai-chat-stage, .ai-empty-state, .ai-composer) {
   background: transparent !important;
   box-shadow: none !important;
 }
+.ai-tutor-page .ai-composer-shell {
+  border: 1px solid var(--ai-line) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: 0 24px 70px rgba(77, 43, 140, 0.22) !important;
+}
+
+.ai-tutor-page .ai-composer {
+  border: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .ai-tutor-page .ai-composer-shell,
+:root.dark .ai-tutor-page .ai-composer-shell {
+  border-color: #4A4568 !important;
+  background: #302B4D !important;
+  background-color: #302B4D !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
+}
+
+.dark .ai-tutor-page .ai-composer,
+:root.dark .ai-tutor-page .ai-composer {
+  border: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
 /* Academent dark surface smoothing */
 .dark .ai-tutor-page :where([class*="content"], [class*="body"], [class*="copy"], [class*="meta"], [class*="group"], [class*="grid"], [class*="section"], [class*="header"], [class*="list"], [class*="details"], [class*="stats"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]) {
   background: transparent !important;
