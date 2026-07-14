@@ -114,8 +114,8 @@
 }
 
 .quiz-difficulty-badge--hard {
-  background: rgba(201, 45, 92, 0.11);
-  color: #b32652;
+  background: rgba(255, 105, 150, 0.18);
+  color: #ffadc8;
 }
 
 .quiz-type-badge {
@@ -124,8 +124,8 @@
 }
 
 .quiz-date {
-  background: rgba(77, 43, 140, 0.08);
-  color: #4d2b8c;
+  background: rgb(33 29 56);
+  color: #a182d9;
 }
 
 .quiz-card__meta {
@@ -167,7 +167,7 @@
 .quiz-score-pill {
   align-self: flex-start;
   background: linear-gradient(135deg, rgba(77, 43, 140, 0.1), rgba(242, 181, 68, 0.16));
-  color: #4d2b8c;
+  color: #c7afff;
 }
 
 .quiz-progress-block {
@@ -1223,7 +1223,7 @@
   color-scheme: dark;
 }
 
-.dark .quiz-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.quiz-attempt-shell):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
+.dark .quiz-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.quiz-attempt-shell):not(.quiz-card-grid):not(.quiz-card__top):not(.quiz-card__meta):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
   background: #302B4D !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
@@ -1302,7 +1302,7 @@
   box-shadow: none !important;
 }
 
-.dark .quiz-page :where([class*="row"], [class*="item"], [class*="chip"], [class*="option"], [class*="answer"], [class*="choice"], [class*="tree-row"], [class*="material-row"], [class*="note-card"], [class*="pdf-card"], [class*="task"]):not(.quiz-difficulty-choice):not(button):not([role="button"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]):not([class*="primary"]):not([class*="danger"]):not(.is-active):not(.is-selected) {
+.dark .quiz-page :where([class*="row"], [class*="item"], [class*="chip"], [class*="option"], [class*="answer"], [class*="choice"], [class*="tree-row"], [class*="material-row"], [class*="note-card"], [class*="pdf-card"], [class*="task"]):not(.quiz-short-answer):not(.quiz-difficulty-choice):not(button):not([role="button"]):not([class*="card"]):not([class*="panel"]):not([class*="modal"]):not([class*="primary"]):not([class*="danger"]):not(.is-active):not(.is-selected) {
   background: transparent !important;
   box-shadow: none !important;
 }
@@ -1359,3 +1359,7 @@
   box-shadow: 0 0 0 3px rgba(255, 232, 115, 0.3) !important;
   opacity: 1;
 }
+
+
+
+
