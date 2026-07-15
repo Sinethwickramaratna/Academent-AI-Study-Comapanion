@@ -77,6 +77,8 @@ Ensure you have **Node.js** (v18.0.0+) and **npm** installed on your machine.
    ```env
    PORT=5000
    GEMINI_API_KEY=your_gemini_api_key_here
+   FIREBASE_PROJECT_ID=your_firebase_project_id
+   FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}
    ```
 4. Start the backend server:
    ```bash

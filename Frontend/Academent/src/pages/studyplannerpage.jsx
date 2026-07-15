@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import useNoteManagement from '../Services/useNoteManagement';
 import ReminderSelector from '../components/notifications/ReminderSelector';
-import { describeReminders } from '../Services/reminderService';
+import { END_TIME_REMINDER_ID, describeReminders, isEndTimeReminder } from '../Services/reminderService';
 import {
   deleteStudyPlannerEvent,
   markStudyPlannerEventCompleted,
@@ -23,6 +23,7 @@ const MINUTES_IN_DAY = HOURS_IN_DAY * 60;
 const HOUR_ROW_HEIGHT = 88;
 const DEFAULT_EVENT_DURATION_MINUTES = 60;
 const MIN_TIMED_EVENT_HEIGHT = 38;
+const PLANNER_CREATE_REQUEST_STORAGE_KEY = 'academent_planner_create_request';
 const formatHourLabel = (hour) => {
   const hour12 = hour % 12 || 12;
   return `${hour12} ${hour < 12 ? 'AM' : 'PM'}`;
@@ -48,10 +49,52 @@ const toDateInput = (date) => {
   copy.setMinutes(copy.getMinutes() - copy.getTimezoneOffset());
   return copy.toISOString().slice(0, 10);
 };
+const fromDateInput = (value) => {
+  const [year, month, day] = String(value || '').split('-').map(Number);
+  return Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)
+    ? new Date(year, month - 1, day)
+    : null;
+};
 const addDays = (date, days) => {
   const copy = new Date(date);
   copy.setDate(copy.getDate() + days);
   return copy;
+};
+const toDateValue = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value.toDate === 'function') return value.toDate();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+const startOfDay = (value = new Date()) => {
+  const date = toDateValue(value) || new Date();
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+};
+const combineDateTime = (dateInput, time = '00:00') => {
+  const date = fromDateInput(dateInput);
+  if (!date) return null;
+  const [hours = 0, minutes = 0] = String(time || '00:00').split(':').map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  date.setHours(hours, minutes, 0, 0);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+const toTimeInput = (date) => `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+const toDateInputOrEmpty = (value) => {
+  const date = toDateValue(value);
+  return date ? toDateInput(date) : '';
+};
+const eventStartDateTime = (event = {}) => toDateValue(event.startAt) || combineDateTime(event.date, event.startTime);
+const eventEndDateInput = (event = {}) => event.endDate || toDateInputOrEmpty(event.endAt) || event.date || '';
+const eventEndDateTime = (event = {}) => toDateValue(event.endAt) || combineDateTime(eventEndDateInput(event), event.endTime || event.startTime);
+const eventOverlapsDate = (event, date) => {
+  const dayStart = startOfDay(date);
+  const dayEnd = addDays(dayStart, 1);
+  const startAt = eventStartDateTime(event);
+  if (!startAt) return false;
+  const rawEndAt = eventEndDateTime(event);
+  const endAt = rawEndAt && rawEndAt > startAt ? rawEndAt : new Date(startAt.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60000);
+  return startAt < dayEnd && endAt > dayStart;
 };
 const slotToTime = (slot = '09:00') => {
   if (slot.includes(':')) return slot;
@@ -73,14 +116,48 @@ const minutesToTime = (minutes) => {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 };
 const addMinutesToTime = (time, minutes) => minutesToTime(timeToMinutes(time) + minutes);
+const addMinutesToDateTime = (dateInput, time, minutes) => {
+  const startAt = combineDateTime(dateInput, time);
+  if (!startAt) return { endDate: dateInput, endTime: addMinutesToTime(time, minutes) };
+  const endAt = new Date(startAt.getTime() + Math.max(0, Number(minutes || 0)) * 60000);
+  return { endDate: toDateInput(endAt), endTime: toTimeInput(endAt) };
+};
+const formatInputDateShort = (dateInput) => {
+  const date = fromDateInput(dateInput);
+  return date ? formatShortDate(date) : dateInput || '';
+};
+const formatEventTimeRange = (event = {}, includeStartDate = false) => {
+  const startDate = event.date || toDateInputOrEmpty(event.startAt);
+  const endDate = eventEndDateInput(event) || startDate;
+  const startDateText = formatInputDateShort(startDate);
+  const endDateText = formatInputDateShort(endDate);
+  const startTime = event.startTime || '00:00';
+  const endTime = event.endTime || startTime;
+  const prefix = includeStartDate && startDateText ? `${startDateText}, ` : '';
+  return startDate && endDate && endDate !== startDate
+    ? `${prefix}${startTime} - ${endDateText}, ${endTime}`
+    : `${prefix}${startTime} - ${endTime}`;
+};
 const getEventId = (event) => event.eventId || event.id || `${event.date}-${event.startTime}-${event.endTime}-${event.title}`;
-const buildTimedEventLayout = (dayEvents) => {
+const minutesSinceStartOfDay = (date, dayStart) => Math.min(MINUTES_IN_DAY, Math.max(0, Math.round((date.getTime() - dayStart.getTime()) / 60000)));
+const buildTimedEventLayout = (dayEvents, date) => {
+  const dayStart = startOfDay(date);
+  const dayEnd = addDays(dayStart, 1);
   const timedEvents = dayEvents.map((event, index) => {
-    const start = Math.min(MINUTES_IN_DAY - 1, timeToMinutes(event.startTime));
-    const rawEnd = timeToMinutes(event.endTime);
-    const end = rawEnd > start ? rawEnd : Math.min(MINUTES_IN_DAY, start + DEFAULT_EVENT_DURATION_MINUTES);
-    return { event, start, end, index };
-  }).sort((a, b) => a.start - b.start || a.end - b.end || a.index - b.index);
+    const startAt = eventStartDateTime(event);
+    if (!startAt) return null;
+    const rawEndAt = eventEndDateTime(event);
+    const endAt = rawEndAt && rawEndAt > startAt ? rawEndAt : new Date(startAt.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60000);
+    const clippedStart = new Date(Math.max(startAt.getTime(), dayStart.getTime()));
+    const clippedEnd = new Date(Math.min(endAt.getTime(), dayEnd.getTime()));
+    if (clippedEnd <= clippedStart) return null;
+    return {
+      event,
+      start: minutesSinceStartOfDay(clippedStart, dayStart),
+      end: minutesSinceStartOfDay(clippedEnd, dayStart),
+      index,
+    };
+  }).filter(Boolean).sort((a, b) => a.start - b.start || a.end - b.end || a.index - b.index);
 
   const groups = [];
   let currentGroup = [];
@@ -132,9 +209,24 @@ const getMonthDays = (date) => {
   });
 };
 const getWeekDays = (date) => Array.from({ length: 7 }, (_, index) => addDays(startOfWeek(date), index));
-const emptyEventForm = (date = new Date(), type = 'studyPlan') => ({
-  title: '', type, date: toDateInput(date), startTime: '09:00', endTime: '10:00', priority: 'medium', repeat: 'none', reminderMinutes: '30', reminders: [{ value: 30, unit: 'minutes' }], description: '', semesterId: '', moduleId: '', folderId: '', folderPath: [], selectedNoteIds: [], selectedPdfIds: [], studyTopic: '', studyGoals: '', durationMinutes: '60', status: 'pending',
-});
+const studyPlanEndReminder = () => ({ id: END_TIME_REMINDER_ID, value: 0, unit: 'minutes', trigger: 'end', isSystem: true });
+const defaultRemindersForType = (type) => [
+  { value: 30, unit: 'minutes' },
+  ...(type === 'studyPlan' ? [studyPlanEndReminder()] : []),
+];
+const syncRemindersForType = (type, reminders = []) => {
+  const withoutEndReminder = reminders.filter((reminder) => !isEndTimeReminder(reminder));
+  if (type !== 'studyPlan') return withoutEndReminder;
+  return reminders.some((reminder) => isEndTimeReminder(reminder))
+    ? reminders
+    : [...withoutEndReminder, studyPlanEndReminder()];
+};
+const emptyEventForm = (date = new Date(), type = 'studyPlan') => {
+  const dateInput = toDateInput(date);
+  return {
+    title: '', type, date: dateInput, endDate: dateInput, startTime: '09:00', endTime: '10:00', priority: 'medium', repeat: 'none', reminderMinutes: '30', reminders: defaultRemindersForType(type), description: '', semesterId: '', moduleId: '', folderId: '', folderPath: [], selectedNoteIds: [], selectedPdfIds: [], studyTopic: '', studyGoals: '', durationMinutes: '60', status: 'pending',
+  };
+};
 
 const flattenMaterials = (semesters = []) => {
   const materials = [];
@@ -267,6 +359,41 @@ function StudyPlannerPage({ profile, currentUser }) {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const storedRequest = window.sessionStorage.getItem(PLANNER_CREATE_REQUEST_STORAGE_KEY);
+    if (!storedRequest) return undefined;
+
+    window.sessionStorage.removeItem(PLANNER_CREATE_REQUEST_STORAGE_KEY);
+
+    let request = {};
+    try {
+      request = JSON.parse(storedRequest) || {};
+    } catch (error) {
+      console.warn('Could not read dashboard task creation request:', error);
+    }
+
+    const type = eventTypes[request.type] ? request.type : 'task';
+    const date = fromDateInput(request.date) || new Date();
+    const startTime = slotToTime(request.startTime || '09:00');
+    const defaultEnd = addMinutesToDateTime(toDateInput(date), startTime, type === 'studyPlan' ? 60 : 45);
+    let cancelled = false;
+
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      setCurrentDate(date);
+      setFilterType('all');
+      setEditingId(null);
+      setForm({ ...emptyEventForm(date, type), startTime, ...defaultEnd });
+      setFormErrors({});
+      setSelectedEvent(null);
+      setModalOpen(true);
+    });
+
+    return () => { cancelled = true; };
+  }, []);
+
   const filteredEvents = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return events.filter((event) => calendarVisibility[event.type]).filter((event) => filterType === 'all' || event.type === filterType).filter((event) => {
@@ -292,29 +419,34 @@ function StudyPlannerPage({ profile, currentUser }) {
     return formatMonth(currentDate);
   }, [currentDate, view]);
 
-  const eventsForDate = (date) => filteredEvents.filter((event) => event.date === toDateInput(date));
+  const eventsForDate = (date) => filteredEvents.filter((event) => eventOverlapsDate(event, date));
   const moduleTitle = (event) => noteIndex.modules.find((module) => module.value === event.moduleId)?.label || event.moduleId || 'No module selected';
   const eventMaterials = (event) => [...(event.selectedNoteIds || []).map((id) => materialMap.get(`note-${id}`) || { id, type: 'note', title: id }), ...(event.selectedPdfIds || []).map((id) => materialMap.get(`pdf-${id}`) || { id, type: 'pdf', title: id })];
 
   const openCreateModal = (date = currentDate, startLabel = '09:00', type = 'studyPlan') => {
     const startTime = slotToTime(startLabel);
+    const defaultEnd = addMinutesToDateTime(toDateInput(date), startTime, type === 'studyPlan' ? 60 : 45);
     setEditingId(null);
-    setForm({ ...emptyEventForm(date, type), startTime, endTime: addMinutesToTime(startTime, type === 'studyPlan' ? 60 : 45) });
+    setForm({ ...emptyEventForm(date, type), startTime, ...defaultEnd });
     setFormErrors({}); setSelectedEvent(null); setModalOpen(true);
   };
   const openEditModal = (event) => {
+    const startDate = event.date || toDateInputOrEmpty(event.startAt) || toDateInput(new Date());
     setEditingId(event.eventId || event.id);
-    setForm({ ...emptyEventForm(new Date(event.date), event.type), ...event, reminderMinutes: event.reminder?.enabled ? String(event.reminder.beforeMinutes || 30) : '0', reminders: Array.isArray(event.reminders) && event.reminders.length ? event.reminders : event.reminder?.enabled ? [{ value: Number(event.reminder.beforeMinutes || 30), unit: 'minutes' }] : [], durationMinutes: String(event.durationMinutes || 60), selectedNoteIds: event.selectedNoteIds || [], selectedPdfIds: event.selectedPdfIds || [] });
+    setForm({ ...emptyEventForm(fromDateInput(startDate) || new Date(), event.type), ...event, date: startDate, endDate: eventEndDateInput(event) || startDate, reminderMinutes: event.reminder?.enabled ? String(event.reminder.beforeMinutes || 30) : '0', reminders: Array.isArray(event.reminders) && event.reminders.length ? event.reminders : event.reminder?.enabled ? [{ value: Number(event.reminder.beforeMinutes || 30), unit: 'minutes' }] : [], durationMinutes: String(event.durationMinutes || 60), selectedNoteIds: event.selectedNoteIds || [], selectedPdfIds: event.selectedPdfIds || [] });
     setFormErrors({}); setSelectedEvent(null); setModalOpen(true);
   };
   const validateForm = () => {
     const errors = {};
     if (!form.title.trim()) errors.title = 'Add a title for this event.';
     if (!form.type) errors.type = 'Choose an event type.';
-    if (!form.date) errors.date = 'Choose a date.';
+    if (!form.date) errors.date = 'Choose a start date.';
+    if (!form.endDate) errors.endDate = 'Choose an end date.';
     if (!form.startTime) errors.startTime = 'Choose a start time.';
     if (!form.endTime) errors.endTime = 'Choose an end time.';
-    if (form.startTime && form.endTime && form.endTime <= form.startTime) errors.endTime = 'End time must be after start time.';
+    const startAt = form.date && form.startTime ? combineDateTime(form.date, form.startTime) : null;
+    const endAt = form.endDate && form.endTime ? combineDateTime(form.endDate, form.endTime) : null;
+    if (startAt && endAt && endAt <= startAt) errors.endTime = 'End date and time must be after the start date and time.';
     if (form.type === 'studyPlan' && !form.studyTopic.trim() && !form.studyGoals.trim() && !form.selectedNoteIds.length && !form.selectedPdfIds.length) errors.studyPlan = 'Add a topic, study goal, note, or PDF for this study plan.';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -363,7 +495,7 @@ function StudyPlannerPage({ profile, currentUser }) {
 
   const renderEventChip = (event, compact = false) => {
     const type = eventTypes[event.type] || eventTypes.task;
-    return <button key={getEventId(event)} type="button" className={`planner-event-chip ${compact ? 'compact' : ''} ${event.status === 'completed' ? 'completed' : ''}`} style={{ '--event-color': type.color, '--event-bg': type.bg }} onClick={(clickEvent) => { clickEvent.stopPropagation(); setSelectedEvent(event); }}><span className="material-symbols-outlined">{type.icon}</span><span className="planner-event-copy"><strong>{event.title}</strong>{!compact && <small>{event.startTime} - {event.endTime} - {moduleTitle(event)}</small>}</span></button>;
+    return <button key={getEventId(event)} type="button" className={`planner-event-chip ${compact ? 'compact' : ''} ${event.status === 'completed' ? 'completed' : ''}`} style={{ '--event-color': type.color, '--event-bg': type.bg }} onClick={(clickEvent) => { clickEvent.stopPropagation(); setSelectedEvent(event); }}><span className="material-symbols-outlined">{type.icon}</span><span className="planner-event-copy"><strong>{event.title}</strong>{!compact && <small>{formatEventTimeRange(event)} - {moduleTitle(event)}</small>}</span></button>;
   };
   const renderTimedEventBlock = ({ event, top, height, left, width, key }, density = 'day') => {
     const type = eventTypes[event.type] || eventTypes.task;
@@ -380,27 +512,49 @@ function StudyPlannerPage({ profile, currentUser }) {
           '--event-left': `${left}%`,
           '--event-width': `${width}%`,
         }}
-        aria-label={`${event.title}, ${event.startTime} to ${event.endTime}`}
+        aria-label={`${event.title}, ${formatEventTimeRange(event)}`}
         onClick={(clickEvent) => { clickEvent.stopPropagation(); setSelectedEvent(event); }}
       >
         <span className="material-symbols-outlined">{type.icon}</span>
         <span className="planner-event-copy">
           <strong>{event.title}</strong>
-          <small>{event.startTime} - {event.endTime}</small>
+          <small>{formatEventTimeRange(event)}</small>
           {density !== 'week' && <small>{moduleTitle(event)}</small>}
         </span>
       </button>
     );
   };
   const renderSkeleton = () => <div className="planner-skeleton-grid">{Array.from({ length: 12 }, (_, index) => <span key={index} />)}</div>;
-  const renderMonthView = () => <div className="planner-month-grid">{weekDays.map((day) => <div className="planner-day-name" key={day}>{day}</div>)}{monthDays.map((day) => { const dayEvents = eventsForDate(day.date); return <button type="button" key={day.key} className={`planner-date-cell ${day.currentMonth ? '' : 'muted'} ${day.today ? 'today' : ''}`} onClick={() => openCreateModal(day.date)}><span className="planner-date-number">{day.date.getDate()}</span><div className="planner-cell-events">{dayEvents.slice(0, 3).map((event) => renderEventChip(event, true))}{dayEvents.length > 3 && <span className="planner-more-events">+{dayEvents.length - 3} more</span>}</div></button>; })}</div>;
+  const renderMonthView = () => (
+    <div className="planner-month-grid">
+      {weekDays.map((day) => <div className="planner-day-name" key={day}>{day}</div>)}
+      {monthDays.map((day) => {
+        const dayEvents = eventsForDate(day.date);
+        return (
+          <div key={day.key} className={`planner-date-cell ${day.currentMonth ? '' : 'muted'} ${day.today ? 'today' : ''}`}>
+            <button
+              type="button"
+              className="planner-date-cell-action"
+              aria-label={`Create event on ${formatShortDate(day.date)}`}
+              onClick={() => openCreateModal(day.date)}
+            />
+            <span className="planner-date-number">{day.date.getDate()}</span>
+            <div className="planner-cell-events">
+              {dayEvents.slice(0, 3).map((event) => renderEventChip(event, true))}
+              {dayEvents.length > 3 && <span className="planner-more-events">+{dayEvents.length - 3} more</span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
   const renderWeekView = () => (
     <div className="planner-week-grid" style={{ '--timeline-height': `${DAY_TIMELINE_HEIGHT}px` }}>
       <div className="planner-time-spacer" />
       {weekDates.map((date) => <button key={date.toISOString()} className={`planner-week-heading ${sameDay(date, new Date()) ? 'today' : ''}`} type="button" onClick={() => { setCurrentDate(date); setView('Day'); }}><span>{weekDays[date.getDay()]}</span><strong>{date.getDate()}</strong></button>)}
       <div className="planner-week-time-column">{timeSlots.map((slot) => <div className="planner-time-label" key={`week-label-${slot}`}>{slot}</div>)}</div>
       {weekDates.map((date) => {
-        const layouts = buildTimedEventLayout(eventsForDate(date));
+        const layouts = buildTimedEventLayout(eventsForDate(date), date);
         return (
           <div className="planner-week-day-column" key={`week-column-${date.toISOString()}`}>
             {timeSlots.map((slot) => <button type="button" aria-label={`Schedule ${slot} on ${formatShortDate(date)}`} className="planner-time-cell" key={`${slot}-${date.toISOString()}`} onClick={() => openCreateModal(date, slot)} />)}
@@ -411,7 +565,7 @@ function StudyPlannerPage({ profile, currentUser }) {
     </div>
   );
   const renderDayView = () => {
-    const layouts = buildTimedEventLayout(eventsForDate(currentDate));
+    const layouts = buildTimedEventLayout(eventsForDate(currentDate), currentDate);
     return (
       <div className="planner-day-view" style={{ '--timeline-height': `${DAY_TIMELINE_HEIGHT}px` }}>
         <div className="planner-day-time-column">{timeSlots.map((slot) => <div className="planner-time-label" key={`day-label-${slot}`}>{slot}</div>)}</div>
@@ -422,7 +576,7 @@ function StudyPlannerPage({ profile, currentUser }) {
       </div>
     );
   };
-  const renderAgendaView = () => <div className="planner-agenda-list">{filteredEvents.map((event) => { const type = eventTypes[event.type] || eventTypes.task; return <button type="button" className="planner-agenda-item" key={event.eventId || event.id} onClick={() => setSelectedEvent(event)}><span className="planner-agenda-date">{formatShortDate(new Date(event.date))}</span><span className="planner-agenda-icon" style={{ background: type.bg, color: type.color }}><span className="material-symbols-outlined">{type.icon}</span></span><span className="planner-agenda-copy"><strong>{event.title}</strong><small>{event.startTime} - {event.endTime} - {moduleTitle(event)}</small></span><span className="planner-priority">{event.priority}</span></button>; })}</div>;
+  const renderAgendaView = () => <div className="planner-agenda-list">{filteredEvents.map((event) => { const type = eventTypes[event.type] || eventTypes.task; return <button type="button" className="planner-agenda-item" key={event.eventId || event.id} onClick={() => setSelectedEvent(event)}><span className="planner-agenda-date">{formatInputDateShort(event.date)}</span><span className="planner-agenda-icon" style={{ background: type.bg, color: type.color }}><span className="material-symbols-outlined">{type.icon}</span></span><span className="planner-agenda-copy"><strong>{event.title}</strong><small>{formatEventTimeRange(event)} - {moduleTitle(event)}</small></span><span className="planner-priority">{event.priority}</span></button>; })}</div>;
   const renderCalendarBody = () => {
     if (eventsLoading) return renderSkeleton();
     if (!filteredEvents.length) return <div className="planner-empty-state"><div className="planner-empty-illustration" aria-hidden="true"><span className="material-symbols-outlined">event_available</span><span className="planner-empty-dot one" /><span className="planner-empty-dot two" /></div><h3>No study plans yet</h3><p>Start by scheduling your first exam, assignment, task, or study session.</p><button type="button" onClick={() => openCreateModal(new Date())}><span className="material-symbols-outlined text-white planner-symbol--dark-light">add</span>Create Your First Plan</button></div>;
@@ -436,11 +590,11 @@ function StudyPlannerPage({ profile, currentUser }) {
     <main className="study-planner-page">
       {toast && <div className={`planner-toast ${toast.type}`}><span className="material-symbols-outlined">{toast.type === 'success' ? 'check_circle' : 'error'}</span>{toast.message}</div>}
       <section className="planner-topbar"><div><p className="planner-kicker">Academent calendar</p><h1>Study Planner</h1><p>Plan exams, assignments, tasks, and study sessions in one place.</p></div><div className="planner-header-actions"><label className="planner-search"><span className="material-symbols-outlined">search</span><input type="search" placeholder="Search scheduled events" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} /></label><button type="button" className="planner-create-button" onClick={() => openCreateModal(new Date())}><span className="material-symbols-outlined text-white planner-symbol--dark-light">add</span>Create Event</button><div className="planner-profile">{photoURL ? <img src={photoURL} alt="Student profile" /> : <span>{fullName.charAt(0).toUpperCase()}</span>}<div><strong>{fullName.split(' ')[0]}</strong><small>Realtime planner</small></div></div></div></section>
-      <section className="planner-shell"><aside className="planner-sidebar"><div className="planner-mini-calendar"><div className="planner-mini-header"><strong>{formatMonth(currentDate)}</strong><button type="button" onClick={() => setCurrentDate(new Date())}>Today</button></div><div className="planner-mini-grid">{weekDays.map((day) => <span key={day}>{day.slice(0, 1)}</span>)}{monthDays.slice(0, 35).map((day) => <button type="button" key={`mini-${day.key}`} className={`${day.currentMonth ? '' : 'muted'} ${sameDay(day.date, currentDate) ? 'selected' : ''}`} onClick={() => setCurrentDate(day.date)}>{day.date.getDate()}</button>)}</div></div><div className="planner-side-section"><h2>My Calendars</h2>{Object.keys(eventTypes).map((type) => <label className="planner-calendar-toggle" key={type}><input type="checkbox" checked={calendarVisibility[type]} onChange={() => setCalendarVisibility((state) => ({ ...state, [type]: !state[type] }))} /><span style={{ background: eventTypes[type].color }} />{eventTypes[type].plural}</label>)}</div><div className="planner-side-section"><h2>Upcoming Deadlines</h2><div className="planner-deadlines">{eventsLoading ? <p className="planner-side-muted">Loading deadlines...</p> : upcomingEvents.map((event) => <button type="button" key={event.eventId || event.id} onClick={() => setSelectedEvent(event)}><span style={{ background: eventTypes[event.type]?.bg, color: eventTypes[event.type]?.color }}><span className="material-symbols-outlined">{eventTypes[event.type]?.icon}</span></span><strong>{event.title}</strong><small>{formatShortDate(new Date(event.date))} - {event.startTime}</small></button>)}</div></div><div className="planner-side-section"><h2>Quick Create</h2><div className="planner-quick-buttons">{Object.entries(eventTypes).map(([type, meta]) => <button type="button" key={type} onClick={() => openCreateModal(currentDate, '09:00', type)}><span className="material-symbols-outlined">{meta.icon}</span>Add {meta.label}</button>)}</div></div></aside>
+      <section className="planner-shell"><aside className="planner-sidebar"><div className="planner-mini-calendar"><div className="planner-mini-header"><strong>{formatMonth(currentDate)}</strong><button type="button" onClick={() => setCurrentDate(new Date())}>Today</button></div><div className="planner-mini-grid">{weekDays.map((day) => <span key={day}>{day.slice(0, 1)}</span>)}{monthDays.slice(0, 35).map((day) => <button type="button" key={`mini-${day.key}`} className={`${day.currentMonth ? '' : 'muted'} ${sameDay(day.date, currentDate) ? 'selected' : ''}`} onClick={() => setCurrentDate(day.date)}>{day.date.getDate()}</button>)}</div></div><div className="planner-side-section"><h2>My Calendars</h2>{Object.keys(eventTypes).map((type) => <label className="planner-calendar-toggle" key={type}><input type="checkbox" checked={calendarVisibility[type]} onChange={() => setCalendarVisibility((state) => ({ ...state, [type]: !state[type] }))} /><span style={{ background: eventTypes[type].color }} />{eventTypes[type].plural}</label>)}</div><div className="planner-side-section"><h2>Upcoming Deadlines</h2><div className="planner-deadlines">{eventsLoading ? <p className="planner-side-muted">Loading deadlines...</p> : upcomingEvents.map((event) => <button type="button" key={event.eventId || event.id} onClick={() => setSelectedEvent(event)}><span style={{ background: eventTypes[event.type]?.bg, color: eventTypes[event.type]?.color }}><span className="material-symbols-outlined">{eventTypes[event.type]?.icon}</span></span><strong>{event.title}</strong><small>{formatEventTimeRange(event, true)}</small></button>)}</div></div><div className="planner-side-section"><h2>Quick Create</h2><div className="planner-quick-buttons">{Object.entries(eventTypes).map(([type, meta]) => <button type="button" key={type} onClick={() => openCreateModal(currentDate, '09:00', type)}><span className="material-symbols-outlined">{meta.icon}</span>Add {meta.label}</button>)}</div></div></aside>
         <section className="planner-calendar-panel"><div className="planner-toolbar"><div className="planner-toolbar-left"><button type="button" onClick={() => setCurrentDate(new Date())}>Today</button><div className="planner-nav-buttons"><button type="button" aria-label="Previous" onClick={() => setCurrentDate((date) => view === 'Day' ? addDays(date, -1) : view === 'Week' ? addDays(date, -7) : new Date(date.getFullYear(), date.getMonth() - 1, 1))}><span className="material-symbols-outlined">chevron_left</span></button><button type="button" aria-label="Next" onClick={() => setCurrentDate((date) => view === 'Day' ? addDays(date, 1) : view === 'Week' ? addDays(date, 7) : new Date(date.getFullYear(), date.getMonth() + 1, 1))}><span className="material-symbols-outlined">chevron_right</span></button></div><h2>{currentLabel}</h2></div><div className="planner-toolbar-right"><div className="planner-view-switcher">{['Month', 'Week', 'Day', 'Agenda'].map((option) => <button type="button" key={option} className={view === option ? 'active' : ''} onClick={() => setView(option)}>{option}</button>)}</div><CustomSelect value={filterType} options={filterOptions} onChange={setFilterType} placeholder="Filter events" icon="filter_list" /></div></div><div className="planner-calendar-body">{renderCalendarBody()}</div></section></section>
       <button type="button" className="planner-mobile-fab" aria-label="Create event" onClick={() => openCreateModal(new Date())}><span className="material-symbols-outlined text-white planner-symbol--dark-light">add</span></button>
-      {modalOpen && <div className="planner-modal-backdrop" role="presentation" onMouseDown={() => !saving && setModalOpen(false)}><form className="planner-modal" onSubmit={handleSave} onMouseDown={(event) => event.stopPropagation()}><div className="planner-modal-header"><div><p>{editingId ? 'Edit schedule' : 'Create schedule'}</p><h2>{form.type === 'studyPlan' ? 'Study Plan Scheduling' : 'Event Details'}</h2></div><button type="button" onClick={() => setModalOpen(false)} aria-label="Close modal" disabled={saving}><span className="material-symbols-outlined">close</span></button></div>{Object.keys(formErrors).length > 0 && <div className="planner-form-errors">{Object.values(formErrors).map((error) => <p key={error}>{error}</p>)}</div>}<div className="planner-form-grid"><label className="planner-field wide"><span className="planner-field-label">Event title</span><input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="e.g. Database normalization review" /></label><CustomSelect label="Event type" value={form.type} options={typeOptions} onChange={(value) => setForm({ ...form, type: value })} /><label className="planner-field"><span className="planner-field-label">Date</span><input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label><label className="planner-field"><span className="planner-field-label">Start time</span><input type="time" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label><label className="planner-field"><span className="planner-field-label">End time</span><input type="time" value={form.endTime} onChange={(event) => setForm({ ...form, endTime: event.target.value })} /></label><CustomSelect label="Priority" value={form.priority} options={priorityOptions} onChange={(value) => setForm({ ...form, priority: value })} /><CustomSelect label="Repeat" value={form.repeat} options={repeatOptions} onChange={(value) => setForm({ ...form, repeat: value })} /><ReminderSelector eventData={form} reminders={form.reminders || []} onChange={(reminders) => setForm({ ...form, reminders })} /><CustomSelect label="Semester" value={form.semesterId} options={semesterOptions} onChange={(value) => setForm({ ...form, semesterId: value, moduleId: '' })} placeholder="Choose semester" searchable /><CustomSelect label="Subject/module" value={form.moduleId} options={moduleOptions} onChange={(value) => setForm({ ...form, moduleId: value })} placeholder="Choose module" searchable />{form.type === 'studyPlan' && <><label className="planner-field"><span className="planner-field-label">Study topic</span><input value={form.studyTopic} onChange={(event) => setForm({ ...form, studyTopic: event.target.value })} placeholder="Topic to revise" /></label><label className="planner-field"><span className="planner-field-label">Duration minutes</span><input type="number" min="15" step="15" value={form.durationMinutes} onChange={(event) => setForm({ ...form, durationMinutes: event.target.value })} /></label><label className="planner-field wide"><span className="planner-field-label">Study goals</span><textarea value={form.studyGoals} onChange={(event) => setForm({ ...form, studyGoals: event.target.value })} placeholder="What should be done by the end of this session?" /></label><div className="planner-notes-selector wide"><div className="planner-notes-heading"><span><strong>Related uploaded notes and PDFs</strong><small>Select multiple materials from your hierarchy.</small></span>{notes.loading && <em>Loading...</em>}</div>{notes.loading ? renderSkeleton() : <NotesTree data={notes.data} selectedNoteIds={form.selectedNoteIds} selectedPdfIds={form.selectedPdfIds} onToggle={handleMaterialToggle} />}{selectedMaterials.length > 0 && <div className="planner-selected-materials">{selectedMaterials.map((material) => <button type="button" key={`${material.type}-${material.id}`} onClick={() => removeMaterial(material)}><span className="material-symbols-outlined">{material.type === 'note' ? 'description' : 'picture_as_pdf'}</span>{material.title}<span className="material-symbols-outlined">close</span></button>)}</div>}</div></>}<label className="planner-field wide"><span className="planner-field-label">Description / notes</span><textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Add instructions, links, chapters, or reminders" /></label></div><div className="planner-modal-actions"><button type="button" onClick={() => setModalOpen(false)} disabled={saving}>Cancel</button><button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button></div></form></div>}
-      {deleteCandidate && <div className="planner-confirm-backdrop" role="presentation" onMouseDown={() => !deleting && setDeleteCandidate(null)}><section className="planner-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="planner-delete-title" onMouseDown={(event) => event.stopPropagation()}><div className="planner-confirm-icon"><span className="material-symbols-outlined">delete</span></div><div><p className="planner-confirm-kicker">Delete schedule</p><h2 id="planner-delete-title">Delete this plan?</h2><p>This will permanently remove <strong>{deleteCandidate.title}</strong> from your Study Planner.</p></div><div className="planner-confirm-actions"><button type="button" onClick={() => setDeleteCandidate(null)} disabled={deleting}>Cancel</button><button type="button" className="danger" onClick={confirmDelete} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete plan'}</button></div></section></div>}      {selectedEvent && <div className="planner-details-backdrop" role="presentation" onMouseDown={() => setSelectedEvent(null)}><aside className="planner-details-panel" onMouseDown={(event) => event.stopPropagation()}><button type="button" className="planner-details-close" onClick={() => setSelectedEvent(null)} aria-label="Close details"><span className="material-symbols-outlined">close</span></button><div className="planner-details-icon" style={{ background: eventTypes[selectedEvent.type]?.bg, color: eventTypes[selectedEvent.type]?.color }}><span className="material-symbols-outlined">{eventTypes[selectedEvent.type]?.icon}</span></div><p className="planner-details-type">{eventTypes[selectedEvent.type]?.label}</p><h2>{selectedEvent.title}</h2><div className="planner-details-list"><span><strong>Date and time</strong>{formatShortDate(new Date(selectedEvent.date))}, {selectedEvent.startTime} - {selectedEvent.endTime}</span><span><strong>Subject/module</strong>{moduleTitle(selectedEvent)}</span><span><strong>Priority</strong>{selectedEvent.priority}</span><span><strong>Reminder</strong>{describeReminders(selectedEvent.reminders || (selectedEvent.reminder?.enabled ? [{ value: selectedEvent.reminder.beforeMinutes || 30, unit: 'minutes' }] : []))}</span>{selectedEvent.type === 'studyPlan' && <><span><strong>Study topic</strong>{selectedEvent.studyTopic || 'Not set'}</span><span><strong>Duration</strong>{selectedEvent.durationMinutes || 60} minutes</span><span><strong>Study goals</strong>{selectedEvent.studyGoals || 'No goals added yet'}</span><span><strong>Selected materials</strong>{eventMaterials(selectedEvent).length ? eventMaterials(selectedEvent).map((item) => item.title).join(', ') : 'No notes or PDFs selected'}</span></>}<span><strong>Description</strong>{selectedEvent.description || 'No description added.'}</span></div><div className="planner-details-actions"><button type="button" onClick={() => openEditModal(selectedEvent)}><span className="material-symbols-outlined">edit</span>Edit</button><button type="button" className="danger" onClick={() => handleDelete(selectedEvent)}><span className="material-symbols-outlined">delete</span>Delete</button>{(selectedEvent.type === 'task' || selectedEvent.type === 'studyPlan') && <button type="button" className="complete" onClick={() => handleComplete(selectedEvent)}><span className="material-symbols-outlined">done_all</span>{selectedEvent.status === 'completed' ? 'Completed' : 'Mark as completed'}</button>}</div></aside></div>}
+      {modalOpen && <div className="planner-modal-backdrop" role="presentation" onMouseDown={() => !saving && setModalOpen(false)}><form className="planner-modal" onSubmit={handleSave} onMouseDown={(event) => event.stopPropagation()}><div className="planner-modal-header"><div><p>{editingId ? 'Edit schedule' : 'Create schedule'}</p><h2>{form.type === 'studyPlan' ? 'Study Plan Scheduling' : 'Event Details'}</h2></div><button type="button" onClick={() => setModalOpen(false)} aria-label="Close modal" disabled={saving}><span className="material-symbols-outlined">close</span></button></div>{Object.keys(formErrors).length > 0 && <div className="planner-form-errors">{Object.values(formErrors).map((error) => <p key={error}>{error}</p>)}</div>}<div className="planner-form-grid"><label className="planner-field wide"><span className="planner-field-label">Event title</span><input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="e.g. Database normalization review" /></label><CustomSelect label="Event type" value={form.type} options={typeOptions} onChange={(value) => setForm((current) => ({ ...current, type: value, reminders: syncRemindersForType(value, current.reminders || []) }))} /><label className="planner-field"><span className="planner-field-label">Start date</span><input type="date" value={form.date} onChange={(event) => setForm((current) => { const nextDate = event.target.value; return { ...current, date: nextDate, endDate: !current.endDate || current.endDate < nextDate || current.endDate === current.date ? nextDate : current.endDate }; })} /></label><label className="planner-field"><span className="planner-field-label">Start time</span><input type="time" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label><label className="planner-field"><span className="planner-field-label">End date</span><input type="date" min={form.date || undefined} value={form.endDate || form.date} onChange={(event) => setForm({ ...form, endDate: event.target.value })} /></label><label className="planner-field"><span className="planner-field-label">End time</span><input type="time" value={form.endTime} onChange={(event) => setForm({ ...form, endTime: event.target.value })} /></label><CustomSelect label="Priority" value={form.priority} options={priorityOptions} onChange={(value) => setForm({ ...form, priority: value })} /><CustomSelect label="Repeat" value={form.repeat} options={repeatOptions} onChange={(value) => setForm({ ...form, repeat: value })} /><ReminderSelector eventData={form} reminders={form.reminders || []} onChange={(reminders) => setForm({ ...form, reminders })} /><CustomSelect label="Semester" value={form.semesterId} options={semesterOptions} onChange={(value) => setForm({ ...form, semesterId: value, moduleId: '' })} placeholder="Choose semester" searchable /><CustomSelect label="Subject/module" value={form.moduleId} options={moduleOptions} onChange={(value) => setForm({ ...form, moduleId: value })} placeholder="Choose module" searchable />{form.type === 'studyPlan' && <><label className="planner-field"><span className="planner-field-label">Study topic</span><input value={form.studyTopic} onChange={(event) => setForm({ ...form, studyTopic: event.target.value })} placeholder="Topic to revise" /></label><label className="planner-field"><span className="planner-field-label">Duration minutes</span><input type="number" min="15" step="15" value={form.durationMinutes} onChange={(event) => setForm({ ...form, durationMinutes: event.target.value })} /></label><label className="planner-field wide"><span className="planner-field-label">Study goals</span><textarea value={form.studyGoals} onChange={(event) => setForm({ ...form, studyGoals: event.target.value })} placeholder="What should be done by the end of this session?" /></label><div className="planner-notes-selector wide"><div className="planner-notes-heading"><span><strong>Related uploaded notes and PDFs</strong><small>Select multiple materials from your hierarchy.</small></span>{notes.loading && <em>Loading...</em>}</div>{notes.loading ? renderSkeleton() : <NotesTree data={notes.data} selectedNoteIds={form.selectedNoteIds} selectedPdfIds={form.selectedPdfIds} onToggle={handleMaterialToggle} />}{selectedMaterials.length > 0 && <div className="planner-selected-materials">{selectedMaterials.map((material) => <button type="button" key={`${material.type}-${material.id}`} onClick={() => removeMaterial(material)}><span className="material-symbols-outlined">{material.type === 'note' ? 'description' : 'picture_as_pdf'}</span>{material.title}<span className="material-symbols-outlined">close</span></button>)}</div>}</div></>}<label className="planner-field wide"><span className="planner-field-label">Description / notes</span><textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Add instructions, links, chapters, or reminders" /></label></div><div className="planner-modal-actions"><button type="button" onClick={() => setModalOpen(false)} disabled={saving}>Cancel</button><button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button></div></form></div>}
+      {deleteCandidate && <div className="planner-confirm-backdrop" role="presentation" onMouseDown={() => !deleting && setDeleteCandidate(null)}><section className="planner-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="planner-delete-title" onMouseDown={(event) => event.stopPropagation()}><div className="planner-confirm-icon"><span className="material-symbols-outlined">delete</span></div><div><p className="planner-confirm-kicker">Delete schedule</p><h2 id="planner-delete-title">Delete this plan?</h2><p>This will permanently remove <strong>{deleteCandidate.title}</strong> from your Study Planner.</p></div><div className="planner-confirm-actions"><button type="button" onClick={() => setDeleteCandidate(null)} disabled={deleting}>Cancel</button><button type="button" className="danger" onClick={confirmDelete} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete plan'}</button></div></section></div>}      {selectedEvent && <div className="planner-details-backdrop" role="presentation" onMouseDown={() => setSelectedEvent(null)}><aside className="planner-details-panel" onMouseDown={(event) => event.stopPropagation()}><button type="button" className="planner-details-close" onClick={() => setSelectedEvent(null)} aria-label="Close details"><span className="material-symbols-outlined">close</span></button><div className="planner-details-icon" style={{ background: eventTypes[selectedEvent.type]?.bg, color: eventTypes[selectedEvent.type]?.color }}><span className="material-symbols-outlined">{eventTypes[selectedEvent.type]?.icon}</span></div><p className="planner-details-type">{eventTypes[selectedEvent.type]?.label}</p><h2>{selectedEvent.title}</h2><div className="planner-details-list"><span><strong>Date and time</strong>{formatEventTimeRange(selectedEvent, true)}</span><span><strong>Subject/module</strong>{moduleTitle(selectedEvent)}</span><span><strong>Priority</strong>{selectedEvent.priority}</span><span><strong>Reminder</strong>{describeReminders(selectedEvent.reminders || (selectedEvent.reminder?.enabled ? [{ value: selectedEvent.reminder.beforeMinutes || 30, unit: 'minutes' }] : []))}</span>{selectedEvent.type === 'studyPlan' && <><span><strong>Study topic</strong>{selectedEvent.studyTopic || 'Not set'}</span><span><strong>Duration</strong>{selectedEvent.durationMinutes || 60} minutes</span><span><strong>Study goals</strong>{selectedEvent.studyGoals || 'No goals added yet'}</span><span><strong>Selected materials</strong>{eventMaterials(selectedEvent).length ? eventMaterials(selectedEvent).map((item) => item.title).join(', ') : 'No notes or PDFs selected'}</span></>}<span><strong>Description</strong>{selectedEvent.description || 'No description added.'}</span></div><div className="planner-details-actions"><button type="button" onClick={() => openEditModal(selectedEvent)}><span className="material-symbols-outlined">edit</span>Edit</button><button type="button" className="danger" onClick={() => handleDelete(selectedEvent)}><span className="material-symbols-outlined">delete</span>Delete</button>{(selectedEvent.type === 'task' || selectedEvent.type === 'studyPlan') && <button type="button" className="complete" onClick={() => handleComplete(selectedEvent)}><span className="material-symbols-outlined">done_all</span>{selectedEvent.status === 'completed' ? 'Completed' : 'Mark as completed'}</button>}</div></aside></div>}
     </main>
   );
 }

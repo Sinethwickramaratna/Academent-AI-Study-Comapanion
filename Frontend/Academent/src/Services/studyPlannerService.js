@@ -16,6 +16,7 @@ import {
   actionLabelForEventType,
   eventEndDate,
   eventStartDate,
+  isEndTimeReminder,
   normalizeEventReminders,
   notificationTypeForEventType,
 } from "./reminderService";
@@ -60,10 +61,11 @@ const actionUrlForEvent = (eventType, eventId) => {
   return `/study-plans/${eventId}`;
 };
 
-const titleForEventType = (eventType) => {
+const titleForEventType = (eventType, reminder = {}) => {
   if (eventType === "exam") return "Upcoming Exam";
   if (eventType === "assignment") return "Assignment Due Soon";
   if (eventType === "task") return "Task Reminder";
+  if (isEndTimeReminder(reminder)) return "Study Session Complete";
   return "Study Session Starting Soon";
 };
 
@@ -78,6 +80,10 @@ const reminderMessage = (event = {}, reminder = {}) => {
   const minutesText = minutes >= 60
     ? `in ${Math.round(minutes / 60)} hour${Math.round(minutes / 60) === 1 ? "" : "s"}`
     : `in ${Math.max(minutes, 0)} minutes`;
+
+  if (eventType === "studyPlan" && isEndTimeReminder(reminder)) {
+    return `Your "${title}" session has reached its end time.`;
+  }
 
   if (eventType === "exam") return `Your "${title}" starts ${minutes >= 1440 ? "soon" : minutesText}.`;
   if (eventType === "assignment") return `"${title}" is due ${minutesText}.`;
@@ -164,6 +170,7 @@ export const saveStudyPlannerEvent = async (uid, eventData, eventId = null) => {
     selectedNoteIds: Array.isArray(eventData.selectedNoteIds) ? eventData.selectedNoteIds : [],
     selectedPdfIds: Array.isArray(eventData.selectedPdfIds) ? eventData.selectedPdfIds : [],
     date: eventData.date,
+    endDate: eventData.endDate || eventData.date,
     startTime: eventData.startTime,
     endTime: eventData.endTime,
     startAt,
@@ -248,7 +255,7 @@ export const processDueStudyPlannerReminders = async (uid, events = [], now = ne
         : await createReminderNotification(uid, {
           id: notificationId,
           type: notificationTypeForEventType(eventType),
-          title: titleForEventType(eventType),
+          title: titleForEventType(eventType, reminder),
           message: reminderMessage(event, reminder),
           entityType: eventType,
           entityId: eventId,
@@ -257,6 +264,7 @@ export const processDueStudyPlannerReminders = async (uid, events = [], now = ne
           actionUrl: actionUrlForEvent(eventType, eventId),
           metadata: {
             reminderId: reminder.id,
+            reminderTrigger: isEndTimeReminder(reminder) ? "end" : "start",
             source: "client-reminder-processor",
             timezone: event.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
           },

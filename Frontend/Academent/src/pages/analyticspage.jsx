@@ -128,7 +128,9 @@ const relativeTime = (value) => {
   return shortDate(date);
 };
 const eventDate = (event, end = false) => {
-  const day = fromInputDate(event?.date);
+  const timestampDate = toDate(end ? event?.endAt : event?.startAt);
+  if (timestampDate) return timestampDate;
+  const day = fromInputDate(end ? (event?.endDate || event?.date) : event?.date);
   if (!day) return null;
   const [hours = 0, minutes = 0] = String((end ? event.endTime : event.startTime) || '00:00').split(':').map(Number);
   return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hours, minutes);
@@ -812,11 +814,3 @@ function AnalyticsPage({ profile, currentUser }) {
 }
 
 export default AnalyticsPage;
-
-
-
-
-
-
-
-

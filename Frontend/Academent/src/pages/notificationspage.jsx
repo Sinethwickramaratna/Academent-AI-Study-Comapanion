@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import FormSelect from "../components/FormSelect";
 import NotificationEmptyState from "../components/notifications/NotificationEmptyState";
 import NotificationList from "../components/notifications/NotificationList";
 import NotificationSkeleton from "../components/notifications/NotificationSkeleton";
@@ -37,6 +38,11 @@ const dateOptions = [
   { value: "today", label: "Today" },
   { value: "7days", label: "Last 7 days" },
   { value: "30days", label: "Last 30 days" },
+];
+
+const sortOptions = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
 ];
 
 const dateMatches = (notification, dateFilter) => {
@@ -222,31 +228,10 @@ function NotificationsPage() {
             <input value={search} type="search" placeholder="Search notifications" onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
           </label>
           <div className="notifications-filter-grid">
-            <label>
-              Category
-              <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>
-                {categoryOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-              </select>
-            </label>
-            <label>
-              Status
-              <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}>
-                {statusOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-              </select>
-            </label>
-            <label>
-              Date
-              <select value={dateFilter} onChange={(event) => { setDateFilter(event.target.value); setPage(1); }}>
-                {dateOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-              </select>
-            </label>
-            <label>
-              Sort
-              <select value={sort} onChange={(event) => setSort(event.target.value)}>
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-              </select>
-            </label>
+            <FormSelect id="notifications-category-filter" label="Category" value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }} containerClassName="notifications-filter-field" className="notifications-select-control" options={categoryOptions} />
+            <FormSelect id="notifications-status-filter" label="Status" value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }} containerClassName="notifications-filter-field" className="notifications-select-control" options={statusOptions} />
+            <FormSelect id="notifications-date-filter" label="Date" value={dateFilter} onChange={(event) => { setDateFilter(event.target.value); setPage(1); }} containerClassName="notifications-filter-field" className="notifications-select-control" options={dateOptions} />
+            <FormSelect id="notifications-sort-filter" label="Sort" value={sort} onChange={(event) => setSort(event.target.value)} containerClassName="notifications-filter-field" className="notifications-select-control" options={sortOptions} />
           </div>
         </div>
       </section>

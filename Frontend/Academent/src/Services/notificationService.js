@@ -13,7 +13,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { auth, db } from "../firebase/firebase";
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   NOTIFICATION_CATEGORIES,
@@ -26,6 +26,7 @@ import {
 
 const MAX_DROPDOWN_NOTIFICATIONS = 20;
 const MAX_PAGE_NOTIFICATIONS = 100;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const ensureUid = (uid) => {
   if (!uid) throw new Error("You must be signed in to use notifications.");
@@ -177,12 +178,52 @@ export const createNotification = async (uid, payload = {}) => {
   return { ...notification, createdAt: new Date() };
 };
 
-export const createSuccessNotification = (uid, payload = {}) => createNotification(uid, {
+const authenticatedNotificationRequest = async (path, options = {}) => {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Please sign in before creating notifications.");
+
+  const token = await user.getIdToken();
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
+    },
+  });
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || result.success === false) {
+    throw new Error(result.message || "Notification request could not be completed.");
+  }
+
+  return result;
+};
+
+export const createNotificationWithBrowserPush = async (uid, payload = {}) => {
+  ensureUid(uid);
+
+  try {
+    const result = await authenticatedNotificationRequest("/api/notifications", {
+      method: "POST",
+      body: JSON.stringify({
+        notification: payload,
+        idempotencyKey: payload.idempotencyKey,
+      }),
+    });
+    return result.notification;
+  } catch (error) {
+    console.warn("Browser push notification could not be sent; saving in-app notification only:", error);
+    return createNotification(uid, payload);
+  }
+};
+
+export const createSuccessNotification = (uid, payload = {}) => createNotificationWithBrowserPush(uid, {
   ...payload,
   status: NOTIFICATION_STATUSES.success,
 });
 
-export const createFailureNotification = (uid, payload = {}) => createNotification(uid, {
+export const createFailureNotification = (uid, payload = {}) => createNotificationWithBrowserPush(uid, {
   ...payload,
   status: NOTIFICATION_STATUSES.failure,
   deliveryChannels: {
@@ -192,7 +233,7 @@ export const createFailureNotification = (uid, payload = {}) => createNotificati
   },
 });
 
-export const createReminderNotification = (uid, payload = {}) => createNotification(uid, {
+export const createReminderNotification = (uid, payload = {}) => createNotificationWithBrowserPush(uid, {
   ...payload,
   category: NOTIFICATION_CATEGORIES.reminder,
   status: NOTIFICATION_STATUSES.reminder,

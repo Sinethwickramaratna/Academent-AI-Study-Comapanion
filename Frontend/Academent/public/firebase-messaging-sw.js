@@ -10,14 +10,15 @@ const readPushPayload = (event) => {
 
 self.addEventListener("push", (event) => {
   const payload = readPushPayload(event);
-  const notification = payload.notification || payload.data || {};
-  const title = notification.title || "Academent notification";
+  const notification = payload.notification || {};
+  const data = payload.data || {};
+  const title = notification.title || data.title || "Academent notification";
   const options = {
-    body: notification.body || notification.message || "",
+    body: notification.body || data.body || data.message || "",
     icon: "/favicon.svg",
     badge: "/favicon.svg",
     data: {
-      url: notification.click_action || notification.actionUrl || payload.fcmOptions?.link || "/notifications",
+      url: notification.click_action || data.click_action || data.actionUrl || payload.fcmOptions?.link || "/notifications",
     },
   };
 

@@ -1,10 +1,12 @@
 ﻿import express from "express";
 import { authenticateFirebaseUser, requireCronSecret } from "../middleware/authenticateFirebaseUser.js";
 import {
+  createNotification,
   deleteNotification,
   getUnreadNotificationCount,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  sendBrowserPushNotification,
 } from "../services/notificationService.js";
 import {
   cancelEventReminders,
@@ -25,6 +27,49 @@ router.post("/process-due-reminders", requireCronSecret, async (req, res) => {
 });
 
 router.use(authenticateFirebaseUser);
+
+const serializeNotification = (notification) => {
+  if (!notification) return null;
+  return {
+    id: notification.id,
+    userId: notification.userId,
+    type: notification.type,
+    category: notification.category,
+    status: notification.status,
+    title: notification.title,
+    message: notification.message,
+    entityType: notification.entityType,
+    entityId: notification.entityId,
+    entityTitle: notification.entityTitle,
+    actionLabel: notification.actionLabel,
+    actionUrl: notification.actionUrl,
+    isRead: notification.isRead,
+    isDeleted: notification.isDeleted,
+    deliveryChannels: notification.deliveryChannels,
+    metadata: notification.metadata,
+  };
+};
+
+router.post("/", async (req, res) => {
+  try {
+    const notification = await createNotification({
+      ...(req.body?.notification || req.body || {}),
+      userId: req.user.uid,
+    }, { idempotencyKey: req.body?.idempotencyKey });
+    const browserPush = notification
+      ? await sendBrowserPushNotification(req.user.uid, notification)
+      : { sent: 0, removed: 0 };
+
+    res.status(201).json({
+      success: true,
+      notification: serializeNotification(notification),
+      browserPush,
+    });
+  } catch (error) {
+    console.error("Create notification failed:", error);
+    res.status(400).json({ success: false, message: error.message || "Notification could not be created." });
+  }
+});
 
 router.get("/unread-count", async (req, res) => {
   try {

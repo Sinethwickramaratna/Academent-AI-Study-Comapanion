@@ -175,23 +175,35 @@ export async function sendBrowserPushNotification(userId, notification) {
     const token = device.data().fcmToken;
     if (!token) return;
     try {
-      await messaging.send({
+      const actionUrl = notification.actionUrl || "/notifications";
+      const message = {
         token,
         notification: {
           title: notification.title,
           body: notification.message,
         },
-        webpush: {
-          fcmOptions: {
-            link: notification.actionUrl || "/notifications",
-          },
-        },
         data: {
-          notificationId: notification.id,
-          type: notification.type,
-          actionUrl: notification.actionUrl || "/notifications",
+          notificationId: String(notification.id || ""),
+          type: String(notification.type || ""),
+          actionUrl,
         },
-      });
+      };
+
+      const frontendOrigin = process.env.FRONTEND_ORIGIN || process.env.CLIENT_ORIGIN || process.env.APP_ORIGIN || "";
+      if (frontendOrigin) {
+        try {
+          message.webpush = {
+            fcmOptions: {
+              link: new URL(actionUrl, frontendOrigin).href,
+            },
+          };
+        } catch {
+          // The service worker still receives data.actionUrl, so an invalid
+          // frontend origin should not block notification delivery.
+        }
+      }
+
+      await messaging.send(message);
       sent += 1;
     } catch (error) {
       const code = String(error?.code || "");

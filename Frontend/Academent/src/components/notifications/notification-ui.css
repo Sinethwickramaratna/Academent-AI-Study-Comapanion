@@ -694,6 +694,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  overflow: visible;
 }
 
 .notification-settings-toggle,
@@ -774,10 +775,148 @@
   padding: 8px 10px;
 }
 
+.notification-settings-field select,
+.reminder-custom-grid select {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.notification-settings-field select option,
+.reminder-custom-grid select option {
+  background: rgb(var(--color-surface-container-lowest));
+  color: rgb(var(--color-on-surface));
+  font-weight: 750;
+  padding: 10px 12px;
+}
+
+.notification-settings-field select option:checked,
+.reminder-custom-grid select option:checked {
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-on-primary));
+  font-weight: 900;
+}
+
+.notification-settings-field select option:hover,
+.notification-settings-field select option:focus,
+.reminder-custom-grid select option:hover,
+.reminder-custom-grid select option:focus {
+  background: rgb(var(--color-primary) / 0.12);
+  color: rgb(var(--color-primary));
+}
+
+.notification-settings-field select option:disabled,
+.reminder-custom-grid select option:disabled {
+  color: rgb(var(--color-outline));
+}
+
+.notification-settings-select-field {
+  position: relative;
+  display: grid;
+  gap: 7px;
+}
+
+.notification-settings-select-field:has(.academent-custom-select.is-open) {
+  z-index: 60;
+}
+
+.notification-settings-select-field > label {
+  color: rgb(var(--color-on-surface));
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.notification-settings-select-field .academent-custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.notification-settings-select-control {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.44);
+  border-radius: 12px !important;
+  background: rgb(var(--color-surface-container-low)) !important;
+  color: rgb(var(--color-on-surface)) !important;
+  padding: 8px 38px 8px 10px !important;
+  text-align: left;
+  font-weight: 800;
+}
+
+.notification-settings-select-control:hover,
+.notification-settings-select-control:focus-visible,
+.notification-settings-select-field .academent-custom-select.is-open .notification-settings-select-control {
+  border-color: rgb(var(--color-primary) / 0.34) !important;
+  outline: none;
+  background: rgb(var(--color-primary) / 0.08) !important;
+  box-shadow: 0 12px 28px rgb(35 22 65 / 0.08) !important;
+}
+
+.notification-settings-select-control .academent-custom-select__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-settings-select-field .academent-select-icon {
+  right: 12px !important;
+  color: rgb(var(--color-on-surface-variant)) !important;
+  transition: transform 160ms ease, color 160ms ease;
+}
+
+.notification-settings-select-field .academent-custom-select.is-open .academent-select-icon {
+  color: rgb(var(--color-primary)) !important;
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.notification-settings-select-field .academent-select-menu {
+  top: calc(100% + 8px);
+  z-index: 130;
+  gap: 6px;
+  max-height: 260px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.45);
+  border-radius: 14px;
+  background: rgb(var(--color-surface-container-lowest));
+  padding: 8px;
+  box-shadow: 0 22px 48px rgb(35 22 65 / 0.16);
+}
+
+.notification-settings-select-field .academent-select-option {
+  min-height: 42px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.28);
+  border-radius: 10px;
+  background: rgb(var(--color-surface-container-low));
+  color: rgb(var(--color-on-surface));
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.notification-settings-select-field .academent-select-option:hover,
+.notification-settings-select-field .academent-select-option:focus-visible {
+  transform: translateX(2px);
+  border-color: rgb(var(--color-primary) / 0.3);
+  background: rgb(var(--color-primary) / 0.07);
+  color: rgb(var(--color-primary));
+}
+
+.notification-settings-select-field .academent-select-option.is-selected {
+  border-color: rgb(var(--color-primary) / 0.36);
+  background: rgb(var(--color-primary) / 0.1);
+  color: rgb(var(--color-primary));
+}
+
+.notification-settings-select-field .academent-select-option .material-symbols-outlined {
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-on-primary));
+}
+
 .notification-settings-actions,
 .notification-permission-actions,
 .reminder-selected-list,
-.reminder-options-grid,
 .reminder-custom-actions {
   display: flex;
   flex-wrap: wrap;
@@ -790,29 +929,138 @@
   padding: 9px 12px;
 }
 
-.reminder-options-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.reminder-dropdown {
+  position: relative;
+  width: 100%;
 }
 
-.reminder-option {
-  min-height: 48px;
+.reminder-dropdown.is-open {
+  z-index: 140;
+}
+
+.reminder-dropdown-trigger {
+  width: 100%;
+  min-height: 54px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  border: 1px solid rgb(var(--color-outline-variant) / 0.35);
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.38);
   border-radius: 12px;
   background: rgb(var(--color-surface-container-low));
   color: rgb(var(--color-on-surface));
+  padding: 9px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.reminder-dropdown-trigger:hover,
+.reminder-dropdown-trigger:focus-visible,
+.reminder-dropdown.is-open .reminder-dropdown-trigger {
+  outline: none;
+  border-color: rgb(var(--color-primary) / 0.34);
+  background: rgb(var(--color-primary) / 0.08);
+  box-shadow: 0 12px 28px rgb(35 22 65 / 0.08);
+}
+
+.reminder-dropdown-trigger-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.reminder-dropdown-trigger-copy > span {
+  color: rgb(var(--color-on-surface-variant));
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.reminder-dropdown-trigger-copy strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: rgb(var(--color-on-surface));
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reminder-dropdown-trigger > .material-symbols-outlined {
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+
+.reminder-dropdown.is-open .reminder-dropdown-trigger > .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.reminder-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 80;
+  width: 100%;
+  max-height: 320px;
+  display: grid;
+  gap: 6px;
+  overflow-y: auto;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.45);
+  border-radius: 14px;
+  background: rgb(var(--color-surface-container-lowest));
+  padding: 8px;
+  box-shadow: 0 22px 48px rgb(35 22 65 / 0.16);
+  animation: notificationDropdownIn 140ms ease both;
+}
+
+.reminder-option {
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.35);
+  border-radius: 10px;
+  background: rgb(var(--color-surface-container-low));
+  color: rgb(var(--color-on-surface));
   padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
   font-size: 12px;
   font-weight: 850;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.reminder-option:hover,
+.reminder-option:focus-visible {
+  outline: none;
+  border-color: rgb(var(--color-primary) / 0.3);
+  background: rgb(var(--color-primary) / 0.07);
 }
 
 .reminder-option.is-selected {
   border-color: rgb(var(--color-primary) / 0.36);
   background: rgb(var(--color-primary) / 0.1);
   color: rgb(var(--color-primary));
+}
+
+.reminder-option .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.reminder-option-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reminder-option-check {
+  justify-self: end;
 }
 
 .reminder-selected-chip {
@@ -838,6 +1086,15 @@
   border-radius: 999px;
   background: transparent;
   color: rgb(var(--color-outline));
+}
+
+.reminder-selected-chip button .material-symbols-outlined {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .reminder-error {
@@ -879,8 +1136,7 @@
     display: none;
   }
 
-  .notification-settings-grid,
-  .reminder-options-grid {
+  .notification-settings-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -900,6 +1156,8 @@
 :root.dark .notification-action-button,
 :root.dark .notification-settings-field input,
 :root.dark .notification-settings-field select,
+:root.dark .reminder-dropdown-trigger,
+:root.dark .reminder-dropdown-menu,
 :root.dark .reminder-option,
 :root.dark .reminder-selected-chip,
 :root.dark .reminder-custom-grid input,
@@ -908,6 +1166,99 @@
   border-color: #4A4568;
   color: #F7F5FF;
 }
+
+:root.dark .notification-settings-field select option,
+:root.dark .reminder-custom-grid select option,
+.profile-settings-page--dark .notification-settings-field select option,
+.profile-settings-page--dark .reminder-custom-grid select option {
+  background: #211D38;
+  color: #F7F5FF;
+}
+
+:root.dark .notification-settings-field select option:checked,
+:root.dark .reminder-custom-grid select option:checked,
+.profile-settings-page--dark .notification-settings-field select option:checked,
+.profile-settings-page--dark .reminder-custom-grid select option:checked {
+  background: #7B5CFF;
+  color: #FFFFFF;
+}
+
+:root.dark .notification-settings-field select option:hover,
+:root.dark .notification-settings-field select option:focus,
+:root.dark .reminder-custom-grid select option:hover,
+:root.dark .reminder-custom-grid select option:focus,
+.profile-settings-page--dark .notification-settings-field select option:hover,
+.profile-settings-page--dark .notification-settings-field select option:focus,
+.profile-settings-page--dark .reminder-custom-grid select option:hover,
+.profile-settings-page--dark .reminder-custom-grid select option:focus {
+  background: #282344;
+  color: #c4b5fd;
+}
+:root.dark .notification-settings-select-control,
+.dark .notification-settings-select-control,
+.profile-settings-page--dark .notification-settings-select-control,
+:root.dark .notification-settings-select-field .academent-select-menu,
+.dark .notification-settings-select-field .academent-select-menu,
+.profile-settings-page--dark .notification-settings-select-field .academent-select-menu,
+:root.dark .notification-settings-select-field .academent-select-option,
+.dark .notification-settings-select-field .academent-select-option,
+.profile-settings-page--dark .notification-settings-select-field .academent-select-option {
+  background: #211D38;
+  border-color: #4A4568;
+  color: #F7F5FF;
+}
+
+:root.dark .notification-settings-select-control:hover,
+.dark .notification-settings-select-control:hover,
+.profile-settings-page--dark .notification-settings-select-control:hover,
+:root.dark .notification-settings-select-control:focus-visible,
+.dark .notification-settings-select-control:focus-visible,
+.profile-settings-page--dark .notification-settings-select-control:focus-visible,
+:root.dark .notification-settings-select-field .academent-custom-select.is-open .notification-settings-select-control,
+.dark .notification-settings-select-field .academent-custom-select.is-open .notification-settings-select-control,
+.profile-settings-page--dark .notification-settings-select-field .academent-custom-select.is-open .notification-settings-select-control,
+:root.dark .notification-settings-select-field .academent-select-option:hover,
+.dark .notification-settings-select-field .academent-select-option:hover,
+.profile-settings-page--dark .notification-settings-select-field .academent-select-option:hover,
+:root.dark .notification-settings-select-field .academent-select-option:focus-visible,
+.dark .notification-settings-select-field .academent-select-option:focus-visible,
+.profile-settings-page--dark .notification-settings-select-field .academent-select-option:focus-visible {
+  border-color: rgba(161, 120, 255, 0.38);
+  background: #282344;
+  color: #F7F5FF;
+}
+
+:root.dark .notification-settings-select-field .academent-select-option.is-selected,
+.dark .notification-settings-select-field .academent-select-option.is-selected,
+.profile-settings-page--dark .notification-settings-select-field .academent-select-option.is-selected {
+  border-color: rgba(161, 120, 255, 0.48);
+  background: rgba(123, 92, 255, 0.22);
+  color: #c4b5fd;
+}
+
+:root.dark .notification-settings-select-field .academent-select-option .material-symbols-outlined,
+.dark .notification-settings-select-field .academent-select-option .material-symbols-outlined,
+.profile-settings-page--dark .notification-settings-select-field .academent-select-option .material-symbols-outlined {
+  background: linear-gradient(135deg, #7B5CFF, #A178FF);
+  color: #F7F5FF;
+}
+
+:root.dark .reminder-dropdown-trigger:hover,
+:root.dark .reminder-dropdown-trigger:focus-visible,
+:root.dark .reminder-dropdown.is-open .reminder-dropdown-trigger,
+:root.dark .reminder-option:hover,
+:root.dark .reminder-option:focus-visible {
+  border-color: rgba(161, 120, 255, 0.38);
+  background: #282344;
+  color: #F7F5FF;
+}
+
+:root.dark .reminder-option.is-selected {
+  border-color: rgba(161, 120, 255, 0.48);
+  background: rgba(123, 92, 255, 0.22);
+  color: #c4b5fd;
+}
+
 :root.dark .notification-permission-card .notification-status-text,
 .dark .notification-permission-card .notification-status-text,
 .profile-settings-page--dark .notification-permission-card .notification-status-text {

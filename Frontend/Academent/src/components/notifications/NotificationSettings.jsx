@@ -1,8 +1,16 @@
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "../../Services/notificationTypes";
+import FormSelect from "../FormSelect";
 import useNotificationPreferences from "../../hooks/useNotificationPreferences";
 import BrowserNotificationPermissionCard from "./BrowserNotificationPermissionCard";
 import { useNotificationToasts } from "./NotificationToastProvider";
 import "./notification-ui.css";
+
+const reminderUnitOptions = [
+  { value: "minutes", label: "Minutes" },
+  { value: "hours", label: "Hours" },
+  { value: "days", label: "Days" },
+  { value: "weeks", label: "Weeks" },
+];
 
 const toggles = [
   { key: "inAppEnabled", label: "In-app notifications" },
@@ -77,23 +85,20 @@ function NotificationSettings() {
             })}
           />
         </label>
-        <label className="notification-settings-field">
-          <span>Default reminder unit</span>
-          <select
-            value={preferences.defaultReminder?.unit || "minutes"}
-            onChange={(event) => patchPreferences({
-              defaultReminder: {
-                ...preferences.defaultReminder,
-                unit: event.target.value,
-              },
-            })}
-          >
-            <option value="minutes">Minutes</option>
-            <option value="hours">Hours</option>
-            <option value="days">Days</option>
-            <option value="weeks">Weeks</option>
-          </select>
-        </label>
+        <FormSelect
+          id="notification-default-reminder-unit"
+          label="Default reminder unit"
+          value={preferences.defaultReminder?.unit || "minutes"}
+          onChange={(event) => patchPreferences({
+            defaultReminder: {
+              ...preferences.defaultReminder,
+              unit: event.target.value,
+            },
+          })}
+          containerClassName="notification-settings-field notification-settings-select-field"
+          className="notification-settings-select-control"
+          options={reminderUnitOptions}
+        />
         <label className="notification-settings-field">
           <span>User timezone</span>
           <input value={preferences.timezone || "UTC"} onChange={(event) => patchPreferences({ timezone: event.target.value })} />

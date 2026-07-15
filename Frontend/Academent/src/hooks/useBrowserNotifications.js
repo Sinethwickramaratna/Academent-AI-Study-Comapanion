@@ -5,6 +5,7 @@ import {
   getBrowserNotificationSupport,
   requestAndSaveFcmToken,
   subscribeToForegroundMessages,
+  syncBrowserNotificationRegistration,
 } from "../Services/firebaseMessagingService";
 import { useNotificationPreferences } from "./useNotificationPreferences";
 
@@ -33,6 +34,21 @@ export const useBrowserNotifications = () => {
       .catch(() => {});
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!uid || !preferences.browserPushEnabled || !support.supported || support.permission !== "granted") return undefined;
+
+    let cancelled = false;
+    syncBrowserNotificationRegistration(uid)
+      .then((fcmToken) => {
+        if (!cancelled) setToken(fcmToken);
+      })
+      .catch((syncError) => {
+        if (!cancelled) setError(syncError);
+      });
+
+    return () => { cancelled = true; };
+  }, [preferences.browserPushEnabled, support.permission, support.supported, uid]);
 
   const enableBrowserNotifications = useCallback(async () => {
     setWorking(true);
@@ -68,7 +84,7 @@ export const useBrowserNotifications = () => {
   return {
     supported: support.supported,
     permission: support.permission,
-    enabled: Boolean(preferences.browserPushEnabled),
+    enabled: Boolean(preferences.browserPushEnabled && support.supported && support.permission === "granted"),
     token,
     working,
     error,

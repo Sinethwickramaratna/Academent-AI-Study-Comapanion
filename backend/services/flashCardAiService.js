@@ -11,6 +11,54 @@ dotenv.config();
 
 // const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b';
+const DEFAULT_JSON_MAX_TOKENS = 6000;
+const MAX_JSON_RETRY_TOKENS = 36000;
+const FLASH_CARD_OUTPUT_TOKENS_PER_CARD = 440;
+
+const FLASH_CARD_RESPONSE_FORMAT = {
+  type: 'object',
+  properties: {
+    cards: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          type: {
+            type: 'string',
+            enum: ['definition', 'concept', 'formula', 'true_false', 'fill_blank', 'process', 'diagram', 'qa'],
+          },
+          difficulty: {
+            type: 'string',
+            enum: ['easy', 'medium', 'hard'],
+          },
+          front: { type: 'string' },
+          back: { type: 'string' },
+          explanation: { type: 'string' },
+          example: { type: 'string' },
+          mnemonic: { type: 'string' },
+          imageDescription: { type: 'string' },
+          tags: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          keywords: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          sourcePages: {
+            type: 'array',
+            items: { type: ['string', 'number'] },
+          },
+          confidence: { type: 'number' },
+          createdBy: { type: 'string' },
+        },
+        required: ['type', 'difficulty', 'front', 'back'],
+      },
+    },
+  },
+  required: ['cards'],
+};
 
 const ollama = new Ollama({
   host: process.env.OLLAMA_HOST || 'https://ollama.com',
@@ -30,11 +78,29 @@ const TYPE_LABELS = {
   qa: 'Q&A',
 };
 
-const parseJsonResponse = (text) => {
+const extractJsonPayload = (text) => {
   const trimmed = String(text || '').trim();
   const fencedJson = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fencedJson) return fencedJson[1].trim();
+
+  const objectStart = trimmed.indexOf('{');
+  const objectEnd = trimmed.lastIndexOf('}');
+  if (objectStart !== -1 && objectEnd > objectStart) {
+    return trimmed.slice(objectStart, objectEnd + 1);
+  }
+
+  const arrayStart = trimmed.indexOf('[');
+  const arrayEnd = trimmed.lastIndexOf(']');
+  if (arrayStart !== -1 && arrayEnd > arrayStart) {
+    return trimmed.slice(arrayStart, arrayEnd + 1);
+  }
+
+  return trimmed;
+};
+
+const parseJsonResponse = (text) => {
   try {
-    return JSON.parse(fencedJson ? fencedJson[1] : trimmed)
+    return JSON.parse(extractJsonPayload(text))
   } catch (error) {
     throw createAiResponseFormatError(error)
   }
@@ -74,25 +140,65 @@ const createTextResponse = async (input, options = {}) => {
       model: OLLAMA_MODEL,
       messages: [{ role: 'user', content: input }],
       stream: true,
-      format: options.json ? 'json' : undefined,
+      format: options.jsonSchema || (options.json ? 'json' : undefined),
+      think: options.think ?? ((options.json || options.jsonSchema) ? false : undefined),
       options: {
-        temperature: options.temperature ?? 0.65,
+        temperature: options.temperature ?? 0.4,
         top_p: options.top_p ?? 0.9,
-        num_predict: options.max_tokens ?? 5000,
+        num_predict: options.max_tokens ?? DEFAULT_JSON_MAX_TOKENS,
       },
     });
 
     let text = '';
-    for await (const part of response) text += part.message?.content || '';
+    let doneReason = '';
+
+    for await (const part of response) {
+      text += part.message?.content || '';
+      if (part.done) doneReason = part.done_reason || '';
+    }
+
+    if ((options.json || options.jsonSchema) && /length/i.test(doneReason)) {
+      throw createAiResponseFormatError(new Error(`Ollama stopped before completing the JSON response (${doneReason}).`));
+    }
+
     return text;
   } catch (error) {
+    if (error?.code === 'AI_RESPONSE_FORMAT') throw error;
     throw new Error(getOllamaErrorMessage(error));
   }
 };
 
-const createJsonResponse = async (input) => parseJsonResponse(await createTextResponse(input, { json: true }));
+const createJsonResponse = async (input, options = {}) => {
+  const requestOptions = {
+    temperature: options.temperature ?? 0.35,
+    top_p: options.top_p ?? 0.85,
+    max_tokens: options.max_tokens ?? DEFAULT_JSON_MAX_TOKENS,
+    json: true,
+    jsonSchema: options.jsonSchema,
+  };
+
+  try {
+    return parseJsonResponse(await createTextResponse(input, requestOptions));
+  } catch (error) {
+    if (options.retry === false || error?.code !== 'AI_RESPONSE_FORMAT') throw error;
+
+    const retryOptions = {
+      ...requestOptions,
+      temperature: Math.min(requestOptions.temperature, 0.2),
+      top_p: Math.min(requestOptions.top_p, 0.8),
+      max_tokens: Math.min(Math.max(requestOptions.max_tokens * 2, DEFAULT_JSON_MAX_TOKENS), MAX_JSON_RETRY_TOKENS),
+    };
+
+    return parseJsonResponse(await createTextResponse(input, retryOptions));
+  }
+};
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+const getFlashCardMaxTokens = (requestedCount) => {
+  const budget = 2000 + requestedCount * FLASH_CARD_OUTPUT_TOKENS_PER_CARD;
+  return Math.min(MAX_JSON_RETRY_TOKENS, Math.max(DEFAULT_JSON_MAX_TOKENS, budget));
+};
 
 const normalizeType = (type) => {
   const normalized = String(type || '')
@@ -214,6 +320,8 @@ Type rules:
 - Q&A: front is a clear question; back is the answer with a direct explanation.
 
 Return ONLY valid JSON in this exact shape:
+Do not include markdown code fences, comments, or extra text.
+Keep front, back, explanation, example, mnemonic, and imageDescription concise so the JSON can complete.
 {
   "cards": [
     {
@@ -246,7 +354,10 @@ export const generateFlashCards = async ({ sources = [], preferences = {} }) => 
   }
 
   const requestedCount = clamp(Number(preferences.cardCount || 35), 1, 100);
-  const result = await createJsonResponse(buildPrompt({ sources, preferences }));
+  const result = await createJsonResponse(buildPrompt({ sources, preferences }), {
+    max_tokens: getFlashCardMaxTokens(requestedCount),
+    jsonSchema: FLASH_CARD_RESPONSE_FORMAT,
+  });
   const cards = normalizeCards(result, requestedCount);
 
   if (!cards.length) throw new Error('The AI did not return any valid flash cards.');
@@ -257,5 +368,4 @@ export const generateFlashCards = async ({ sources = [], preferences = {} }) => 
     generatedCount: cards.length,
   };
 };
-
 

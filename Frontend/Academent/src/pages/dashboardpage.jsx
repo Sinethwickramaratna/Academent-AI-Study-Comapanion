@@ -9,7 +9,7 @@ import TopBar from '../components/TopBar';
 import logo from '../assets/Logo/Logo.png';
 import { dashboardWindowItems, getDashboardRouteForTab, getDashboardTabForPath } from '../routes/windowRoutes';
 import { DEFAULT_DASHBOARD_DATA, subscribeDashboardData } from '../Services/dashboardService';
-import { markStudyPlannerEventCompleted, saveStudyPlannerEvent } from '../Services/studyPlannerService';
+import { markStudyPlannerEventCompleted } from '../Services/studyPlannerService';
 
 const NotePage = lazy(() => import('./notepage'));
 const QuizGeneratorPage = lazy(() => import('./quizgeneratorpage'));
@@ -23,6 +23,8 @@ const NotificationsPage = lazy(() => import('./notificationspage'));
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RING_CIRCUMFERENCE = 339.29;
+const PLANNER_CREATE_REQUEST_STORAGE_KEY = 'academent_planner_create_request';
+const NOTES_OPEN_REQUEST_STORAGE_KEY = 'academent_notes_open_request';
 
 const eventTypeMeta = {
   exam: { label: 'Exam', icon: 'school' },
@@ -142,7 +144,9 @@ const getWeeklyTargetHours = (weeklyHours) => {
 };
 
 const eventDate = (event, end = false) => {
-  const day = fromInputDate(event?.date);
+  const timestampDate = toDate(end ? event?.endAt : event?.startAt);
+  if (timestampDate) return timestampDate;
+  const day = fromInputDate(end ? (event?.endDate || event?.date) : event?.date);
   if (!day) return null;
   const [hours = 0, minutes = 0] = String((end ? event.endTime : event.startTime) || '00:00').split(':').map(Number);
   return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hours, minutes);
@@ -188,7 +192,7 @@ const quizScore = (quiz) => {
 const flattenNoteManagement = (data = {}) => {
   const materials = [];
   const modules = [];
-  const addMaterial = (item, type, semester, module, path) => {
+  const addMaterial = (item, type, semester, module, path, folderTrail = []) => {
     const id = type === 'note' ? item.noteId : item.pdfId;
     if (!id) return;
     const title = item.title || item.originalName || (type === 'note' ? 'Untitled note' : 'Untitled PDF');
@@ -198,26 +202,30 @@ const flattenNoteManagement = (data = {}) => {
       type,
       title,
       path,
+      semesterId: semester.semesterId,
+      semesterTitle: semester.title || 'Semester',
       moduleId: module.moduleId,
       moduleTitle: module.title || 'Untitled module',
+      folderTrail,
       size: item.size || 0,
       pageCount: item.pageCount || item.pages || 0,
       wordCount: type === 'note' ? content.split(/\s+/).filter(Boolean).length : 0,
     });
   };
-  const visitFolder = (folder, semester, module, path) => {
+  const visitFolder = (folder, semester, module, path, folderTrail = []) => {
     const nextPath = `${path} / ${folder.title || 'Folder'}`;
-    (folder.notes || []).forEach((note) => addMaterial(note, 'note', semester, module, nextPath));
-    (folder.pdfs || []).forEach((pdf) => addMaterial(pdf, 'pdf', semester, module, nextPath));
-    (folder.folders || []).forEach((child) => visitFolder(child, semester, module, nextPath));
+    const nextTrail = [...folderTrail, { folderId: folder.folderId, title: folder.title || 'Folder' }];
+    (folder.notes || []).forEach((note) => addMaterial(note, 'note', semester, module, nextPath, nextTrail));
+    (folder.pdfs || []).forEach((pdf) => addMaterial(pdf, 'pdf', semester, module, nextPath, nextTrail));
+    (folder.folders || []).forEach((child) => visitFolder(child, semester, module, nextPath, nextTrail));
   };
 
   (data.semesters || []).forEach((semester) => {
     (semester.modules || []).forEach((module) => {
       const path = `${semester.title || 'Semester'} / ${module.title || 'Module'}`;
       const beforeCount = materials.length;
-      (module.notes || []).forEach((note) => addMaterial(note, 'note', semester, module, path));
-      (module.pdfs || []).forEach((pdf) => addMaterial(pdf, 'pdf', semester, module, path));
+      (module.notes || []).forEach((note) => addMaterial(note, 'note', semester, module, path, []));
+      (module.pdfs || []).forEach((pdf) => addMaterial(pdf, 'pdf', semester, module, path, []));
       (module.folders || []).forEach((folder) => visitFolder(folder, semester, module, path));
       modules.push({
         id: module.moduleId,
@@ -462,6 +470,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   const [quizToOpenId, setQuizToOpenId] = useState(() => routeParams.quizId || null);
   const [inputMessage, setInputMessage] = useState('');
   const [isSavingTask, setIsSavingTask] = useState(false);
+  const [openMaterialMenuId, setOpenMaterialMenuId] = useState(null);
   const [dashboardSearch, setDashboardSearch] = useState('');
   const chatBottomRef = useRef(null);
 
@@ -561,6 +570,27 @@ function DashboardPage({ initialActiveTab = 'home' }) {
     }
   }, [messages]);
 
+  useEffect(() => {
+    if (!openMaterialMenuId || typeof document === 'undefined') return undefined;
+
+    const closeMaterialMenu = (event) => {
+      if (!event.target.closest('[data-dashboard-material-menu]')) {
+        setOpenMaterialMenuId(null);
+      }
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setOpenMaterialMenuId(null);
+    };
+
+    document.addEventListener('click', closeMaterialMenu);
+    document.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.removeEventListener('click', closeMaterialMenu);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [openMaterialMenuId]);
+
   /**
    * Log out currently signed-in user and redirect to login page.
    */
@@ -576,6 +606,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   const switchToTab = (tabId) => {
     const nextRoute = getDashboardRouteForTab(tabId);
     setIsMobileMenuOpen(false);
+    setOpenMaterialMenuId(null);
 
     if (location.pathname !== nextRoute) {
       navigate(nextRoute);
@@ -613,47 +644,21 @@ function DashboardPage({ initialActiveTab = 'home' }) {
     }
   };
 
-  const handleAddTask = async () => {
-    if (!uid) {
-      alert('Please sign in before adding tasks.');
-      return;
+  const handleAddTask = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.setItem(PLANNER_CREATE_REQUEST_STORAGE_KEY, JSON.stringify({
+          type: 'task',
+          date: toInputDate(new Date()),
+          startTime: '09:00',
+          requestedAt: Date.now(),
+        }));
+      } catch (error) {
+        console.warn('Could not prepare dashboard task creation request:', error);
+      }
     }
 
-    const title = prompt('Enter task title:');
-    if (!title?.trim()) return;
-    const priorityInput = prompt('Enter priority (high, medium, low):', 'medium') || 'medium';
-    const dateInput = prompt('Enter due date (YYYY-MM-DD):', toInputDate(new Date())) || toInputDate(new Date());
-    const dueDate = fromInputDate(dateInput);
-
-    if (!dueDate) {
-      alert('Please use the YYYY-MM-DD date format.');
-      return;
-    }
-
-    const normalizedPriority = priorityInput.trim().toLowerCase();
-    const priority = normalizedPriority === 'urgent' ? 'high' : ['high', 'medium', 'low'].includes(normalizedPriority) ? normalizedPriority : 'medium';
-
-    setIsSavingTask(true);
-    try {
-      await saveStudyPlannerEvent(uid, {
-        title: title.trim(),
-        type: 'task',
-        date: toInputDate(dueDate),
-        startTime: '09:00',
-        endTime: '09:30',
-        priority,
-        repeat: 'none',
-        reminder: { enabled: false, beforeMinutes: 0 },
-        description: 'Created from the dashboard.',
-        status: 'pending',
-        durationMinutes: 30,
-      });
-    } catch (error) {
-      console.error('Failed to save dashboard task:', error);
-      alert(error.message || 'Could not save this task.');
-    } finally {
-      setIsSavingTask(false);
-    }
+    switchToTab('study-planner');
   };
 
   const handleSendMessage = (textToSend = null) => {
@@ -672,6 +677,24 @@ function DashboardPage({ initialActiveTab = 'home' }) {
       return;
     }
     openAiTutorWithPrompt(`${action} my study material: "${material.name}"`);
+  };
+
+  const handleOpenMaterial = (material) => {
+    if (typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.setItem(NOTES_OPEN_REQUEST_STORAGE_KEY, JSON.stringify({
+          id: material.id,
+          type: material.type,
+          semesterId: material.semesterId,
+          moduleId: material.moduleId,
+          folderTrail: material.folderTrail || [],
+        }));
+      } catch (error) {
+        console.warn('Could not prepare dashboard material open request:', error);
+      }
+    }
+
+    switchToTab('my-notes');
   };
 
   const handleUpload = () => switchToTab('my-notes');
@@ -1018,7 +1041,8 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                         </div>
                       )}
                     </div>
-                    <button 
+                    <button
+                      type="button"
                       onClick={handleAddTask}
                       disabled={isSavingTask}
                       className="w-full py-md mt-lg border-2 border-dashed border-outline-variant/40 rounded-xl text-outline hover:text-primary hover:border-primary/40 transition-all flex items-center justify-center gap-sm font-label-md text-label-md hover:bg-primary/5 active:scale-95"
@@ -1225,39 +1249,73 @@ function DashboardPage({ initialActiveTab = 'home' }) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
-                {materials.length ? materials.map((mat) => (
-                  <div 
-                    key={mat.id} 
-                    className="glass-panel group p-lg rounded-xl hover:-translate-y-1 active:translate-y-0 transition-all cursor-pointer flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start mb-md">
-                        <div className={`w-12 h-12 ${mat.iconColor} rounded-lg flex items-center justify-center shrink-0 shadow-sm`}>
-                          <span className="material-symbols-outlined text-[32px]">{mat.icon}</span>
+                {materials.length ? materials.map((mat) => {
+                  const materialMenuId = `${mat.type}-${mat.id}`;
+
+                  return (
+                    <div
+                      key={materialMenuId}
+                      className="glass-panel group relative p-lg rounded-xl hover:-translate-y-1 active:translate-y-0 transition-all cursor-pointer flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex justify-between items-start mb-md">
+                          <div className={`w-12 h-12 ${mat.iconColor} rounded-lg flex items-center justify-center shrink-0 shadow-sm`}>
+                            <span className="material-symbols-outlined text-[32px]">{mat.icon}</span>
+                          </div>
+                          <div className="dashboard-material-menu" data-dashboard-material-menu>
+                            <button
+                              type="button"
+                              aria-label={`Actions for ${mat.name}`}
+                              aria-haspopup="menu"
+                              aria-expanded={openMaterialMenuId === materialMenuId}
+                              className="dashboard-material-menu__trigger p-xs text-outline opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-primary transition-opacity flex items-center justify-center"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setOpenMaterialMenuId((current) => (current === materialMenuId ? null : materialMenuId));
+                              }}
+                            >
+                              <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                            </button>
+                            {openMaterialMenuId === materialMenuId && (
+                              <div className="dashboard-material-menu__content" role="menu">
+                                <button type="button" role="menuitem" onClick={() => handleOpenMaterial(mat)}>
+                                  <span className="material-symbols-outlined">open_in_new</span>
+                                  Open in Notes
+                                </button>
+                                <button type="button" role="menuitem" onClick={() => handleMaterialAction(mat, mat.btn1)}>
+                                  <span className="material-symbols-outlined">psychology</span>
+                                  {mat.btn1}
+                                </button>
+                                <button type="button" role="menuitem" onClick={() => handleMaterialAction(mat, mat.btn2)}>
+                                  <span className="material-symbols-outlined">{mat.type === 'pdf' ? 'quiz' : 'style'}</span>
+                                  {mat.btn2}
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <button className="p-xs text-outline opacity-0 group-hover:opacity-100 hover:text-primary transition-opacity flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                        <h5 className="font-label-md text-label-md mb-xs text-on-surface truncate">{mat.name}</h5>
+                        <p className="text-xs text-outline mb-lg">{mat.info}</p>
+                      </div>
+                      <div className="flex gap-sm pt-2">
+                        <button
+                          type="button"
+                          onClick={() => handleMaterialAction(mat, mat.btn1)}
+                          className="flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
+                        >
+                          {mat.btn1}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMaterialAction(mat, mat.btn2)}
+                          className="flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
+                        >
+                          {mat.btn2}
                         </button>
                       </div>
-                      <h5 className="font-label-md text-label-md mb-xs text-on-surface truncate">{mat.name}</h5>
-                      <p className="text-xs text-outline mb-lg">{mat.info}</p>
                     </div>
-                    <div className="flex gap-sm pt-2">
-                      <button 
-                        onClick={() => handleMaterialAction(mat, mat.btn1)}
-                        className="flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
-                      >
-                        {mat.btn1}
-                      </button>
-                      <button 
-                        onClick={() => handleMaterialAction(mat, mat.btn2)}
-                        className="flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
-                      >
-                        {mat.btn2}
-                      </button>
-                    </div>
-                  </div>
-                )) : (
+                  );
+                }) : (
                   <div className="glass-panel p-lg rounded-xl md:col-span-3 flex flex-col items-center justify-center text-center min-h-[220px] text-outline gap-sm">
                     <span className="material-symbols-outlined text-4xl">folder_open</span>
                     <h5 className="font-label-md text-label-md text-on-surface">{dashboardSearchTerm ? 'No matching materials' : 'No study materials yet'}</h5>
@@ -1338,10 +1396,4 @@ function DashboardPage({ initialActiveTab = 'home' }) {
 }
 
 export default DashboardPage;
-
-
-
-
-
-
 

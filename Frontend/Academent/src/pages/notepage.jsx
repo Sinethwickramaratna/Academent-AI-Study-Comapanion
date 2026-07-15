@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import FolderCreateModal from '../components/FolderCreateModal';
 import FolderVaultCard from '../components/FolderVaultCard';
 import NoteCreateModal from '../components/NoteCreateModal';
@@ -20,6 +20,7 @@ const EMPTY_SEMESTER_FORM = { title: '', subtitle: '', accent: 'cyan' };
 const EMPTY_MODULE_FORM = { moduleId: '', title: '', subtitle: '', accent: 'cyan' };
 const EMPTY_FOLDER_FORM = { title: '', subtitle: '', accent: 'cyan' };
 const EMPTY_NOTE_FORM = { title: '', content: '' };
+const NOTES_OPEN_REQUEST_STORAGE_KEY = 'academent_notes_open_request';
 
 const isHexAccent = (accent) => /^#[0-9a-f]{6}$/i.test(accent || '');
 const toAccentColor = (accent) => {
@@ -92,6 +93,19 @@ const mapFolderForCard = (folder, index = 0) => ({
   icon: 'folder_special',
 });
 
+const findMaterialInWorkspace = (workspace, type, id, trail = []) => {
+  const items = type === 'pdf' ? (workspace?.pdfs || []) : (workspace?.notes || []);
+  const match = items.find((item) => (type === 'pdf' ? item.pdfId : item.noteId) === id);
+  if (match) return { item: match, trail };
+
+  for (const folder of workspace?.folders || []) {
+    const found = findMaterialInWorkspace(folder, type, id, [...trail, folder]);
+    if (found) return found;
+  }
+
+  return null;
+};
+
 function NotePage({ profile, currentUser }) {
   const notes = useNoteManagement();
   const { addToast } = useNotificationToasts();
@@ -113,7 +127,7 @@ function NotePage({ profile, currentUser }) {
   const [searchQuery, setSearchQuery] = useState('');
   const pdfInputRef = useRef(null);
 
-  const semesters = notes.data.semesters || [];
+  const semesters = useMemo(() => notes.data.semesters || [], [notes.data.semesters]);
   const fullName = profile?.fullName || currentUser?.displayName || 'Student';
   const photoURL = currentUser?.photoURL || profile?.photoURL || '';
   const selectedSemester = semesters.find((semester) => semester.semesterId === activeSemester);
@@ -147,6 +161,48 @@ function NotePage({ profile, currentUser }) {
   const visibleNotes = !hasSearch || activeWorkspaceOwnMatches
     ? (selectedWorkspace.notes || [])
     : (selectedWorkspace.notes || []).filter((note) => noteMatchesSearch(note, normalizedSearch));
+
+  useEffect(() => {
+    if (notes.loading || typeof window === 'undefined') return;
+
+    const rawRequest = window.sessionStorage.getItem(NOTES_OPEN_REQUEST_STORAGE_KEY);
+    if (!rawRequest) return;
+
+    let request = null;
+    try {
+      request = JSON.parse(rawRequest);
+    } catch (error) {
+      console.warn('Could not read dashboard material open request:', error);
+      window.sessionStorage.removeItem(NOTES_OPEN_REQUEST_STORAGE_KEY);
+      return;
+    }
+
+    if (!request?.id || !['note', 'pdf'].includes(request.type)) {
+      window.sessionStorage.removeItem(NOTES_OPEN_REQUEST_STORAGE_KEY);
+      return;
+    }
+
+    const targetSemester = semesters.find((semester) => semester.semesterId === request.semesterId)
+      || semesters.find((semester) => (semester.modules || []).some((module) => module.moduleId === request.moduleId));
+    const targetModule = (targetSemester?.modules || []).find((module) => module.moduleId === request.moduleId);
+    const foundMaterial = targetModule ? findMaterialInWorkspace(targetModule, request.type, request.id) : null;
+    window.sessionStorage.removeItem(NOTES_OPEN_REQUEST_STORAGE_KEY);
+
+    if (!targetSemester || !targetModule || !foundMaterial) return;
+
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      setActiveSemester(targetSemester.semesterId);
+      setActiveModuleId(targetModule.moduleId);
+      setActiveFolderTrail(foundMaterial.trail);
+      setSearchQuery('');
+      setViewingNote(request.type === 'note' ? foundMaterial.item : null);
+      setViewingPdf(request.type === 'pdf' ? foundMaterial.item : null);
+    });
+
+    return () => { cancelled = true; };
+  }, [notes.loading, semesters]);
 
   const closeModal = () => {
     setModalType(null);

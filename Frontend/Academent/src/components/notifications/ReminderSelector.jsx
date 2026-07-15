@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   REMINDER_OPTIONS,
   describeReminders,
+  isEndTimeReminder,
   makeReminderId,
   normalizeReminderInput,
   reminderLabel,
@@ -15,6 +16,8 @@ const reminderIdentityKeys = (reminder = {}) => [
   `${Number(reminder.value || 0)}-${reminder.unit || "minutes"}`,
 ].filter(Boolean);
 
+const isLockedReminder = (reminder = {}) => isEndTimeReminder(reminder) && reminder.isSystem;
+
 function ReminderSelector({ eventData, reminders = [], onChange, multiple = true }) {
   const [customOpen, setCustomOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -24,6 +27,11 @@ function ReminderSelector({ eventData, reminders = [], onChange, multiple = true
   const triggerId = `${dropdownId}-trigger`;
   const menuId = `${dropdownId}-menu`;
   const selectedIds = useMemo(() => new Set(reminders.flatMap(reminderIdentityKeys)), [reminders]);
+  const lockedIds = useMemo(() => new Set(reminders.filter(isLockedReminder).flatMap(reminderIdentityKeys)), [reminders]);
+  const reminderOptions = useMemo(
+    () => REMINDER_OPTIONS.filter((option) => eventData?.type === "studyPlan" || !isEndTimeReminder(option)),
+    [eventData?.type],
+  );
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -52,6 +60,7 @@ function ReminderSelector({ eventData, reminders = [], onChange, multiple = true
     try {
       const normalized = normalizeReminderInput(option, eventData);
       if (selectedIds.has(normalized.id)) {
+        if (lockedIds.has(normalized.id)) return true;
         commit(reminders.filter((reminder) => !reminderIdentityKeys(reminder).includes(normalized.id)));
         return true;
       }
@@ -77,7 +86,7 @@ function ReminderSelector({ eventData, reminders = [], onChange, multiple = true
     <section className="reminder-selector wide">
       <div>
         <strong>Reminder times</strong>
-        <p>{describeReminders(reminders)}</p>
+        {/*<p>{describeReminders(reminders)}</p>*/}
       </div>
       <div className={`reminder-dropdown ${menuOpen ? "is-open" : ""}`} ref={dropdownRef}>
         <button
@@ -97,7 +106,7 @@ function ReminderSelector({ eventData, reminders = [], onChange, multiple = true
         </button>
         {menuOpen && (
           <div className="reminder-dropdown-menu" id={menuId} role="menu" aria-labelledby={triggerId}>
-            {REMINDER_OPTIONS.map((option) => {
+            {reminderOptions.map((option) => {
               const selected = selectedIds.has(option.id);
               return (
                 <button
@@ -134,9 +143,11 @@ function ReminderSelector({ eventData, reminders = [], onChange, multiple = true
           {reminders.map((reminder) => (
             <span className="reminder-selected-chip" key={reminder.id}>
               {reminderLabel(reminder)}
-              <button type="button" aria-label={`Remove ${reminderLabel(reminder)}`} onClick={() => commit(reminders.filter((item) => item.id !== reminder.id))}>
-                <span className="material-symbols-outlined">close</span>
-              </button>
+              {!isLockedReminder(reminder) && (
+                <button type="button" aria-label={`Remove ${reminderLabel(reminder)}`} onClick={() => commit(reminders.filter((item) => item.id !== reminder.id))}>
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              )}
             </span>
           ))}
         </div>

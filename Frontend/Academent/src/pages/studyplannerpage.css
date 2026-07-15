@@ -457,14 +457,33 @@
 }
 
 .planner-date-cell {
+  position: relative;
+  display: block;
   min-height: 118px;
   padding: 10px;
+  overflow: hidden;
   border: 0;
   border-right: 1px solid rgba(77, 43, 140, 0.08);
   border-bottom: 1px solid rgba(77, 43, 140, 0.08);
   background: #ffffff;
   text-align: left;
   vertical-align: top;
+}
+
+.planner-date-cell-action {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.planner-date-cell-action:focus-visible {
+  outline: 2px solid var(--planner-primary);
+  outline-offset: -3px;
 }
 
 .planner-date-cell:hover,
@@ -478,6 +497,8 @@
 }
 
 .planner-date-number {
+  position: relative;
+  z-index: 1;
   width: 28px;
   height: 28px;
   display: grid;
@@ -485,6 +506,7 @@
   border-radius: 999px;
   color: #4c4358;
   font-weight: 900;
+  pointer-events: none;
 }
 
 .planner-date-cell.today .planner-date-number,
@@ -494,15 +516,20 @@
 }
 
 .planner-cell-events {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 6px;
   margin-top: 8px;
+  pointer-events: none;
 }
 
 .planner-event-chip {
+  position: relative;
   width: 100%;
   min-width: 0;
   display: flex;
+  pointer-events: auto;
   align-items: center;
   gap: 8px;
   border: 1px solid rgba(77, 43, 140, 0.08);
@@ -1422,6 +1449,7 @@ textarea:focus-visible {
 
 .planner-field-label {
   color: #554b62;
+  margin-bottom: 5px;
 }
 
 .planner-field input,
@@ -2143,12 +2171,17 @@ textarea:focus-visible {
 /* Dropdown polish */
 .planner-custom-select {
   isolation: isolate;
+  gap: 2px;
 }
 
 .planner-select-trigger {
   position: relative;
   overflow: hidden;
-  border-radius: 14px;
+  min-height: 36px;
+  grid-template-columns: 24px minmax(0, 1fr) 18px;
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: 10px;
   background:
     linear-gradient(135deg, rgba(77, 43, 140, 0.055), rgba(238, 167, 39, 0.09)),
     #ffffff;
@@ -2173,10 +2206,10 @@ textarea:focus-visible {
 
 .planner-select-trigger > .material-symbols-outlined:first-child {
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   place-items: center;
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgba(77, 43, 140, 0.1);
   color: var(--planner-primary);
   font-size: 18px;
@@ -2187,6 +2220,47 @@ textarea:focus-visible {
   color: var(--planner-secondary);
   transition: transform 160ms ease, color 160ms ease;
 }
+.planner-form-grid .planner-custom-select {
+  width: 100%;
+  justify-self: stretch;
+  align-self: start;
+  align-content: start;
+  grid-template-rows: auto auto;
+  gap: 0;
+}
+
+.planner-form-grid .planner-custom-select .planner-field-label {
+  display: block;
+  height: auto;
+  min-height: 0;
+}
+
+.planner-form-grid .planner-custom-select .planner-select-trigger {
+  height: 40px;
+  min-height: 40px;
+  grid-template-columns: 22px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 8px;
+}
+
+.planner-form-grid .planner-custom-select .planner-select-trigger > .material-symbols-outlined:first-child {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+.planner-form-grid .planner-custom-select .planner-select-trigger > .material-symbols-outlined:last-child {
+  font-size: 17px;
+}
+
+.planner-form-grid .planner-custom-select .planner-select-trigger strong {
+  font-size: 13px;
+  line-height: 1.1;
+}
+
 
 .planner-select-trigger:hover,
 .planner-select-trigger:focus-visible,
@@ -2215,11 +2289,12 @@ textarea:focus-visible {
 }
 
 .planner-select-menu {
-  top: calc(100% + 9px);
-  gap: 6px;
-  padding: 8px;
+  top: calc(100% + 3px);
+  gap: 3px;
+  max-height: 160px;
+  padding: 5px !important;
   border-color: rgba(77, 43, 140, 0.16);
-  border-radius: 16px;
+  border-radius: 14px !important;
   background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 24px 58px rgba(45, 28, 88, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(16px);
@@ -2228,9 +2303,11 @@ textarea:focus-visible {
 }
 
 .planner-select-menu input {
-  min-height: 40px;
+  min-height: 34px;
+  margin-bottom: 1px;
   border-color: rgba(77, 43, 140, 0.14);
-  border-radius: 12px;
+  border-radius: 10px;
+  padding: 6px 9px;
   background:
     linear-gradient(135deg, rgba(77, 43, 140, 0.045), rgba(238, 167, 39, 0.07)),
     #fbf8ff;
@@ -2247,22 +2324,23 @@ textarea:focus-visible {
 }
 
 .planner-select-menu button {
-  min-height: 42px;
+  min-height: 36px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 10px !important;
+  padding: 6px 8px;
   color: #3d3150;
   transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
 }
 
 .planner-select-menu button .material-symbols-outlined {
   display: grid;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   place-items: center;
-  border-radius: 9px;
+  border-radius: 8px;
   background: rgba(77, 43, 140, 0.08);
   color: var(--planner-primary);
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .planner-select-menu button:hover,

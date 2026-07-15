@@ -63,16 +63,7 @@ export const saveFcmTokenForUser = async (uid, fcmToken, patch = {}) => {
   return deviceId;
 };
 
-export const requestAndSaveFcmToken = async (uid) => {
-  const sdk = await getMessagingSdk();
-  if (!sdk) throw new Error("Browser push notifications are not supported in this browser.");
-  if (!uid) throw new Error("Please sign in before enabling browser notifications.");
-
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") {
-    throw new Error("Browser notification permission was not granted.");
-  }
-
+const saveCurrentFcmToken = async (uid, sdk) => {
   const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
   if (!vapidKey) throw new Error("VITE_FIREBASE_VAPID_KEY is required to enable browser push notifications.");
 
@@ -89,6 +80,28 @@ export const requestAndSaveFcmToken = async (uid) => {
     createdAt: snapshot.exists() ? snapshot.data().createdAt : serverTimestamp(),
   });
   return fcmToken;
+};
+
+export const syncBrowserNotificationRegistration = async (uid) => {
+  const sdk = await getMessagingSdk();
+  if (!sdk) throw new Error("Browser push notifications are not supported in this browser.");
+  if (!uid) throw new Error("Please sign in before enabling browser notifications.");
+  if (Notification.permission !== "granted") throw new Error("Browser notification permission is not granted.");
+
+  return saveCurrentFcmToken(uid, sdk);
+};
+
+export const requestAndSaveFcmToken = async (uid) => {
+  const sdk = await getMessagingSdk();
+  if (!sdk) throw new Error("Browser push notifications are not supported in this browser.");
+  if (!uid) throw new Error("Please sign in before enabling browser notifications.");
+
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") {
+    throw new Error("Browser notification permission was not granted.");
+  }
+
+  return saveCurrentFcmToken(uid, sdk);
 };
 
 export const disableBrowserNotificationsForUser = async (uid) => {

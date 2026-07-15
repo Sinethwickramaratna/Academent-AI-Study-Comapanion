@@ -22,12 +22,19 @@ cd backend
 npm install
 ```
 
-Add Firebase Admin credentials through one of these options:
+Add Firebase Admin credentials through one of these options. For local development, set `FIREBASE_PROJECT_ID` explicitly so the Admin SDK can verify Firebase ID tokens without relying on Google Cloud metadata:
 
 ```bash
-FIREBASE_SERVICE_ACCOUNT_JSON='{"project_id":"..."}'
+FIREBASE_PROJECT_ID=your_firebase_project_id
+FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}'
 # or use Google Application Default Credentials:
 GOOGLE_APPLICATION_CREDENTIALS=/secure/path/service-account.json
+```
+
+Optional frontend origin for notification-click links:
+
+```bash
+FRONTEND_ORIGIN=http://localhost:5173
 ```
 
 Optional cron protection:
@@ -54,6 +61,10 @@ VITE_FIREBASE_VAPID_KEY=your_web_push_certificate_key
 ```
 
 The app asks for browser notification permission only from the profile notification settings card. FCM tokens are stored per device in `users/{userId}/devices/{deviceId}`. Invalid tokens are removed by the backend sender.
+
+Generation and app-open reminder flows call `POST /api/notifications` with the signed-in Firebase ID token. The backend creates the in-app notification and sends Firebase Cloud Messaging browser push to enabled device tokens. If the backend is unavailable, the frontend falls back to creating the in-app Firestore notification only.
+
+Scheduled reminders require the backend scheduler to call `/api/notifications/process-due-reminders`; otherwise reminders can only be checked while the app is open.
 
 ## Existing Flow Examples
 
@@ -109,3 +120,4 @@ await fetch(`/api/notifications/events/${eventId}/reminders`, {
 - Failure notifications remain enabled by default.
 - Scheduled notification jobs are not client-writable.
 - Reminder processing claims jobs transactionally before creating notifications.
+

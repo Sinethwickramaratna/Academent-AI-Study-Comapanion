@@ -11,6 +11,14 @@ const parseServiceAccount = () => {
   }
 };
 
+const getFirebaseProjectId = (serviceAccount) =>
+  process.env.FIREBASE_PROJECT_ID ||
+  process.env.GOOGLE_CLOUD_PROJECT ||
+  process.env.GCLOUD_PROJECT ||
+  serviceAccount?.project_id ||
+  serviceAccount?.projectId ||
+  null;
+
 export async function getFirebaseAdmin() {
   if (firebaseAdmin) return firebaseAdmin;
 
@@ -25,11 +33,15 @@ export async function getFirebaseAdmin() {
 
   if (!firebaseAdmin.apps.length) {
     const serviceAccount = parseServiceAccount();
+    const projectId = getFirebaseProjectId(serviceAccount);
     const credential = serviceAccount
       ? firebaseAdmin.credential.cert(serviceAccount)
       : firebaseAdmin.credential.applicationDefault();
 
-    firebaseApp = firebaseAdmin.initializeApp({ credential });
+    firebaseApp = firebaseAdmin.initializeApp({
+      credential,
+      ...(projectId ? { projectId } : {}),
+    });
   } else {
     firebaseApp = firebaseAdmin.app();
   }

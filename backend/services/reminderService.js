@@ -22,10 +22,17 @@ const actionUrlForEvent = (eventType, eventId) => {
   return `/study-plans/${eventId}`;
 };
 
-const titleForEventType = (eventType) => {
+const END_TIME_REMINDER_ID = "end_time";
+
+const isEndTimeReminder = (reminder = {}) => (
+  reminder.id === END_TIME_REMINDER_ID || reminder.trigger === "end"
+);
+
+const titleForEventType = (eventType, reminder = {}) => {
   if (eventType === "exam") return "Upcoming Exam";
   if (eventType === "assignment") return "Assignment Due Soon";
   if (eventType === "task") return "Task Reminder";
+  if (isEndTimeReminder(reminder)) return "Study Session Complete";
   return "Study Session Starting Soon";
 };
 
@@ -48,6 +55,10 @@ const reminderMessage = (event = {}, reminder = {}) => {
   const startAt = toDate(event.startAt);
   const remindAt = toDate(reminder.remindAt);
   const minutes = startAt && remindAt ? Math.round((startAt.getTime() - remindAt.getTime()) / 60000) : Number(reminder.value || 0);
+
+  if (event.type === "studyPlan" && isEndTimeReminder(reminder)) {
+    return `Your "${title}" session has reached its end time.`;
+  }
 
   if (event.type === "exam") return `Your "${title}" starts ${minutes >= 1440 ? "soon" : `in ${Math.max(minutes, 0)} minutes`}.`;
   if (event.type === "assignment") return `"${title}" is due ${minutes >= 60 ? `in ${Math.round(minutes / 60)} hour${Math.round(minutes / 60) === 1 ? "" : "s"}` : `in ${Math.max(minutes, 0)} minutes`}.`;
@@ -99,8 +110,9 @@ export async function scheduleEventReminders(userId, event = {}) {
       eventId: event.eventId,
       eventType,
       reminderId: reminder.id,
+      reminderTrigger: isEndTimeReminder(reminder) ? "end" : "start",
       notificationType: notificationTypeForEventType(eventType),
-      title: titleForEventType(eventType),
+      title: titleForEventType(eventType, reminder),
       message: reminderMessage({ ...event, type: eventType }, reminder),
       entityTitle: event.title || event.studyTopic || "Scheduled event",
       actionLabel: actionLabelForEventType(eventType),
@@ -182,6 +194,7 @@ export async function processDueReminders({ limit = 50 } = {}) {
         metadata: {
           scheduledNotificationId: claimedJob.id,
           reminderId: claimedJob.reminderId,
+          reminderTrigger: claimedJob.reminderTrigger || "start",
           timezone: claimedJob.timezone,
         },
       }, { idempotencyKey: claimedJob.id });

@@ -12,6 +12,7 @@ import {
 } from '../Services/authService';
 import { uploadProfilePhotoToCloudinary } from '../Services/profilePhotoService';
 import { deleteAllTutorConversations } from '../Services/aiTutorService';
+import { createProfileDataPdfBlob } from '../Services/pdfReportService';
 import { applyThemeMode, storeThemeMode } from '../utils/theme';
 import FormSelect from '../components/FormSelect';
 import NotificationSettings from '../components/notifications/NotificationSettings';
@@ -216,13 +217,6 @@ const getAppPreferencesFingerprint = (form) => JSON.stringify({
   notifications: { ...notificationDefaults, ...(form.notifications || {}) },
 });
 
-const safeStringify = (value) => JSON.stringify(value, (key, item) => {
-  if (item && typeof item.toDate === 'function') {
-    return item.toDate().toISOString();
-  }
-  return item;
-}, 2);
-
 const toRoleLabel = (role) => {
   const label = String(role || 'Student').replace(/[-_]+/g, ' ');
   return label.charAt(0).toUpperCase() + label.slice(1);
@@ -248,6 +242,7 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
   const [sendingVerification, setSendingVerification] = useState(false);
   const [clearingChats, setClearingChats] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
 
   useEffect(() => {
     latestFormRef.current = form;
@@ -292,7 +287,7 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
   const university = form.university || 'University not set';
   const emailVerified = Boolean(currentUser?.emailVerified || profile?.emailVerified);
   const googleLinked = Boolean(currentUser?.providerData?.some((provider) => provider.providerId === 'google.com'));
-  const busy = saving || uploadingPhoto || sendingPasswordReset || sendingVerification || clearingChats || deletingAccount;
+  const busy = saving || uploadingPhoto || sendingPasswordReset || sendingVerification || clearingChats || deletingAccount || exportingData;
 
   const completionItems = [
     form.fullName,
@@ -552,30 +547,24 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
     }
   };
 
-  const handleExportData = () => {
-    const exportPayload = {
-      exportedAt: new Date().toISOString(),
-      authUser: {
-        uid: currentUser?.uid || '',
-        email: currentUser?.email || '',
-        displayName: currentUser?.displayName || '',
-        photoURL: currentUser?.photoURL || '',
-        emailVerified: Boolean(currentUser?.emailVerified),
-      },
-      firestoreProfile: profile || {},
-      currentSettingsDraft: form,
-    };
-
-    const blob = new Blob([safeStringify(exportPayload)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `academent-profile-${currentUser?.uid || 'export'}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
-    showNotice('success', 'Profile data export started.');
+  const handleExportData = async () => {
+    setExportingData(true);
+    try {
+      const pdfBlob = await createProfileDataPdfBlob({ profile, currentUser, form, completion });
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `academent-profile-data-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showNotice('success', 'Profile PDF export started.');
+    } catch (error) {
+      showNotice('error', error.message || 'Could not export profile data as a PDF.');
+    } finally {
+      setExportingData(false);
+    }
   };
 
   const handleClearChatHistory = async () => {
@@ -918,9 +907,9 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
             </div>
 
             <div className="privacy-actions">
-              <button type="button" onClick={handleExportData}>
-                <span className="material-symbols-outlined">download</span>
-                Export my data
+              <button type="button" onClick={handleExportData} disabled={exportingData}>
+                <span className="material-symbols-outlined">{exportingData ? 'sync' : 'download'}</span>
+                {exportingData ? 'Exporting PDF...' : 'Export my data'}
               </button>
               <button type="button" onClick={() => navigate('/my-notes')}>
                 <span className="material-symbols-outlined">folder_managed</span>

@@ -8,6 +8,7 @@
   { id: "1_day", label: "1 day before", value: 1, unit: "days", icon: "event_upcoming" },
   { id: "2_days", label: "2 days before", value: 2, unit: "days", icon: "event_upcoming" },
   { id: "1_week", label: "1 week before", value: 1, unit: "weeks", icon: "date_range" },
+  { id: "end_time", label: "At the end time", value: 0, unit: "minutes", icon: "event_available", trigger: "end", isSystem: true },
 ];
 
 const UNIT_MINUTES = {
@@ -16,6 +17,12 @@ const UNIT_MINUTES = {
   days: 1440,
   weeks: 10080,
 };
+
+export const END_TIME_REMINDER_ID = "end_time";
+
+export const isEndTimeReminder = (reminder = {}) => (
+  reminder.id === END_TIME_REMINDER_ID || reminder.trigger === "end"
+);
 
 const toDate = (value) => {
   if (!value) return null;
@@ -38,7 +45,7 @@ export const eventStartDate = (eventData = {}) => {
 };
 
 export const eventEndDate = (eventData = {}) => {
-  const [year, month, day] = String(eventData.date || "").split("-").map(Number);
+  const [year, month, day] = String(eventData.endDate || eventData.date || "").split("-").map(Number);
   const [hours = 0, minutes = 0] = String(eventData.endTime || eventData.startTime || "00:00").split(":").map(Number);
   if (!year || !month || !day) return null;
   const date = new Date(year, month - 1, day, hours, minutes, 0, 0);
@@ -50,6 +57,7 @@ export const reminderOffsetToMinutes = (reminder = {}) => (
 );
 
 export const reminderLabel = (reminder = {}) => {
+  if (isEndTimeReminder(reminder)) return "At the end time";
   if (reminder.isCustom || reminder.unit === "custom") {
     const date = toDate(reminder.remindAt);
     return date ? `Custom: ${date.toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}` : "Custom reminder";
@@ -60,6 +68,7 @@ export const reminderLabel = (reminder = {}) => {
 };
 
 export const makeReminderId = (reminder = {}) => {
+  if (isEndTimeReminder(reminder)) return END_TIME_REMINDER_ID;
   if (reminder.id) return reminder.id;
   if (reminder.isCustom || reminder.unit === "custom") return `custom-${toDate(reminder.remindAt)?.getTime() || Date.now()}`;
   const value = Number(reminder.value || 0);
@@ -70,11 +79,22 @@ export const makeReminderId = (reminder = {}) => {
 };
 
 export const normalizeReminderInput = (reminder = {}, eventData = {}) => {
+  const isEndReminder = isEndTimeReminder(reminder);
   const startAt = eventStartDate(eventData);
-  if (!startAt) throw new Error("Choose a valid event date and start time before adding reminders.");
+  const endAt = eventEndDate(eventData);
+
+  if (isEndReminder && !endAt) {
+    throw new Error("Choose a valid event date and end time before adding an end reminder.");
+  }
+
+  if (!isEndReminder && !startAt) {
+    throw new Error("Choose a valid event date and start time before adding reminders.");
+  }
 
   let remindAt;
-  if (reminder.isCustom || reminder.unit === "custom") {
+  if (isEndReminder) {
+    remindAt = endAt;
+  } else if (reminder.isCustom || reminder.unit === "custom") {
     remindAt = toDate(reminder.remindAt || reminder.customDateTime);
   } else {
     const minutesBefore = reminderOffsetToMinutes(reminder);
@@ -90,29 +110,45 @@ export const normalizeReminderInput = (reminder = {}, eventData = {}) => {
     && previousRemindAt
     && Math.abs(previousRemindAt.getTime() - remindAt.getTime()) < 1000;
 
-  return {
-    id: makeReminderId({ ...reminder, remindAt }),
-    value: Number(reminder.value || 0),
-    unit: reminder.isCustom ? "custom" : reminder.unit || "minutes",
+  const normalized = {
+    id: isEndReminder ? END_TIME_REMINDER_ID : makeReminderId({ ...reminder, remindAt }),
+    value: isEndReminder ? 0 : Number(reminder.value || 0),
+    unit: isEndReminder ? "minutes" : reminder.isCustom ? "custom" : reminder.unit || "minutes",
     remindAt,
     notificationSent,
     sentAt: notificationSent ? reminder.sentAt || null : null,
     isCustom: Boolean(reminder.isCustom || reminder.unit === "custom"),
     label: reminderLabel({ ...reminder, remindAt }),
   };
+
+  if (isEndReminder) {
+    normalized.trigger = "end";
+    normalized.isSystem = true;
+    normalized.label = reminderLabel(normalized);
+  }
+
+  return normalized;
 };
 
 export const normalizeEventReminders = (eventData = {}, preferences = {}) => {
   const timezone = preferences.timezone || getUserTimezone();
+  const eventType = eventData.type || eventData.eventType;
+  const isStudyPlan = eventType === "studyPlan";
   const sourceReminders = Array.isArray(eventData.reminders)
     ? eventData.reminders
     : eventData.reminder?.enabled || eventData.reminderMinutes
       ? [{ value: Number(eventData.reminder?.beforeMinutes ?? eventData.reminderMinutes ?? preferences.defaultReminder?.value ?? 30), unit: "minutes" }]
       : [];
+  const shouldAddEndReminder = isStudyPlan
+    && !sourceReminders.some((reminder) => isEndTimeReminder(reminder));
+  const remindersToNormalize = shouldAddEndReminder
+    ? [...sourceReminders, { id: END_TIME_REMINDER_ID, trigger: "end", value: 0, unit: "minutes", isSystem: true }]
+    : sourceReminders;
 
   const unique = new Map();
-  sourceReminders.forEach((reminder) => {
+  remindersToNormalize.forEach((reminder) => {
     if (reminder.disabled) return;
+    if (isEndTimeReminder(reminder) && !isStudyPlan) return;
     const normalized = normalizeReminderInput(reminder, eventData);
     unique.set(normalized.id, normalized);
   });

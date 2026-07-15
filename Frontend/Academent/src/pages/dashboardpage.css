@@ -312,3 +312,94 @@
   background-color: #1f1c31 !important;
 }
 
+
+.dashboard-material-menu {
+  position: relative;
+  z-index: 5;
+}
+
+.dashboard-material-menu__trigger {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.dashboard-material-menu__trigger:hover,
+.dashboard-material-menu__trigger:focus-visible,
+.dashboard-material-menu__trigger[aria-expanded="true"] {
+  background: rgba(77, 43, 140, 0.08);
+  opacity: 1;
+  outline: none;
+}
+
+.dashboard-material-menu__content {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  min-width: 176px;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid rgba(77, 43, 140, 0.14);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(45, 28, 88, 0.16);
+}
+
+.dashboard-material-menu__content button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #373044;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 9px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dashboard-material-menu__content button:hover,
+.dashboard-material-menu__content button:focus-visible {
+  background: rgba(77, 43, 140, 0.08);
+  color: var(--window-primary);
+  outline: none;
+}
+
+.dashboard-material-menu__content .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.dark .dashboard-home-window .dashboard-material-menu__content,
+.dark .dashboard .dashboard-material-menu__content {
+  background: #211D38 !important;
+  border-color: #4A4568 !important;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34) !important;
+}
+
+.dark .dashboard-home-window .dashboard-material-menu__content button,
+.dark .dashboard .dashboard-material-menu__content button {
+  background: transparent !important;
+  color: #F7F5FF !important;
+}
+
+.dark .dashboard-home-window .dashboard-material-menu__content button:hover,
+.dark .dashboard-home-window .dashboard-material-menu__content button:focus-visible,
+.dark .dashboard .dashboard-material-menu__content button:hover,
+.dark .dashboard .dashboard-material-menu__content button:focus-visible,
+.dark .dashboard-home-window .dashboard-material-menu__trigger:hover,
+.dark .dashboard-home-window .dashboard-material-menu__trigger:focus-visible,
+.dark .dashboard-home-window .dashboard-material-menu__trigger[aria-expanded="true"],
+.dark .dashboard .dashboard-material-menu__trigger:hover,
+.dark .dashboard .dashboard-material-menu__trigger:focus-visible,
+.dark .dashboard .dashboard-material-menu__trigger[aria-expanded="true"] {
+  background: rgba(123, 92, 255, 0.18) !important;
+}
