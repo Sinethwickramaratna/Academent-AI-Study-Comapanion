@@ -1597,9 +1597,7 @@ textarea:focus-visible {
 
 .planner-picker-menu-header button,
 .planner-date-menu-footer button,
-.planner-time-presets button,
-.planner-date-option,
-.planner-time-options button {
+.planner-date-option {
   border: 1px solid transparent;
   font: inherit;
   cursor: pointer;
@@ -1619,11 +1617,7 @@ textarea:focus-visible {
 .planner-picker-menu-header button:hover,
 .planner-picker-menu-header button:focus-visible,
 .planner-date-menu-footer button:hover,
-.planner-date-menu-footer button:focus-visible,
-.planner-time-presets button:hover,
-.planner-time-presets button:focus-visible,
-.planner-time-options button:hover,
-.planner-time-options button:focus-visible {
+.planner-date-menu-footer button:focus-visible {
   transform: translateY(-1px);
   border-color: rgba(77, 43, 140, 0.18);
   background: rgba(77, 43, 140, 0.08);
@@ -1725,79 +1719,204 @@ textarea:focus-visible {
 .planner-time-menu-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 10px;
-  padding: 9px 10px;
+  padding: 10px;
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(77, 43, 140, 0.09), rgba(238, 167, 39, 0.12));
   color: var(--planner-primary);
 }
 
 .planner-time-menu-header .material-symbols-outlined {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(77, 43, 140, 0.1);
   font-size: 18px;
 }
 
+.planner-time-menu-header span:last-child {
+  display: grid;
+  gap: 1px;
+}
+
 .planner-time-menu-header strong {
-  font-size: 14px;
+  color: var(--planner-primary);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.planner-time-menu-header small {
+  color: #80748d;
+  font-size: 11px;
   font-weight: 900;
 }
 
 .planner-time-presets {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-  margin-bottom: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 12px;
 }
 
-.planner-time-presets button.is-selected,
-.planner-time-options button.is-selected {
+.planner-time-presets button,
+.planner-time-adjuster button,
+.planner-time-menu-footer button {
+  border: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.planner-time-presets button {
+  min-height: 46px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: rgba(238, 167, 39, 0.14);
+  color: #664100;
+  text-align: left;
+}
+
+.planner-time-presets button strong {
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.planner-time-presets button small {
+  color: rgba(102, 65, 0, 0.72);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.planner-time-adjuster {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 82px;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.planner-time-adjuster > span {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid rgba(77, 43, 140, 0.12);
+  border-radius: 14px;
+  background: #fbf8ff;
+  text-align: center;
+}
+
+.planner-time-adjuster > span strong {
+  color: var(--planner-primary);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.planner-time-adjuster > span small {
+  color: #80748d;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.planner-time-adjuster button {
+  min-width: 0;
+  min-height: 50px;
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  border-radius: 14px;
+  background: #fbf8ff;
+  color: #33263f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.planner-time-adjuster button .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.planner-time-exact {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.planner-time-exact > span {
+  color: #6d627a;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.planner-time-exact input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(77, 43, 140, 0.14);
+  border-radius: 12px;
+  padding: 0 12px;
+  background: #fbf8ff;
+  color: #241a33;
+  font-size: 14px;
+  font-weight: 900;
+  color-scheme: light;
+}
+
+.planner-time-exact input:focus,
+.planner-time-exact input:focus-visible {
+  border-color: var(--planner-secondary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(133, 64, 157, 0.13);
+}
+
+.planner-time-presets button:hover,
+.planner-time-presets button:focus-visible,
+.planner-time-adjuster button:hover,
+.planner-time-adjuster button:focus-visible,
+.planner-time-menu-footer button:hover,
+.planner-time-menu-footer button:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(77, 43, 140, 0.18);
+  background: rgba(77, 43, 140, 0.08);
+  color: var(--planner-primary);
+  outline: none;
+}
+
+.planner-time-presets button.is-selected {
   border-color: transparent;
   background: linear-gradient(135deg, var(--planner-primary), var(--planner-secondary));
   color: #ffffff;
   box-shadow: 0 10px 22px rgba(77, 43, 140, 0.22);
 }
 
-.planner-time-options {
-  max-height: 236px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.planner-time-options button {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  border-radius: 10px;
-  padding: 6px 9px;
-  background: #fbf8ff;
-  color: #33263f;
-  font-weight: 900;
-}
-
-.planner-time-options button small {
-  color: #8d8498;
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.planner-time-options button.is-selected small {
+.planner-time-presets button.is-selected small {
   color: rgba(255, 255, 255, 0.78);
 }
 
-.planner-time-options::-webkit-scrollbar {
-  width: 8px;
+.planner-time-menu-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid rgba(77, 43, 140, 0.1);
 }
 
-.planner-time-options::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(77, 43, 140, 0.2);
+.planner-time-menu-footer button {
+  min-height: 34px;
+  border-radius: 10px;
+  padding: 0 16px;
+  background: linear-gradient(135deg, var(--planner-primary), var(--planner-secondary));
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 10px 22px rgba(77, 43, 140, 0.18);
 }
-
 .planner-custom-select {
   position: relative;
   text-transform: none;
@@ -2828,7 +2947,9 @@ textarea:focus-visible {
 .dark .study-planner-page .planner-date-option,
 .dark .study-planner-page .planner-date-menu-footer button,
 .dark .study-planner-page .planner-time-presets button,
-.dark .study-planner-page .planner-time-options button {
+.dark .study-planner-page .planner-time-adjuster button,
+.dark .study-planner-page .planner-time-adjuster > span,
+.dark .study-planner-page .planner-time-exact input {
   background: #211D38 !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
@@ -2842,8 +2963,10 @@ textarea:focus-visible {
 .dark .study-planner-page .planner-date-menu-footer button:focus-visible,
 .dark .study-planner-page .planner-time-presets button:hover,
 .dark .study-planner-page .planner-time-presets button:focus-visible,
-.dark .study-planner-page .planner-time-options button:hover,
-.dark .study-planner-page .planner-time-options button:focus-visible {
+.dark .study-planner-page .planner-time-adjuster button:hover,
+.dark .study-planner-page .planner-time-adjuster button:focus-visible,
+.dark .study-planner-page .planner-time-menu-footer button:hover,
+.dark .study-planner-page .planner-time-menu-footer button:focus-visible {
   background: #3A345A !important;
   border-color: #7B5CFF !important;
   color: #F7F5FF !important;
@@ -2851,7 +2974,10 @@ textarea:focus-visible {
 
 .dark .study-planner-page .planner-date-weekdays span,
 .dark .study-planner-page .planner-date-option.is-muted,
-.dark .study-planner-page .planner-time-options button small {
+.dark .study-planner-page .planner-time-presets button small,
+.dark .study-planner-page .planner-time-menu-header small,
+.dark .study-planner-page .planner-time-adjuster > span small,
+.dark .study-planner-page .planner-time-exact > span {
   color: #D8D3EE !important;
 }
 
@@ -2862,8 +2988,7 @@ textarea:focus-visible {
 }
 
 .dark .study-planner-page .planner-date-option.is-selected,
-.dark .study-planner-page .planner-time-presets button.is-selected,
-.dark .study-planner-page .planner-time-options button.is-selected {
+.dark .study-planner-page .planner-time-presets button.is-selected {
   background: linear-gradient(135deg, #7B5CFF, #A178FF) !important;
   border-color: transparent !important;
   color: #F7F5FF !important;
@@ -2875,7 +3000,8 @@ textarea:focus-visible {
   color: rgba(216, 211, 238, 0.46) !important;
 }
 
-.dark .study-planner-page .planner-date-menu-footer {
+.dark .study-planner-page .planner-date-menu-footer,
+.dark .study-planner-page .planner-time-menu-footer {
   border-top-color: #4A4568 !important;
 }
 
@@ -2884,9 +3010,24 @@ textarea:focus-visible {
   color: #A178FF !important;
 }
 
-.dark .study-planner-page .planner-time-options::-webkit-scrollbar-thumb {
-  background: rgba(161, 120, 255, 0.34);
+.dark .study-planner-page .planner-time-menu-header .material-symbols-outlined {
+  background: rgba(161, 120, 255, 0.16) !important;
+  color: #A178FF !important;
 }
+
+.dark .study-planner-page .planner-time-adjuster > span strong {
+  color: #FFE873 !important;
+}
+
+.dark .study-planner-page .planner-time-exact input {
+  color-scheme: dark;
+}
+
+.dark .study-planner-page .planner-time-menu-footer button {
+  background: linear-gradient(135deg, #7B5CFF, #A178FF) !important;
+  color: #F7F5FF !important;
+}
+
 .dark .study-planner-page .planner-notes-selector {
   background:
     linear-gradient(135deg, rgba(123, 92, 255, 0.12), rgba(242, 181, 68, 0.07)),

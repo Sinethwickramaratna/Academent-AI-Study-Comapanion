@@ -120,11 +120,12 @@ const formatTimeOption = (time = '00:00') => {
   const date = new Date(2000, 0, 1, Number.isFinite(hours) ? hours : 0, Number.isFinite(minutes) ? minutes : 0);
   return new Intl.DateTimeFormat('en', { hour: 'numeric', minute: '2-digit' }).format(date);
 };
-const timePickerOptions = Array.from({ length: 96 }, (_, index) => {
-  const value = minutesToTime(index * 15);
-  return { value, label: formatTimeOption(value) };
-});
-const timePresetOptions = ['08:00', '09:00', '12:00', '14:00', '18:00', '20:00'].map((value) => ({ value, label: formatTimeOption(value) }));
+const timePresetOptions = [
+  { value: '08:00', label: 'Morning' },
+  { value: '09:00', label: 'Class' },
+  { value: '14:00', label: 'Afternoon' },
+  { value: '18:00', label: 'Evening' },
+].map((option) => ({ ...option, timeLabel: formatTimeOption(option.value) }));
 const addMinutesToTime = (time, minutes) => minutesToTime(timeToMinutes(time) + minutes);
 const addMinutesToDateTime = (dateInput, time, minutes) => {
   const startAt = combineDateTime(dateInput, time);
@@ -339,8 +340,8 @@ function PlannerDatePicker({ label, value, min, onChange }) {
 
 function PlannerTimePicker({ label, value, onChange }) {
   const [open, setOpen] = useState(false);
-  const selected = timePickerOptions.find((option) => option.value === value);
-  const chooseTime = (nextTime) => {
+  const shiftTime = (minutes) => onChange(addMinutesToTime(value || '09:00', minutes));
+  const choosePreset = (nextTime) => {
     onChange(nextTime);
     setOpen(false);
   };
@@ -348,17 +349,21 @@ function PlannerTimePicker({ label, value, onChange }) {
   return (
     <div className={`planner-field planner-picker-field planner-time-picker ${open ? 'is-open' : ''}`} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }} onKeyDown={(event) => { if (event.key === 'Escape') setOpen(false); }}>
       {label && <span className="planner-field-label">{label}</span>}
-      <button type="button" className={`planner-picker-trigger ${value ? 'has-value' : ''} ${open ? 'is-open' : ''}`} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((state) => !state)}>
+      <button type="button" className={`planner-picker-trigger ${value ? 'has-value' : ''} ${open ? 'is-open' : ''}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((state) => !state)}>
         <span className="material-symbols-outlined">schedule</span>
-        <span><strong>{selected?.label || formatTimeOption(value)}</strong><small>{value || 'Choose time'}</small></span>
+        <span><strong>{formatTimeOption(value)}</strong><small>{value || 'Choose time'}</small></span>
         <span className="material-symbols-outlined">expand_more</span>
       </button>
-      {open && <div className="planner-picker-menu planner-time-menu" role="listbox" aria-label={`${label || 'Time'} options`}>
-        <div className="planner-time-menu-header"><span className="material-symbols-outlined">schedule</span><strong>{selected?.label || 'Choose time'}</strong></div>
-        <div className="planner-time-presets">{timePresetOptions.map((option) => <button type="button" key={option.value} className={option.value === value ? 'is-selected' : ''} onClick={() => chooseTime(option.value)}>{option.label}</button>)}</div>
-        <div className="planner-time-options">
-          {timePickerOptions.map((option) => <button type="button" key={option.value} role="option" aria-selected={option.value === value} className={option.value === value ? 'is-selected' : ''} onClick={() => chooseTime(option.value)}><span>{option.label}</span><small>{option.value}</small></button>)}
+      {open && <div className="planner-picker-menu planner-time-menu" role="dialog" aria-label={`${label || 'Time'} selector`}>
+        <div className="planner-time-menu-header"><span className="material-symbols-outlined">schedule</span><span><strong>{formatTimeOption(value)}</strong><small>{value || 'Choose time'}</small></span></div>
+        <div className="planner-time-presets">{timePresetOptions.map((option) => <button type="button" key={option.value} className={option.value === value ? 'is-selected' : ''} onClick={() => choosePreset(option.value)}><strong>{option.label}</strong><small>{option.timeLabel}</small></button>)}</div>
+        <div className="planner-time-adjuster">
+          <button type="button" onClick={() => shiftTime(-15)}><span className="material-symbols-outlined">remove</span><strong>15 min</strong></button>
+          <span><strong>{formatTimeOption(value)}</strong><small>{value || '09:00'}</small></span>
+          <button type="button" onClick={() => shiftTime(15)}><span className="material-symbols-outlined">add</span><strong>15 min</strong></button>
         </div>
+        <label className="planner-time-exact"><span>Exact time</span><input type="time" value={value || '09:00'} onChange={(event) => onChange(event.target.value)} /></label>
+        <div className="planner-time-menu-footer"><button type="button" onClick={() => setOpen(false)}>Done</button></div>
       </div>}
     </div>
   );
