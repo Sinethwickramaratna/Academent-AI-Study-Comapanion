@@ -211,8 +211,8 @@
   color-scheme: dark;
 }
 
-.dark .dashboard :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.notification-shell),
-.dark .dashboard-home-window :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.notification-shell) {
+.dark .dashboard :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.notification-shell):not(.dashboard-material-menu):not(.dashboard-material-card__title),
+.dark .dashboard-home-window :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.notification-shell):not(.dashboard-material-menu):not(.dashboard-material-card__title) {
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.334) !important;
@@ -248,8 +248,8 @@
   color: #F7F5FF !important;
 }
 
-.dark .dashboard :where(button:not([class*="primary"]):not([class*="danger"]):hover, [role="button"]:hover, .is-active, .is-selected, [aria-selected="true"]),
-.dark .dashboard-home-window :where(button:not([class*="primary"]):not([class*="danger"]):hover, [role="button"]:hover, .is-active, .is-selected, [aria-selected="true"]) {
+.dark .dashboard :where(.is-active, .is-selected, [aria-selected="true"]),
+.dark .dashboard-home-window :where(.is-active, .is-selected, [aria-selected="true"]) {
   background-color: #221f36 !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
@@ -304,10 +304,6 @@
   box-shadow: none !important;
 }
 
-.dark .dashboard :where([class*="row"], [class*="item"], [class*="option"], [class*="answer"], [class*="choice"], [class*="chip"]):hover:not([class*="primary"]):not([class*="danger"]),
-.dark .dashboard-home-window :where([class*="row"], [class*="item"], [class*="option"], [class*="answer"], [class*="choice"], [class*="chip"]):hover:not([class*="primary"]):not([class*="danger"]) {
-  background-color: #1f1c31 !important;
-}
 
 
 .dashboard-material-menu {
@@ -326,7 +322,8 @@
 .dashboard-material-menu__trigger:hover,
 .dashboard-material-menu__trigger:focus-visible,
 .dashboard-material-menu__trigger[aria-expanded="true"] {
-  background: rgba(77, 43, 140, 0.08);
+  background: transparent;
+  background-color: transparent;
   opacity: 1;
   outline: none;
 }
@@ -399,19 +396,7 @@
 .dark .dashboard-home-window .dashboard-material-menu__content button:hover,
 .dark .dashboard-home-window .dashboard-material-menu__content button:focus-visible,
 .dark .dashboard .dashboard-material-menu__content button:hover,
-.dark .dashboard .dashboard-material-menu__content button:focus-visible,
-:root.dark .dashboard-home-window .dashboard-material-menu__trigger:hover,
-:root.dark .dashboard-home-window .dashboard-material-menu__trigger:focus-visible,
-:root.dark .dashboard-home-window .dashboard-material-menu__trigger[aria-expanded="true"],
-:root.dark .dashboard .dashboard-material-menu__trigger:hover,
-:root.dark .dashboard .dashboard-material-menu__trigger:focus-visible,
-:root.dark .dashboard .dashboard-material-menu__trigger[aria-expanded="true"],
-.dark .dashboard-home-window .dashboard-material-menu__trigger:hover,
-.dark .dashboard-home-window .dashboard-material-menu__trigger:focus-visible,
-.dark .dashboard-home-window .dashboard-material-menu__trigger[aria-expanded="true"],
-.dark .dashboard .dashboard-material-menu__trigger:hover,
-.dark .dashboard .dashboard-material-menu__trigger:focus-visible,
-.dark .dashboard .dashboard-material-menu__trigger[aria-expanded="true"] {
+.dark .dashboard .dashboard-material-menu__content button:focus-visible {
   background: rgba(123, 92, 255, 0.18) !important;
 }
 
@@ -432,7 +417,7 @@
 
 .dashboard-material-card:hover::before,
 .dashboard-material-card:focus-within::before {
-  opacity: 1;
+  opacity: 0;
 }
 
 .dashboard-material-card__icon {
@@ -472,8 +457,8 @@
 .dark .dashboard-home-window .dashboard-material-card:focus-within,
 .dark .dashboard .dashboard-material-card:hover,
 .dark .dashboard .dashboard-material-card:focus-within {
-  border-color: rgba(242, 181, 68, 0.46) !important;
-  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(123, 92, 255, 0.18) !important;
+  border-color: rgba(161, 120, 255, 0.28) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3) !important;
 }
 
 .dark .dashboard-home-window .dashboard-material-card__icon,
@@ -597,4 +582,28 @@
 .dark .dashboard .dashboard-stat-icon .material-symbols-outlined {
   color: inherit !important;
   filter: drop-shadow(0 4px 12px currentColor);
+}
+
+:root.dark .dashboard-home-window .dashboard-material-menu__trigger:hover,
+:root.dark .dashboard-home-window .dashboard-material-menu__trigger:focus-visible,
+:root.dark .dashboard-home-window .dashboard-material-menu__trigger[aria-expanded="true"],
+:root.dark .dashboard .dashboard-material-menu__trigger:hover,
+:root.dark .dashboard .dashboard-material-menu__trigger:focus-visible,
+:root.dark .dashboard .dashboard-material-menu__trigger[aria-expanded="true"],
+.dark .dashboard-home-window .dashboard-material-menu__trigger:hover,
+.dark .dashboard-home-window .dashboard-material-menu__trigger:focus-visible,
+.dark .dashboard-home-window .dashboard-material-menu__trigger[aria-expanded="true"],
+.dark .dashboard .dashboard-material-menu__trigger:hover,
+.dark .dashboard .dashboard-material-menu__trigger:focus-visible,
+.dark .dashboard .dashboard-material-menu__trigger[aria-expanded="true"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.dashboard-material-card .dashboard-material-menu__trigger:hover,
+.dashboard-material-card .dashboard-material-menu__trigger:focus-visible,
+.dashboard-material-card .dashboard-material-menu__trigger[aria-expanded="true"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
