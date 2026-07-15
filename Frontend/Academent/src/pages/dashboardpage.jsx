@@ -820,8 +820,8 @@ function DashboardPage({ initialActiveTab = 'home' }) {
 
             {/* Stats Quick Look */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-lg">
-              <div className="glass-panel p-lg rounded-xl flex items-center gap-md">
-                <div className="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+              <div className="dashboard-stat-card glass-panel p-lg rounded-xl flex items-center gap-md">
+                <div className="dashboard-stat-icon dashboard-stat-icon--streak w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
                 </div>
                 <div className="overflow-hidden">
@@ -829,8 +829,8 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                   <h3 className="font-headline-md text-headline-md truncate">{metrics.streak} {metrics.streak === 1 ? 'Day' : 'Days'}</h3>
                 </div>
               </div>
-              <div className="glass-panel p-lg rounded-xl flex items-center gap-md">
-                <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+              <div className="dashboard-stat-card glass-panel p-lg rounded-xl flex items-center gap-md">
+                <div className="dashboard-stat-icon dashboard-stat-icon--notes w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>description</span>
                 </div>
                 <div className="overflow-hidden">
@@ -838,8 +838,8 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                   <h3 className="font-headline-md text-headline-md truncate">{metrics.notesCreated}</h3>
                 </div>
               </div>
-              <div className="glass-panel p-lg rounded-xl flex items-center gap-md">
-                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+              <div className="dashboard-stat-card glass-panel p-lg rounded-xl flex items-center gap-md">
+                <div className="dashboard-stat-icon dashboard-stat-icon--quizzes w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>quiz</span>
                 </div>
                 <div className="overflow-hidden">
@@ -847,8 +847,8 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                   <h3 className="font-headline-md text-headline-md truncate">{metrics.quizzesTaken}</h3>
                 </div>
               </div>
-              <div className="glass-panel p-lg rounded-xl flex items-center gap-md">
-                <div className="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center shrink-0">
+              <div className="dashboard-stat-card glass-panel p-lg rounded-xl flex items-center gap-md">
+                <div className="dashboard-stat-icon dashboard-stat-icon--gpa w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
                 </div>
                 <div className="overflow-hidden">

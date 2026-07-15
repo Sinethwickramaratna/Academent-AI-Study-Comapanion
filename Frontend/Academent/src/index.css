@@ -796,7 +796,6 @@ textarea::placeholder {
 }
 /* Academent dark surface smoothing */
 .dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="shell"], [class*="workspace"]) :where([class*="content"], [class*="body"], [class*="section"], [class*="header"], [class*="row"], [class*="item"], [class*="meta"], [class*="copy"], [class*="group"], [class*="grid"], [class*="list"]):not(button):not([role="button"]):not(.is-active):not(.is-selected):not([aria-selected="true"]):not([class*="hero"]):not([class*="primary"]):not([class*="danger"]):not(.flash-card-row__top):not(.flash-card-row__meta):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-hover-actions) {
-  background: transparent !important;
   box-shadow: none !important;
 }
 
@@ -1367,4 +1366,3 @@ body .flash-header .flash-custom-select .academent-select-menu {
 body .flash-header {
   overflow: visible !important;
 }
-
