@@ -528,11 +528,10 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   const fullName = effectiveProfile?.fullName || currentUser?.displayName || 'Student';
   const major = effectiveProfile?.academicProfile?.major || 'Undecided Major';
   const rawSubjects = effectiveProfile?.academicProfile?.subjects;
-  const subjects = Array.isArray(rawSubjects) && rawSubjects.length
-    ? rawSubjects
-    : rawSubjects
-      ? [rawSubjects]
-      : ['General Study'];
+  const subjects = useMemo(() => {
+    if (Array.isArray(rawSubjects) && rawSubjects.length) return rawSubjects;
+    return rawSubjects ? [rawSubjects] : ['General Study'];
+  }, [rawSubjects]);
   const studyStyle = effectiveProfile?.learningPreferences?.studyStyle || 'visual';
   const photoURL = currentUser?.photoURL || effectiveProfile?.photoURL || '';
 
@@ -1255,11 +1254,11 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                   return (
                     <div
                       key={materialMenuId}
-                      className="glass-panel group relative p-lg rounded-xl hover:-translate-y-1 active:translate-y-0 transition-all cursor-pointer flex flex-col justify-between"
+                      className="dashboard-material-card glass-panel group relative p-lg rounded-xl hover:-translate-y-1 active:translate-y-0 transition-all cursor-pointer flex flex-col justify-between"
                     >
                       <div>
                         <div className="flex justify-between items-start mb-md">
-                          <div className={`w-12 h-12 ${mat.iconColor} rounded-lg flex items-center justify-center shrink-0 shadow-sm`}>
+                          <div className={`dashboard-material-card__icon w-12 h-12 ${mat.iconColor} rounded-lg flex items-center justify-center shrink-0 shadow-sm`}>
                             <span className="material-symbols-outlined text-[32px]">{mat.icon}</span>
                           </div>
                           <div className="dashboard-material-menu" data-dashboard-material-menu>
@@ -1294,21 +1293,21 @@ function DashboardPage({ initialActiveTab = 'home' }) {
                             )}
                           </div>
                         </div>
-                        <h5 className="font-label-md text-label-md mb-xs text-on-surface truncate">{mat.name}</h5>
-                        <p className="text-xs text-outline mb-lg">{mat.info}</p>
+                        <h5 className="dashboard-material-card__title font-label-md text-label-md mb-xs text-on-surface truncate">{mat.name}</h5>
+                        <p className="dashboard-material-card__meta text-xs text-outline mb-lg">{mat.info}</p>
                       </div>
-                      <div className="flex gap-sm pt-2">
+                      <div className="dashboard-material-card__actions flex gap-sm pt-2">
                         <button
                           type="button"
                           onClick={() => handleMaterialAction(mat, mat.btn1)}
-                          className="flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
+                          className="dashboard-material-card__action flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
                         >
                           {mat.btn1}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleMaterialAction(mat, mat.btn2)}
-                          className="flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
+                          className="dashboard-material-card__action flex-1 py-sm bg-surface-container-low rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all"
                         >
                           {mat.btn2}
                         </button>
