@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+﻿import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import {
   DEFAULT_NOTE_MANAGEMENT,
@@ -15,6 +15,7 @@ import {
   updateModuleTree,
 } from "./noteManagementUtils";
 import { extractAndSaveKnowledge } from "./quizService";
+import { createPdfUploadSuccessNotification } from "./notificationService";
 
 const noteManagementRef = (uid) => doc(db, "users", uid, "noteManagement", "structure");
 
@@ -189,6 +190,18 @@ export const addPdf = async (uid, semesterId, moduleId, folderId, pdfData) => {
     url: pdf.url,
   });
 
+  const semester = (data.semesters || []).find((item) => item.semesterId === semesterId);
+  const module = (semester?.modules || []).find((item) => item.moduleId === moduleId);
+  await createPdfUploadSuccessNotification(uid, pdf, {
+    semesterId,
+    moduleId,
+    folderId: folderId || "",
+    semesterTitle: semester?.title || "Semester",
+    moduleTitle: module?.title || "Module",
+  }).catch((error) => {
+    console.warn("PDF upload success notification could not be created:", error);
+  });
+
   return savedData;
 };
 
@@ -256,3 +269,5 @@ export const deleteNote = async (uid, semesterId, moduleId, noteId) => {
 
   return saveNoteManagement(uid, nextData);
 };
+
+

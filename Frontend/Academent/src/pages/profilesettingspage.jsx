@@ -14,6 +14,7 @@ import { uploadProfilePhotoToCloudinary } from '../Services/profilePhotoService'
 import { deleteAllTutorConversations } from '../Services/aiTutorService';
 import { applyThemeMode, storeThemeMode } from '../utils/theme';
 import FormSelect from '../components/FormSelect';
+import NotificationSettings from '../components/notifications/NotificationSettings';
 
 const subjectOptions = [
   'Biology',
@@ -901,6 +902,10 @@ function ProfileSettingsPage({ profile, currentUser, onProfileUpdated }) {
                 </button>
               ))}
             </div>
+          </section>
+
+          <section className="profile-card">
+            <NotificationSettings />
           </section>
 
           <section className="profile-card privacy-card">

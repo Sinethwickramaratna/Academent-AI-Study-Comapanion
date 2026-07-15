@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import TopBar from '../components/TopBar';
+import { useNotificationToasts } from '../components/notifications/NotificationToastProvider';
 import LoadingEffect from '../components/LoadingEffect';
 import FormSelect from '../components/FormSelect';
 import useNoteManagement from '../Services/useNoteManagement';
@@ -244,6 +245,7 @@ function FlashCardRow({ card, activeCollection, onStudy, onView }) {
 function FlashCardsWorkspace({ profile, currentUser }) {
   const notes = useNoteManagement();
   const flash = useFlashCards();
+  const { addToast } = useNotificationToasts();
   const loadCards = flash.loadCards;
   const [activeCollectionId, setActiveCollectionId] = useState(null);
   const [studyCollection, setStudyCollection] = useState(null);
@@ -324,6 +326,9 @@ function FlashCardsWorkspace({ profile, currentUser }) {
     try {
       const created = await flash.generateCollection(payload);
       setActiveCollectionId(created.id);
+      addToast({ type: 'success', message: 'Flashcards generated successfully.' });
+    } catch (error) {
+      addToast({ type: 'error', message: error.message || 'Flashcard generation failed.' });
     } finally {
       setIsGeneratingCards(false);
     }
@@ -368,6 +373,7 @@ function FlashCardsPage(props) {
 }
 
 export default FlashCardsPage;
+
 
 
 

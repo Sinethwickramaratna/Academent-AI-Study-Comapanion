@@ -1,4 +1,4 @@
-// Import React StrictMode for highlighting potential problems in an application
+﻿// Import React StrictMode for highlighting potential problems in an application
 import { StrictMode } from 'react'
 // Import createRoot from React DOM to bootstrap/render the application
 import { createRoot } from 'react-dom/client'
@@ -10,6 +10,7 @@ import { AuthProvider } from './context/AuthContext'
 import './index.css'
 // Import the core App component
 import App from './App.jsx'
+import { NotificationToastProvider } from './components/notifications/NotificationToastProvider.jsx'
 import { applyThemeMode, getStoredThemeMode } from './utils/theme'
 
 // Find the HTML root element and render the application tree
@@ -19,11 +20,14 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     {/* AuthProvider supplies current user & loading state to the rest of the application */}
     <AuthProvider>
-      {/* BrowserRouter wraps the app to handle client-side routing routes */}
-      <BrowserRouter>
+      <NotificationToastProvider>
+        {/* BrowserRouter wraps the app to handle client-side routing routes */}
+        <BrowserRouter>
         <App />
       </BrowserRouter>
+      </NotificationToastProvider>
     </AuthProvider>
   </StrictMode>,
 )
+
 

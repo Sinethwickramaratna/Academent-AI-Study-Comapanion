@@ -2450,11 +2450,6 @@
   color: #F7F5FF !important;
 }
 
-.dark .flash-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-row__meta):not(.flash-card-hover-actions):not(.flash-study-card):not(.flash-study-card-inner),
-.dark .flash-study-mode :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-row__meta):not(.flash-card-hover-actions):not(.flash-study-card):not(.flash-study-card-inner) {
-  background: #302B4D !important;
-}
-
 .dark .flash-page :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-card-front):not(.flash-card-row__meta):not(.flash-card-row__top):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-hover-actions):not(.flash-study-card-inner),
 .dark .flash-study-mode :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-card-front):not(.flash-card-row__meta):not(.flash-card-row__top):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-hover-actions):not(.flash-study-card-inner) {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
@@ -2462,7 +2457,6 @@
 
 .dark .flash-page :where([class*="sidebar"], [class*="side-card"], [class*="topbar"], [class*="toolbar"], [class*="nav"]):not([class*="hero"]):not([class*="avatar"]),
 .dark .flash-study-mode :where([class*="sidebar"], [class*="side-card"], [class*="topbar"], [class*="toolbar"], [class*="nav"]):not([class*="hero"]):not([class*="avatar"]) {
-  background: #211D38 !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
 }
@@ -2609,6 +2603,88 @@
   line-height: 1.14;
 }
 
+.dark .flash-page .flash-card-row {
+  border-color: #4A4568 !important;
+  background: #211D38 !important;
+  color: #F7F5FF !important;
+}
+
+.dark .flash-page .flash-card-row:hover,
+.dark .flash-page .flash-card-row:focus-visible,
+.dark .flash-page .flash-card-row:focus-within {
+  border-color: #6B5FA1 !important;
+  background: #302B4D !important;
+}
+
+.dark .flash-page .flash-card-row .flash-card-front strong,
+.dark .flash-page .flash-card-row .flash-review-status strong,
+.dark .flash-page .flash-card-row .flash-srs-grid strong {
+  color: #F7F5FF !important;
+}
+
+.dark .flash-page .flash-card-row .flash-card-front small,
+.dark .flash-page .flash-card-row .flash-review-status small,
+.dark .flash-page .flash-card-row .flash-srs-grid span,
+.dark .flash-page .flash-card-row .flash-card-mastery > div:first-child {
+  color: #D8D3EE !important;
+}
+
+.dark .flash-page .flash-card-row .flash-pin {
+  background: #2A2442 !important;
+  color: #A178FF !important;
+}
+
+.dark .flash-page .flash-card-row:hover .flash-pin,
+.dark .flash-page .flash-card-row:focus-visible .flash-pin,
+.dark .flash-page .flash-card-row:focus-within .flash-pin {
+  background: #3A345A !important;
+  color: #F7F5FF !important;
+}
+
+.dark .flash-page .flash-card-row .flash-review-status,
+.dark .flash-page .flash-card-row .flash-srs-grid span,
+.dark .flash-page .flash-card-row .flash-card-mastery {
+  border-color: #4A4568 !important;
+  background: #2A2442 !important;
+}
+
+.dark .flash-page .flash-card-row:hover .flash-review-status,
+.dark .flash-page .flash-card-row:focus-visible .flash-review-status,
+.dark .flash-page .flash-card-row:focus-within .flash-review-status,
+.dark .flash-page .flash-card-row:hover .flash-srs-grid span,
+.dark .flash-page .flash-card-row:focus-visible .flash-srs-grid span,
+.dark .flash-page .flash-card-row:focus-within .flash-srs-grid span,
+.dark .flash-page .flash-card-row:hover .flash-card-mastery,
+.dark .flash-page .flash-card-row:focus-visible .flash-card-mastery,
+.dark .flash-page .flash-card-row:focus-within .flash-card-mastery {
+  border-color: #6B5FA1 !important;
+  background: #3A345A !important;
+}
+
+.dark .flash-page .flash-card-row .flash-card-mastery strong {
+  color: #A178FF !important;
+}
+
+.dark .flash-page .flash-card-row .flash-card-mastery > div:last-child {
+  background: #4A4568 !important;
+}
+
+.dark .flash-page .flash-card-row .flash-card-mastery > div:last-child span {
+  background: linear-gradient(90deg, #7B5CFF, #A178FF, #F2B544) !important;
+}
+
+.dark .flash-page .flash-card-row .flash-row-actions button {
+  border-color: #4A4568 !important;
+  background: #2A2442 !important;
+  color: #D8D3EE !important;
+}
+
+.dark .flash-page .flash-card-row .flash-row-actions button:hover,
+.dark .flash-page .flash-card-row .flash-row-actions button:focus-visible {
+  border-color: #A178FF !important;
+  background: #7B5CFF !important;
+  color: #F7F5FF !important;
+}
 .dark .flash-page .flash-difficulty--easy,
 .dark .flash-page .flash-learning-status--learned {
   border-color: rgba(74, 222, 128, 0.34);

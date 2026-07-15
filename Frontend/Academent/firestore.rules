@@ -1,17 +1,100 @@
-rules_version = '2';
+﻿rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function validNotificationType(type) {
+      return type in [
+        'quiz_success', 'quiz_failure',
+        'flashcard_success', 'flashcard_failure',
+        'pdf_upload_success', 'pdf_upload_failure',
+        'exam_reminder', 'assignment_reminder', 'task_reminder', 'study_plan_reminder',
+        'general_info', 'warning'
+      ];
+    }
+
+    function validNotificationCreate(userId) {
+      return isOwner(userId)
+        && request.resource.data.userId == userId
+        && validNotificationType(request.resource.data.type)
+        && request.resource.data.title is string
+        && request.resource.data.message is string
+        && request.resource.data.isRead == false
+        && request.resource.data.isDeleted == false
+        && (!('actionUrl' in request.resource.data) || request.resource.data.actionUrl == '' || request.resource.data.actionUrl.matches('^/[^/].*|^/$')); 
+    }
+
+    function validNotificationUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'isRead', 'readAt', 'isDeleted', 'deletedAt'
+      ]);
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, create, update, delete: if isOwner(userId);
+
+      match /notifications/{notificationId} {
+        allow read: if isOwner(userId);
+        allow create: if validNotificationCreate(userId);
+        allow update: if isOwner(userId) && validNotificationUpdate();
+        allow delete: if false;
+      }
+
+      match /settings/{settingId} {
+        allow read, create, update, delete: if isOwner(userId);
+      }
+
+      match /devices/{deviceId} {
+        allow read, create, update, delete: if isOwner(userId);
+      }
 
       match /noteManagement/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
 
-      match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /quizzes/{docId} {
+        allow read, write: if isOwner(userId);
       }
+
+      match /quizAttempts/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /quizKnowledge/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /studyPlannerEvents/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /flashCardCollections/{collectionId} {
+        allow read, write: if isOwner(userId);
+
+        match /{document=**} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+
+      match /aiTutorConversations/{conversationId} {
+        allow read, write: if isOwner(userId);
+
+        match /messages/{messageId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+    }
+
+    match /scheduledNotifications/{scheduledNotificationId} {
+      allow read, write: if false;
     }
   }
 }
+

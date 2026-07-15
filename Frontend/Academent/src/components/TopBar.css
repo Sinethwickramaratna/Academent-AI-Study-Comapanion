@@ -1,0 +1,172 @@
+.app-topbar {
+  position: relative;
+  z-index: 50;
+  width: 100%;
+  overflow: visible;
+}
+
+.app-topbar__search {
+  min-width: min(100%, 280px);
+}
+
+.app-topbar__search-input {
+  min-height: 48px;
+}
+
+.app-topbar__actions {
+  flex-wrap: wrap;
+}
+
+.app-topbar__profile {
+  min-height: 48px;
+  border: 1px solid transparent;
+}
+
+.app-topbar__avatar {
+  flex: 0 0 auto;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar {
+  --topbar-surface: rgba(33, 29, 56, 0.94);
+  --topbar-surface-hover: rgba(48, 43, 77, 0.96);
+  --topbar-border: rgba(161, 120, 255, 0.22);
+  --topbar-border-strong: rgba(161, 120, 255, 0.46);
+  --topbar-text: #F7F5FF;
+  --topbar-muted: #D8D3EE;
+  --topbar-accent: #A178FF;
+  --topbar-primary: #7B5CFF;
+  --topbar-gold: #F2B544;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__search-input,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__search-input {
+  border: 1px solid var(--topbar-border) !important;
+  border-radius: 14px !important;
+  background:
+    linear-gradient(135deg, rgba(123, 92, 255, 0.12), rgba(242, 181, 68, 0.05)),
+    var(--topbar-surface) !important;
+  color: var(--topbar-text) !important;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__search-input::placeholder,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__search-input::placeholder {
+  color: rgba(216, 211, 238, 0.74) !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__search-input:focus,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__search-input:focus {
+  border-color: var(--topbar-border-strong) !important;
+  box-shadow:
+    0 0 0 4px rgba(123, 92, 255, 0.16),
+    0 16px 38px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__search-icon,
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__clear-button .material-symbols-outlined,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__search-icon,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__clear-button .material-symbols-outlined {
+  color: var(--topbar-accent) !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__clear-button,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__clear-button {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--topbar-muted) !important;
+  box-shadow: none !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__clear-button:hover,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__clear-button:hover {
+  background: rgba(161, 120, 255, 0.16) !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button {
+  border: 1px solid var(--topbar-border) !important;
+  border-radius: 14px !important;
+  background:
+    linear-gradient(135deg, rgba(123, 92, 255, 0.1), rgba(242, 181, 68, 0.04)),
+    var(--topbar-surface) !important;
+  color: var(--topbar-accent) !important;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button:hover,
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button:focus-visible,
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button.is-open,
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button.has-unread,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button:hover,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button:focus-visible,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button.is-open,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button.has-unread {
+  border-color: var(--topbar-border-strong) !important;
+  background:
+    linear-gradient(135deg, rgba(161, 120, 255, 0.18), rgba(242, 181, 68, 0.08)),
+    var(--topbar-surface-hover) !important;
+  color: var(--topbar-text) !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button .material-symbols-outlined,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-bell-button .material-symbols-outlined {
+  color: inherit !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__profile,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__profile {
+  border-color: var(--topbar-border) !important;
+  background:
+    linear-gradient(135deg, rgba(123, 92, 255, 0.1), rgba(242, 181, 68, 0.04)),
+    var(--topbar-surface) !important;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__profile-name,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__profile-name {
+  color: var(--topbar-accent) !important;
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__avatar,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__avatar {
+  border: 1px solid rgba(247, 245, 255, 0.24);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+html:root.dark body :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__avatar--fallback,
+body .dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .app-topbar__avatar--fallback {
+  background: linear-gradient(135deg, var(--topbar-primary), var(--topbar-accent)) !important;
+  color: var(--topbar-text) !important;
+}
+
+@media (max-width: 640px) {
+  .app-topbar__search,
+  .app-topbar__actions {
+    width: 100%;
+  }
+
+  .app-topbar__actions {
+    justify-content: space-between;
+  }
+
+  .app-topbar__profile {
+    max-width: calc(100% - 64px);
+  }
+
+  .app-topbar__profile-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+
+

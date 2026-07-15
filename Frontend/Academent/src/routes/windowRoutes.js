@@ -1,4 +1,4 @@
-export const dashboardWindowItems = [
+﻿export const dashboardWindowItems = [
   { id: 'home', label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
   { id: 'my-notes', label: 'My Notes', icon: 'description', route: '/my-notes' },
   { id: 'ai-tutor', label: 'AI Tutor', icon: 'psychology', route: '/ai-tutor' },
@@ -7,6 +7,7 @@ export const dashboardWindowItems = [
   { id: 'study-planner', label: 'Study Planner', icon: 'calendar_today', route: '/study-planner' },
   { id: 'analytics', label: 'Analytics', icon: 'leaderboard', route: '/analytics' },
   { id: 'profile', label: 'Profile', icon: 'account_circle', route: '/profile' },
+  { id: 'notifications', label: 'Notifications', icon: 'notifications', route: '/notifications' },
 ];
 
 export const dashboardRouteByTab = dashboardWindowItems.reduce((routes, item) => ({
@@ -22,3 +23,4 @@ export const dashboardTabByRoute = dashboardWindowItems.reduce((tabs, item) => (
 export const getDashboardRouteForTab = (tabId) => dashboardRouteByTab[tabId] || dashboardRouteByTab.home;
 
 export const getDashboardTabForPath = (pathname) => dashboardTabByRoute[pathname] || null;
+

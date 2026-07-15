@@ -1,4 +1,4 @@
-import {
+﻿import {
   collection,
   deleteDoc,
   doc,
@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { getApiErrorMessage } from "./apiErrorUtils";
+import { createQuizFailureNotification, createQuizSuccessNotification } from "./notificationService";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
@@ -300,12 +301,37 @@ export const createGeneratedQuizFromKnowledge = async (uid, payload) => {
   };
 };
 
-export const createGeneratedQuiz = async (uid, payload) => (
-  createGeneratedQuizFromKnowledge(uid, {
-    ...payload,
-    source: payload.source || "quiz-generator",
-  })
-);
+const buildQuizGenerationNotificationKey = (payload = {}) => [
+  "quiz-generation",
+  payload.title || "untitled",
+  payload.difficulty || "medium",
+  payload.questionCount || "auto",
+  ...(payload.selectedItems || []).map((item) => item.sourceId || item.id || item.noteId || item.pdfId).filter(Boolean),
+].join("|");
+
+export const createGeneratedQuiz = async (uid, payload) => {
+  const idempotencyKey = buildQuizGenerationNotificationKey(payload);
+  try {
+    const quiz = await createGeneratedQuizFromKnowledge(uid, {
+      ...payload,
+      source: payload.source || "quiz-generator",
+    });
+    await createQuizSuccessNotification(uid, quiz, { idempotencyKey }).catch((error) => {
+      console.warn("Quiz success notification could not be created:", error);
+    });
+    return quiz;
+  } catch (error) {
+    await createQuizFailureNotification(uid, {
+      idempotencyKey,
+      difficulty: payload.difficulty,
+      questionCount: payload.questionCount,
+      sourceName: payload.selectedItems?.[0]?.title || "",
+    }).catch((notificationError) => {
+      console.warn("Quiz failure notification could not be created:", notificationError);
+    });
+    throw error;
+  }
+};
 export const deleteQuiz = async (uid, quizId) => {
   ensureUid(uid);
   if (!quizId) throw new Error("A quiz id is required to delete a quiz.");
@@ -489,3 +515,5 @@ export const completeQuizAttempt = async (uid, quiz, attempt, userAnswers) => {
     partiallyCorrectCount,
   };
 };
+
+

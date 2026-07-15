@@ -1,4 +1,4 @@
-import {
+﻿import {
   collection,
   deleteDoc,
   doc,
@@ -10,6 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
+import { eventEndDate, eventStartDate, normalizeEventReminders } from "./reminderService";
 
 const ensureUid = (uid) => {
   if (!uid) throw new Error("You must be signed in to use Study Planner.");
@@ -39,12 +40,17 @@ export const saveStudyPlannerEvent = async (uid, eventData, eventId = null) => {
   const eventDoc = eventId ? eventRef(uid, eventId) : doc(eventsCollection(uid));
   const finalEventId = eventId || eventDoc.id;
   const isUpdate = Boolean(eventId);
+  const { timezone, reminders } = normalizeEventReminders(eventData, { timezone: eventData.timezone });
+  const startAt = eventStartDate(eventData);
+  const endAt = eventEndDate(eventData);
+  const firstReminder = reminders[0] || null;
 
   const payload = {
     eventId: finalEventId,
     userId: uid,
     title: String(eventData.title || "").trim(),
     type: eventData.type,
+    eventType: eventData.type,
     semesterId: eventData.semesterId || "",
     moduleId: eventData.moduleId || "",
     folderId: eventData.folderId || "",
@@ -54,9 +60,16 @@ export const saveStudyPlannerEvent = async (uid, eventData, eventId = null) => {
     date: eventData.date,
     startTime: eventData.startTime,
     endTime: eventData.endTime,
+    startAt,
+    endAt,
+    dueAt: eventData.type === "assignment" ? startAt : null,
     priority: eventData.priority || "medium",
     repeat: eventData.repeat || "none",
-    reminder: normalizeReminder(eventData.reminder),
+    reminder: firstReminder
+      ? { enabled: true, beforeMinutes: firstReminder.unit === "minutes" ? Number(firstReminder.value || 0) : 0 }
+      : normalizeReminder(eventData.reminder),
+    reminders,
+    timezone,
     description: eventData.description || "",
     status: eventData.status || "pending",
     studyTopic: eventData.studyTopic || "",

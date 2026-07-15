@@ -11,6 +11,8 @@ import NotesSectionHeader from '../components/NotesSectionHeader';
 import TopBar from '../components/TopBar';
 import { findFolderById } from '../Services/noteManagementUtils';
 import { uploadPdfToCloudinary } from '../Services/pdfUploadService';
+import { createPdfUploadFailureNotification } from '../Services/notificationService';
+import { useNotificationToasts } from '../components/notifications/NotificationToastProvider';
 import useNoteManagement from '../Services/useNoteManagement';
 import './notepage.css';
 
@@ -92,6 +94,7 @@ const mapFolderForCard = (folder, index = 0) => ({
 
 function NotePage({ profile, currentUser }) {
   const notes = useNoteManagement();
+  const { addToast } = useNotificationToasts();
   const [activeSemester, setActiveSemester] = useState(null);
   const [activeModuleId, setActiveModuleId] = useState(null);
   const [activeFolderTrail, setActiveFolderTrail] = useState([]);
@@ -336,8 +339,11 @@ function NotePage({ profile, currentUser }) {
     setIsUploadingPdf(true);
     setUploadError(null);
 
+    let failedFileName = files[0]?.name || 'Selected PDF';
+
     try {
       for (const file of files) {
+        failedFileName = file.name;
         const uploadedPdf = await uploadPdfToCloudinary(file);
         await notes.addPdf(activeSemester, activeModuleId, currentFolderId, {
           title: uploadedPdf.title,
@@ -349,9 +355,19 @@ function NotePage({ profile, currentUser }) {
           fileType: uploadedPdf.fileType,
         });
       }
+      addToast({ type: 'success', message: files.length === 1 ? 'PDF uploaded successfully.' : `${files.length} PDFs uploaded successfully.` });
     } catch (error) {
       console.error('Unable to upload PDF:', error);
       setUploadError(error.message || 'PDF upload failed');
+      addToast({ type: 'error', message: error.message || 'PDF upload failed.' });
+      if (currentUser?.uid) {
+        await createPdfUploadFailureNotification(currentUser.uid, failedFileName, {
+          error: error.message || 'PDF upload failed',
+          idempotencyKey: globalThis.crypto?.randomUUID?.() || `${failedFileName}-upload`,
+        }).catch((notificationError) => {
+          console.warn('PDF upload failure notification could not be created:', notificationError);
+        });
+      }
     } finally {
       setIsUploadingPdf(false);
       event.target.value = '';
@@ -604,6 +620,7 @@ function NotePage({ profile, currentUser }) {
 }
 
 export default NotePage;
+
 
 
 

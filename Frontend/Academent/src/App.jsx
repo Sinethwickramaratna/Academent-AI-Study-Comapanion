@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+﻿import { lazy, Suspense, useEffect, useState } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 // Lazy-load route pages so the initial app shell stays small.
 const LoginPage = lazy(() => import('./pages/loginpage.jsx'))
@@ -213,6 +213,62 @@ function App() {
           }
         />
       ))}
+      <Route
+        path="/quizzes/:quizId"
+        element={
+          <ProtectedRoute>
+            <DashboardPage initialActiveTab="quiz-generator" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/flashcards/:flashcardSetId"
+        element={
+          <ProtectedRoute>
+            <DashboardPage initialActiveTab="flashcards" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pdfs/:pdfId"
+        element={
+          <ProtectedRoute>
+            <DashboardPage initialActiveTab="my-notes" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/exams/:eventId"
+        element={
+          <ProtectedRoute>
+            <DashboardPage initialActiveTab="study-planner" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/assignments/:eventId"
+        element={
+          <ProtectedRoute>
+            <DashboardPage initialActiveTab="study-planner" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tasks/:eventId"
+        element={
+          <ProtectedRoute>
+            <DashboardPage initialActiveTab="study-planner" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/study-plans/:eventId"
+        element={
+          <ProtectedRoute>
+            <DashboardPage initialActiveTab="study-planner" />
+          </ProtectedRoute>
+        }
+      />
       {/* Reset Password: User to reset their password */}
       <Route
         path="/reset-password"
@@ -224,3 +280,5 @@ function App() {
 }
 
 export default App
+
+

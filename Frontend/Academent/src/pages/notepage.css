@@ -1392,7 +1392,7 @@
   color: #F7F5FF !important;
 }
 
-.dark .notes-page :where([class*="sidebar"], [class*="side-card"], [class*="topbar"], [class*="toolbar"], [class*="nav"]):not([class*="hero"]):not([class*="avatar"]) {
+.dark .notes-page :where([class*="sidebar"], [class*="side-card"], [class*="topbar"], [class*="toolbar"], [class*="nav"]):not([class*="hero"]):not([class*="avatar"]):not([class*="app-topbar"]) {
   background: #211D38 !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
@@ -2096,3 +2096,4 @@
 .notes-page .module-workspace-panel:has(.workspace-actions-menu:focus-within) {
   z-index: 25;
 }
+

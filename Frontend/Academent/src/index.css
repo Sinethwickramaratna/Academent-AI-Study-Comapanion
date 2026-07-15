@@ -767,14 +767,12 @@ textarea::placeholder {
 }
 
 .dark :where([class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="dropdown"], [class*="menu__content"], [class*="toolbar"], [class*="shell"], [class*="workspace"], [class*="empty-state"], [class*="list-section"]):not(.notes-page *):not(.planner-shell):not(.quiz-attempt-shell):not(.quiz-card-grid):not(.quiz-card__top):not(.quiz-card__meta):not(.ai-chat-shell):not(.ai-chat-stage):not(.ai-empty-state):not(.ai-composer-shell):not(.ai-composer):not(.ai-panel-eyebrow):not(.ai-panel-muted):not(.ai-panel-list):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]):not([class*="button"]):not([class*="primary"]):not(.flash-main-column):not(.flash-panel-heading):not(.flash-workspace-grid):not(.flash-card-tags):not(.flash-card-row__meta):not(.flash-card-hover-actions):not(.flash-study-card):not(.flash-study-card-inner) {
-  background-color: var(--dark-card) !important;
   border-color: var(--dark-border) !important;
   color: var(--dark-text);
 }
 
 
 .dark :where(aside, [class*="sidebar"], [class*="side-nav"], [class*="topbar"], [class*="navigation"]):not(.ai-gradient):not(.gradient-bg):not([class*="hero"]) {
-  background-color: var(--dark-sidebar) !important;
   border-color: var(--dark-border) !important;
   color: var(--dark-text);
 }
@@ -1369,5 +1367,4 @@ body .flash-header .flash-custom-select .academent-select-menu {
 body .flash-header {
   overflow: visible !important;
 }
-
 

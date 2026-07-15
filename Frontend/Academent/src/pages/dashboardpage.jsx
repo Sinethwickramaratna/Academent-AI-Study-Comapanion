@@ -3,7 +3,7 @@ import './dashboardpage.css';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { logoutUser } from '../Services/authService';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import LoadingEffect from '../components/LoadingEffect';
 import TopBar from '../components/TopBar';
 import logo from '../assets/Logo/Logo.png';
@@ -18,6 +18,7 @@ const StudyPlannerPage = lazy(() => import('./studyplannerpage'));
 const FlashCardsPage = lazy(() => import('./flashcardspage'));
 const AnalyticsPage = lazy(() => import('./analyticspage'));
 const ProfileSettingsPage = lazy(() => import('./profilesettingspage'));
+const NotificationsPage = lazy(() => import('./notificationspage'));
 
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -447,6 +448,7 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const routeParams = useParams();
   const routeActiveTab = getDashboardTabForPath(location.pathname) || initialActiveTab || 'home';
   
   const uid = currentUser?.uid || null;
@@ -457,11 +459,18 @@ function DashboardPage({ initialActiveTab = 'home' }) {
   const activeTab = routeActiveTab;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
-  const [quizToOpenId, setQuizToOpenId] = useState(null);
+  const [quizToOpenId, setQuizToOpenId] = useState(() => routeParams.quizId || null);
   const [inputMessage, setInputMessage] = useState('');
   const [isSavingTask, setIsSavingTask] = useState(false);
   const [dashboardSearch, setDashboardSearch] = useState('');
   const chatBottomRef = useRef(null);
+
+  useEffect(() => {
+    if (routeParams.quizId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQuizToOpenId(routeParams.quizId);
+    }
+  }, [routeParams.quizId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1299,6 +1308,10 @@ function DashboardPage({ initialActiveTab = 'home' }) {
           <Suspense fallback={<LoadingEffect icon="account_circle" title="Loading profile" message="Opening your profile and settings." />}>
             <ProfileSettingsPage profile={effectiveProfile} currentUser={currentUser} onProfileUpdated={setProfile} />
           </Suspense>
+        ) : activeTab === 'notifications' ? (
+          <Suspense fallback={<LoadingEffect icon="notifications" title="Loading notifications" message="Collecting your activity updates and reminders." />}>
+            <NotificationsPage />
+          </Suspense>
         ) : (
           /* Under Construction Panel for other Tabs */
           <main className="dashboard-home-window flex-1 flex items-center justify-center p-gutter md:p-margin-desktop min-h-[400px]">
@@ -1325,6 +1338,9 @@ function DashboardPage({ initialActiveTab = 'home' }) {
 }
 
 export default DashboardPage;
+
+
+
 
 
 

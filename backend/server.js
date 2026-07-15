@@ -1,4 +1,4 @@
-import express from "express"
+﻿import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 
@@ -7,6 +7,7 @@ import chatRoutes from "./routes/chatRoutes.js"
 import noteRoutes from "./routes/noteRoutes.js"
 import flashCardRoutes from "./routes/flashCardRoutes.js"
 import profileRoutes from "./routes/profileRoutes.js"
+import notificationRoutes from "./routes/notificationRoutes.js"
 
 import { quizLimiter, chatLimiter, flashCardLimiter, globalLimiter } from "./middleware/rateLimiter.js"
 import { getPublicErrorMessage, INVALID_JSON_REQUEST_MESSAGE, isRequestJsonParseError } from "./utils/apiErrors.js"
@@ -38,6 +39,7 @@ app.use("/api/chat/", chatLimiter, chatRoutes)
 app.use("/api/notes", noteRoutes)
 app.use("/api/flashcards", flashCardLimiter, flashCardRoutes)
 app.use("/api/profile", profileRoutes)
+app.use("/api/notifications", notificationRoutes)
 
 app.use(function handleUnhandledApiError(error, req, res, next) {
   console.error("Unhandled API error:", error)
@@ -57,3 +59,5 @@ const PORT = process.env.PORT ? process.env.PORT : 5000
 app.listen(PORT, function handleListen() {
   console.log("Server is running on port " + PORT)
 })
+
+

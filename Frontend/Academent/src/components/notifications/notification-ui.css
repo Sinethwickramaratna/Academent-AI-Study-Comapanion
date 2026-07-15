@@ -1,0 +1,702 @@
+﻿.notification-shell {
+  position: relative;
+}
+
+.notification-bell-button {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: rgb(var(--color-surface-container-low));
+  color: rgb(var(--color-on-surface-variant));
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.notification-bell-button:hover,
+.notification-bell-button:focus-visible,
+.notification-bell-button.is-open,
+.notification-bell-button.has-unread {
+  outline: none;
+  border-color: rgb(var(--color-primary) / 0.18);
+  background: rgb(var(--color-surface-container-high));
+  color: rgb(var(--color-primary));
+  box-shadow: 0 12px 28px rgb(35 22 65 / 0.1);
+}
+
+.notification-bell-button.has-new {
+  animation: notificationBellPulse 680ms ease both;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  border: 2px solid rgb(var(--color-surface-container-lowest));
+  border-radius: 999px;
+  background: rgb(var(--color-error));
+  color: rgb(var(--color-on-error));
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 150;
+  width: min(430px, calc(100vw - 24px));
+  max-height: min(680px, calc(100vh - 96px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.45);
+  border-radius: 18px;
+  background: rgb(var(--color-surface-container-lowest) / 0.98);
+  color: rgb(var(--color-on-surface));
+  box-shadow: 0 26px 64px rgb(35 22 65 / 0.2);
+  backdrop-filter: blur(18px);
+  transform-origin: top right;
+  animation: notificationDropdownIn 160ms ease both;
+}
+
+.notification-dropdown::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 18px;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid rgb(var(--color-outline-variant) / 0.45);
+  border-left: 1px solid rgb(var(--color-outline-variant) / 0.45);
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.notification-dropdown-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid rgb(var(--color-outline-variant) / 0.24);
+}
+
+.notification-dropdown-header h2,
+.notifications-page h1,
+.notification-settings h2,
+.notification-section-title {
+  margin: 0;
+  color: rgb(var(--color-on-surface));
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.notification-dropdown-header p,
+.notification-empty-state p,
+.notification-settings p,
+.notifications-page p {
+  margin: 2px 0 0;
+  color: rgb(var(--color-on-surface-variant));
+}
+
+.notification-text-button,
+.notification-action-button,
+.notification-icon-button,
+.notification-filter-button,
+.notification-page-button,
+.notification-danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  cursor: pointer;
+  font-weight: 850;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.notification-text-button {
+  background: rgb(var(--color-primary) / 0.08);
+  color: rgb(var(--color-primary));
+  padding: 8px 11px;
+  font-size: 12px;
+}
+
+.notification-text-button:hover,
+.notification-action-button:hover,
+.notification-page-button:hover,
+.notification-danger-button:hover {
+  transform: translateY(-1px);
+}
+
+.notification-tabs,
+.notification-filters {
+  display: flex;
+  gap: 7px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.notification-tabs::-webkit-scrollbar,
+.notification-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.notification-filter-button {
+  flex: 0 0 auto;
+  background: rgb(var(--color-surface-container-low));
+  color: rgb(var(--color-on-surface-variant));
+  padding: 8px 11px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.notification-filter-button.is-active {
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-on-primary));
+}
+
+.notification-list-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 10px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-primary) / 0.24) transparent;
+}
+
+.notification-group {
+  display: grid;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.notification-group-title {
+  padding: 7px 7px 2px;
+  color: rgb(var(--color-outline));
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.notification-item {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 11px;
+  padding: 11px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: rgb(var(--color-on-surface));
+  text-align: left;
+}
+
+.notification-item:hover,
+.notification-item:focus-within {
+  border-color: rgb(var(--color-primary) / 0.16);
+  background: rgb(var(--color-surface-container-low));
+}
+
+.notification-item.is-unread {
+  background: rgb(var(--color-primary) / 0.07);
+  border-color: rgb(var(--color-primary) / 0.14);
+}
+
+.notification-item-main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.notification-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.notification-item-title-row strong {
+  min-width: 0;
+  overflow: hidden;
+  color: rgb(var(--color-on-surface));
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-status-text {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgb(var(--color-surface-container-high));
+  color: rgb(var(--color-on-surface-variant));
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.notification-item p {
+  margin: 0;
+  color: rgb(var(--color-on-surface-variant));
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.notification-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: rgb(var(--color-outline));
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.notification-dot {
+  width: 8px;
+  height: 8px;
+  align-self: start;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: rgb(var(--color-primary));
+}
+
+.notification-more {
+  position: relative;
+}
+
+.notification-icon-button {
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  color: rgb(var(--color-outline));
+}
+
+.notification-icon-button:hover,
+.notification-icon-button:focus-visible {
+  outline: none;
+  background: rgb(var(--color-surface-container-high));
+  color: rgb(var(--color-primary));
+}
+
+.notification-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 4;
+  min-width: 220px;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.38);
+  border-radius: 14px;
+  background: rgb(var(--color-surface-container-lowest));
+  box-shadow: 0 20px 46px rgb(35 22 65 / 0.18);
+}
+
+.notification-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgb(var(--color-on-surface));
+  padding: 8px 9px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.notification-menu button:hover {
+  background: rgb(var(--color-surface-container-low));
+}
+
+.notification-menu button.is-danger {
+  color: rgb(var(--color-error));
+}
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--notification-soft, rgb(var(--color-primary) / 0.1));
+  color: var(--notification-color, rgb(var(--color-primary)));
+}
+
+.notification-icon .material-symbols-outlined {
+  font-size: 22px;
+}
+
+.notification-tone-success {
+  --notification-color: #047857;
+  --notification-soft: rgba(16, 185, 129, 0.12);
+}
+
+.notification-tone-danger {
+  --notification-color: #be123c;
+  --notification-soft: rgba(244, 63, 94, 0.12);
+}
+
+.notification-tone-amber {
+  --notification-color: #9b6100;
+  --notification-soft: rgba(242, 181, 68, 0.18);
+}
+
+.notification-tone-blue {
+  --notification-color: #2563eb;
+  --notification-soft: rgba(37, 99, 235, 0.12);
+}
+
+.notification-tone-purple,
+.notification-tone-violet {
+  --notification-color: #6d28d9;
+  --notification-soft: rgba(109, 40, 217, 0.12);
+}
+
+.notification-dropdown-footer {
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgb(var(--color-outline-variant) / 0.24);
+}
+
+.notification-dropdown-footer .notification-page-button {
+  width: 100%;
+}
+
+.notification-page-button {
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-on-primary));
+  padding: 10px 14px;
+}
+
+.notification-action-button {
+  justify-self: start;
+  min-height: 30px;
+  margin-top: 2px;
+  padding: 6px 9px;
+  background: rgb(var(--color-surface-container-high));
+  color: rgb(var(--color-primary));
+  font-size: 11px;
+}
+
+.notification-empty-state {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 220px;
+  padding: 28px 18px;
+  text-align: center;
+}
+
+.notification-empty-state span {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: rgb(var(--color-primary) / 0.09);
+  color: rgb(var(--color-primary));
+  font-size: 30px;
+}
+
+.notification-empty-state h3 {
+  margin: 4px 0 0;
+  color: rgb(var(--color-on-surface));
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.notification-skeleton {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.notification-skeleton span {
+  min-height: 62px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgb(var(--color-surface-container-low)), rgb(var(--color-surface-container-high)), rgb(var(--color-surface-container-low)));
+  background-size: 220% 100%;
+  animation: notificationSkeleton 1.2s ease infinite;
+}
+
+.notification-toast-region {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 250;
+  display: grid;
+  gap: 10px;
+  width: min(360px, calc(100vw - 32px));
+}
+
+.notification-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.34);
+  border-radius: 14px;
+  background: rgb(var(--color-surface-container-lowest));
+  color: rgb(var(--color-on-surface));
+  box-shadow: 0 18px 44px rgb(35 22 65 / 0.16);
+  font-size: 13px;
+  font-weight: 850;
+  animation: notificationToastIn 180ms ease both;
+}
+
+.notification-toast.success {
+  border-color: rgba(16, 185, 129, 0.28);
+  color: #047857;
+}
+
+.notification-toast.error {
+  border-color: rgba(244, 63, 94, 0.28);
+  color: #be123c;
+}
+
+.notification-settings,
+.notification-permission-card,
+.reminder-selector {
+  display: grid;
+  gap: 16px;
+}
+
+.notification-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.notification-settings-toggle,
+.notification-settings-field,
+.notification-permission-card,
+.reminder-selector {
+  border: 1px solid rgb(var(--color-outline-variant) / 0.35);
+  border-radius: 16px;
+  background: rgb(var(--color-surface-container-lowest) / 0.86);
+  padding: 14px;
+}
+
+.notification-settings-toggle {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.notification-settings-toggle strong,
+.notification-settings-field span,
+.reminder-selector strong {
+  color: rgb(var(--color-on-surface));
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.notification-switch {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgb(var(--color-outline-variant));
+}
+
+.notification-switch::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ffffff;
+  transition: transform 160ms ease;
+}
+
+.notification-settings-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.notification-settings-toggle input:checked + .notification-switch {
+  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-secondary)));
+}
+
+.notification-settings-toggle input:checked + .notification-switch::after {
+  transform: translateX(20px);
+}
+
+.notification-settings-field {
+  display: grid;
+  gap: 7px;
+}
+
+.notification-settings-field input,
+.notification-settings-field select,
+.reminder-custom-grid input,
+.reminder-custom-grid select {
+  min-height: 42px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.44);
+  border-radius: 12px;
+  background: rgb(var(--color-surface-container-low));
+  color: rgb(var(--color-on-surface));
+  padding: 8px 10px;
+}
+
+.notification-settings-actions,
+.notification-permission-actions,
+.reminder-selected-list,
+.reminder-options-grid,
+.reminder-custom-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.notification-danger-button {
+  background: rgb(var(--color-error-container));
+  color: rgb(var(--color-on-error-container));
+  padding: 9px 12px;
+}
+
+.reminder-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.reminder-option {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.35);
+  border-radius: 12px;
+  background: rgb(var(--color-surface-container-low));
+  color: rgb(var(--color-on-surface));
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.reminder-option.is-selected {
+  border-color: rgb(var(--color-primary) / 0.36);
+  background: rgb(var(--color-primary) / 0.1);
+  color: rgb(var(--color-primary));
+}
+
+.reminder-selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.35);
+  border-radius: 999px;
+  background: rgb(var(--color-surface-container-low));
+  color: rgb(var(--color-on-surface));
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.reminder-selected-chip button {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(var(--color-outline));
+}
+
+.reminder-error {
+  color: rgb(var(--color-error));
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@keyframes notificationDropdownIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes notificationBellPulse {
+  0%, 100% { transform: scale(1); }
+  35% { transform: scale(1.08) rotate(-8deg); }
+  70% { transform: scale(1.04) rotate(7deg); }
+}
+
+@keyframes notificationSkeleton {
+  to { background-position-x: -220%; }
+}
+
+@keyframes notificationToastIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  .notification-dropdown {
+    position: fixed;
+    top: 76px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+
+  .notification-dropdown::before {
+    display: none;
+  }
+
+  .notification-settings-grid,
+  .reminder-options-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root.dark .notification-dropdown,
+:root.dark .notification-menu,
+:root.dark .notification-toast,
+:root.dark .notification-settings-toggle,
+:root.dark .notification-settings-field,
+:root.dark .notification-permission-card,
+:root.dark .reminder-selector {
+  background: #302B4D;
+  border-color: #4A4568;
+}
+
+:root.dark .notification-filter-button,
+:root.dark .notification-action-button,
+:root.dark .notification-settings-field input,
+:root.dark .notification-settings-field select,
+:root.dark .reminder-option,
+:root.dark .reminder-selected-chip,
+:root.dark .reminder-custom-grid input,
+:root.dark .reminder-custom-grid select {
+  background: #211D38;
+  border-color: #4A4568;
+  color: #F7F5FF;
+}
+
+

@@ -3,6 +3,7 @@ import NotesActionButton from '../components/NotesActionButton';
 import LoadingEffect from '../components/LoadingEffect';
 import NotesSectionHeader from '../components/NotesSectionHeader';
 import TopBar from '../components/TopBar';
+import { useNotificationToasts } from '../components/notifications/NotificationToastProvider';
 import useNoteManagement from '../Services/useNoteManagement';
 import useQuizGenerator from '../Services/useQuizGenerator';
 import './quizgeneratorpage.css';
@@ -568,6 +569,7 @@ function QuizResults({ quiz, result, onRetake, onBack, isWorking }) {
 function QuizGeneratorPage({ profile, currentUser, initialQuizId, onInitialQuizOpened }) {
   const notes = useNoteManagement();
   const quizStore = useQuizGenerator();
+  const { addToast } = useNotificationToasts();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [resultState, setResultState] = useState(null);
@@ -597,16 +599,23 @@ function QuizGeneratorPage({ profile, currentUser, initialQuizId, onInitialQuizO
     const quiz = quizStore.quizzes.find((item) => item.quizId === initialQuizId);
     if (!quiz) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpenedInitialQuizId(initialQuizId);
     onInitialQuizOpened?.();
     openQuiz(quiz);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSession, initialQuizId, onInitialQuizOpened, openedInitialQuizId, quizStore.loading, quizStore.quizzes, quizStore.working]);
 
   const handleGenerate = async (payload) => {
     setIsCreateOpen(false);
-    const quiz = await quizStore.generateQuiz(payload);
-    const attempt = await quizStore.startOrContinueQuiz(quiz);
-    setActiveSession({ quiz, attempt });
+    try {
+      const quiz = await quizStore.generateQuiz(payload);
+      addToast({ type: 'success', message: 'Quiz generated successfully.' });
+      const attempt = await quizStore.startOrContinueQuiz(quiz);
+      setActiveSession({ quiz, attempt });
+    } catch (error) {
+      addToast({ type: 'error', message: error.message || 'Quiz generation failed.' });
+    }
   };
 
   const handleSubmit = async (answers) => {
@@ -716,5 +725,8 @@ function QuizGeneratorPage({ profile, currentUser, initialQuizId, onInitialQuizO
 }
 
 export default QuizGeneratorPage;
+
+
+
 
 

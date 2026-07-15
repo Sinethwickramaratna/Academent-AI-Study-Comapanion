@@ -1,4 +1,4 @@
-import {
+﻿import {
   collection,
   doc,
   getDocs,
@@ -14,6 +14,7 @@ import {
 import { db } from "../firebase/firebase";
 import { getApiErrorMessage } from "./apiErrorUtils";
 import { getKnowledgeForMaterial } from "./quizService";
+import { createFlashcardFailureNotification, createFlashcardSuccessNotification } from "./notificationService";
 import { applySm2Rating, createInitialSchedule, REVIEW_RATINGS } from "./spacedRepetitionService";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
@@ -419,66 +420,84 @@ const commitInBatches = async (operations) => {
 
 export const createGeneratedFlashCardCollection = async (uid, payload) => {
   ensureUid(uid);
-  const preferences = normalizeFlashCardPreferences(payload.preferences);
-  const resolvedSources = resolveSelectedFlashCardSources(payload.noteManagement, payload.selectedItems);
-  if (!resolvedSources.length) throw new Error("Select at least one note or PDF source.");
+  const idempotencyKey = [
+    "flashcard-generation",
+    payload.title || "untitled",
+    ...(payload.selectedItems || []).map((item) => item.sourceId || item.id).filter(Boolean),
+  ].join("|");
 
-  const apiSources = await prepareGenerationSources(uid, resolvedSources);
-  if (!apiSources.length) throw new Error("No extractable note text or PDF knowledge was available for the selected sources.");
+  try {
+    const preferences = normalizeFlashCardPreferences(payload.preferences);
+    const resolvedSources = resolveSelectedFlashCardSources(payload.noteManagement, payload.selectedItems);
+    if (!resolvedSources.length) throw new Error("Select at least one note or PDF source.");
 
-  const generated = await callFlashCardApi({ sources: apiSources, preferences });
-  const cards = validateAndDedupeFlashCards(generated.cards || []);
-  if (!cards.length) throw new Error("No valid flash cards were generated. Try different sources or preferences.");
+    const apiSources = await prepareGenerationSources(uid, resolvedSources);
+    if (!apiSources.length) throw new Error("No extractable note text or PDF knowledge was available for the selected sources.");
 
-  const collectionDoc = doc(collectionRoot(uid));
-  const now = new Date();
-  const analytics = calculateFlashCardAnalytics(cards.map((card) => ({ ...card, ...createInitialSchedule(now) })), []);
-  const selectedSources = resolvedSources.map(compactSource);
-  const firstSource = selectedSources[0] || {};
-  const title = payload.title?.trim()
-    || `${firstSource.title || "AI"} Flash Cards${selectedSources.length > 1 ? ` + ${selectedSources.length - 1}` : ""}`;
+    const generated = await callFlashCardApi({ sources: apiSources, preferences });
+    const cards = validateAndDedupeFlashCards(generated.cards || []);
+    if (!cards.length) throw new Error("No valid flash cards were generated. Try different sources or preferences.");
 
-  const collectionPayload = {
-    collectionId: collectionDoc.id,
-    title,
-    description: payload.description || `Generated from ${selectedSources.length} selected source${selectedSources.length === 1 ? "" : "s"}.`,
-    semesterId: firstSource.semesterId || "",
-    moduleId: firstSource.moduleId || "",
-    folderId: firstSource.folderId || "",
-    selectedSources,
-    preferences,
-    analytics,
-    cardCount: cards.length,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
+    const collectionDoc = doc(collectionRoot(uid));
+    const now = new Date();
+    const analytics = calculateFlashCardAnalytics(cards.map((card) => ({ ...card, ...createInitialSchedule(now) })), []);
+    const selectedSources = resolvedSources.map(compactSource);
+    const firstSource = selectedSources[0] || {};
+    const title = payload.title?.trim()
+      || `${firstSource.title || "AI"} Flash Cards${selectedSources.length > 1 ? ` + ${selectedSources.length - 1}` : ""}`;
 
-  const operations = [
-    (batch) => batch.set(collectionDoc, collectionPayload),
-    ...cards.map((card, index) => (batch) => {
-      const cardDoc = doc(cardsRoot(uid, collectionDoc.id));
-      batch.set(cardDoc, {
-        ...card,
-        ...createInitialSchedule(now),
-        cardId: cardDoc.id,
-        collectionId: collectionDoc.id,
-        sourceTitles: selectedSources.map((source) => source.title),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        sortIndex: index,
-      });
-    }),
-  ];
+    const collectionPayload = {
+      collectionId: collectionDoc.id,
+      title,
+      description: payload.description || `Generated from ${selectedSources.length} selected source${selectedSources.length === 1 ? "" : "s"}.`,
+      semesterId: firstSource.semesterId || "",
+      moduleId: firstSource.moduleId || "",
+      folderId: firstSource.folderId || "",
+      selectedSources,
+      preferences,
+      analytics,
+      cardCount: cards.length,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
 
-  await commitInBatches(operations);
-  return {
-    ...collectionPayload,
-    id: collectionDoc.id,
-    createdAt: now,
-    updatedAt: now,
-  };
+    const operations = [
+      (batch) => batch.set(collectionDoc, collectionPayload),
+      ...cards.map((card, index) => (batch) => {
+        const cardDoc = doc(cardsRoot(uid, collectionDoc.id));
+        batch.set(cardDoc, {
+          ...card,
+          ...createInitialSchedule(now),
+          cardId: cardDoc.id,
+          collectionId: collectionDoc.id,
+          sourceTitles: selectedSources.map((source) => source.title),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          sortIndex: index,
+        });
+      }),
+    ];
+
+    await commitInBatches(operations);
+    const createdCollection = {
+      ...collectionPayload,
+      id: collectionDoc.id,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await createFlashcardSuccessNotification(uid, createdCollection, { idempotencyKey }).catch((error) => {
+      console.warn("Flashcard success notification could not be created:", error);
+    });
+
+    return createdCollection;
+  } catch (error) {
+    await createFlashcardFailureNotification(uid, { idempotencyKey }).catch((notificationError) => {
+      console.warn("Flashcard failure notification could not be created:", notificationError);
+    });
+    throw error;
+  }
 };
-
 export const deleteFlashCardCollection = async (uid, collectionId) => {
   ensureUid(uid);
   const [cardsSnapshot, reviewsSnapshot] = await Promise.all([
@@ -587,4 +606,6 @@ export const saveManualFlashCard = async (uid, collectionId, cardData) => {
 };
 
 export { toDate };
+
+
 
