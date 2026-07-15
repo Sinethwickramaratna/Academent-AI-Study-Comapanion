@@ -1,4 +1,4 @@
-﻿import { getFirebaseAdmin } from "../config/firebaseAdmin.js";
+import { getFirebaseAdmin } from "../config/firebaseAdmin.js";
 import { createNotification, sendBrowserPushNotification } from "./notificationService.js";
 
 const notificationTypeForEventType = (eventType) => {
@@ -66,6 +66,7 @@ export async function cancelEventReminders(userId, eventId) {
     .get();
 
   const batch = db.batch();
+  let scheduledCount = 0;
   snapshot.docs.forEach((job) => batch.update(job.ref, {
     status: "cancelled",
     cancelledAt: FieldValue.serverTimestamp(),
@@ -85,10 +86,12 @@ export async function scheduleEventReminders(userId, event = {}) {
   await cancelEventReminders(userId, event.eventId);
 
   const batch = db.batch();
+  let scheduledCount = 0;
   reminders.forEach((reminder) => {
     const scheduledFor = toDate(reminder.remindAt);
     if (!scheduledFor || scheduledFor.getTime() < Date.now()) return;
 
+    scheduledCount += 1;
     const scheduledNotificationId = `${sanitizeIdPart(userId)}_${sanitizeIdPart(event.eventId)}_${sanitizeIdPart(reminder.id)}`;
     const ref = db.collection("scheduledNotifications").doc(scheduledNotificationId);
     batch.set(ref, {
@@ -114,7 +117,7 @@ export async function scheduleEventReminders(userId, event = {}) {
   });
 
   await batch.commit();
-  return reminders.length;
+  return scheduledCount;
 }
 
 export async function rescheduleEventReminders(userId, event = {}) {
@@ -154,7 +157,19 @@ export async function processDueReminders({ limit = 50 } = {}) {
     if (!claimedJob) continue;
 
     try {
+      const existingNotification = await db.doc(`users/${claimedJob.userId}/notifications/${claimedJob.id}`).get();
+      if (existingNotification.exists) {
+        await jobSnapshot.ref.update({
+          status: "sent",
+          sentAt: FieldValue.serverTimestamp(),
+          failureReason: null,
+        });
+        results.push({ id: claimedJob.id, status: "already_sent" });
+        continue;
+      }
+
       const notification = await createNotification({
+        id: claimedJob.id,
         userId: claimedJob.userId,
         type: claimedJob.notificationType,
         title: claimedJob.title,

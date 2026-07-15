@@ -40,7 +40,7 @@ function BrowserNotificationPermissionCard() {
       </div>
       <div className="notification-permission-actions">
         {!supported ? (
-          <span className="notification-status-text">Not supported in this browser</span>
+          <span className="notification-status-text notification-status-text--unsupported">Not supported in this browser</span>
         ) : enabled ? (
           <button className="notification-danger-button" type="button" disabled={working} onClick={handleDisable}>
             <span className="material-symbols-outlined">notifications_off</span>
@@ -52,7 +52,11 @@ function BrowserNotificationPermissionCard() {
             {permission === "denied" ? "Permission blocked" : "Enable browser notifications"}
           </button>
         )}
-        {permission !== "default" && <span className="notification-status-text">Permission: {permission}</span>}
+        {permission !== "default" && (
+          <span className={`notification-status-text notification-status-text--${permission}`}>
+            Permission: {permission}
+          </span>
+        )}
       </div>
       {error && <p className="reminder-error">{error.message}</p>}
     </section>

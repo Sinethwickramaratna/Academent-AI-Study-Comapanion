@@ -211,11 +211,16 @@
   color-scheme: dark;
 }
 
-.dark .dashboard :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]),
-.dark .dashboard-home-window :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]) {
+.dark .dashboard :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.notification-shell),
+.dark .dashboard-home-window :where(.glass-panel, .glass-card, [class*="card"], [class*="panel"], [class*="modal"], [class*="drawer"], [class*="popover"], [class*="menu"], [class*="workspace"], [class*="empty-state"], [class*="list-section"], [class*="composer-shell"], [class*="context-panel"], [class*="chat-stage"], [class*="generator-panel"], [class*="editor-modal"], [class*="review-panel"], [class*="deck-panel"], [class*="source-panel"], [class*="tree-panel"], [class*="shell"], [class*="Shell"]):not(.ai-gradient):not(.gradient-bg):not(.primary-gradient):not(.primary-button):not([class*="hero"]):not([class*="header"]):not([class*="primary"]):not([class*="danger"]):not(.notification-shell) {
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.334) !important;
+}
+
+.dark .dashboard .app-topbar .notification-shell,
+.dark .dashboard-home-window .app-topbar .notification-shell {
+  box-shadow: none !important;
 }
 
 .dark .dashboard :where([class*="sidebar"], [class*="side-card"], [class*="topbar"], [class*="toolbar"], [class*="nav"]):not([class*="hero"]):not([class*="avatar"]),
@@ -232,9 +237,13 @@
   box-shadow: none !important;
 }
 
+.dark .dashboard :where(button:not(.ai-gradient):not(.primary-gradient):not(.primary-button):not(.btn-primary-gradient):not(.profile-button--primary):not(.quiz-button--primary):not(.flash-button--primary):not(.planner-create-button):not(.login-page__primary):not(.ai-send-button):not(.ai-new-chat-button):not([class*="primary"]):not([class*="danger"]):not(.notification-item-main)),
+.dark .dashboard-home-window :where(button:not(.ai-gradient):not(.primary-gradient):not(.primary-button):not(.btn-primary-gradient):not(.profile-button--primary):not(.quiz-button--primary):not(.flash-button--primary):not(.planner-create-button):not(.login-page__primary):not(.ai-send-button):not(.ai-new-chat-button):not([class*="primary"]):not([class*="danger"]):not(.notification-item-main)) {
+  background-color: #211D38 !important;
+}
+
 .dark .dashboard :where(button:not(.ai-gradient):not(.primary-gradient):not(.primary-button):not(.btn-primary-gradient):not(.profile-button--primary):not(.quiz-button--primary):not(.flash-button--primary):not(.planner-create-button):not(.login-page__primary):not(.ai-send-button):not(.ai-new-chat-button):not([class*="primary"]):not([class*="danger"])),
 .dark .dashboard-home-window :where(button:not(.ai-gradient):not(.primary-gradient):not(.primary-button):not(.btn-primary-gradient):not(.profile-button--primary):not(.quiz-button--primary):not(.flash-button--primary):not(.planner-create-button):not(.login-page__primary):not(.ai-send-button):not(.ai-new-chat-button):not([class*="primary"]):not([class*="danger"])) {
-  background-color: #211D38 !important;
   border-color: #4A4568 !important;
   color: #F7F5FF !important;
 }

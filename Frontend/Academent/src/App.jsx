@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 // Lazy-load route pages so the initial app shell stays small.
 const LoginPage = lazy(() => import('./pages/loginpage.jsx'))
@@ -20,6 +20,7 @@ import { logoutUser } from './Services/authService'
 import LoadingEffect from './components/LoadingEffect'
 import { dashboardWindowItems } from './routes/windowRoutes'
 import { applyThemeMode, getStoredThemeMode, normalizeThemeMode, storeThemeMode } from './utils/theme'
+import useStudyPlannerReminderProcessor from './hooks/useStudyPlannerReminderProcessor'
 
 
 /**
@@ -32,6 +33,7 @@ function App() {
   const [learningPreferencesData, setLearningPreferencesData] = useState(null)
   const navigate = useNavigate()
   const { currentUser, userProfile } = useAuth()
+  useStudyPlannerReminderProcessor()
 
   useEffect(() => {
     const themeMode = normalizeThemeMode(userProfile?.appPreferences?.themeMode || getStoredThemeMode());

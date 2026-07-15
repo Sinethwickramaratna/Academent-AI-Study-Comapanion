@@ -39,7 +39,7 @@ function NotificationItem({
   };
 
   return (
-    <article className={`notification-item ${notification.isRead ? "" : "is-unread"}`}>
+    <article className={`notification-item ${notification.isRead ? "" : "is-unread"} ${menuOpen ? "has-open-menu" : ""}`}>
       {selectable ? (
         <input aria-label={`Select ${notification.title}`} checked={selected} type="checkbox" onChange={handleSelect} />
       ) : (

@@ -5,7 +5,7 @@ function NotesBreadcrumb({ items }) {
         {items.map((item, index) => (
           <span key={`${item.label}-${index}`} className="flex items-center gap-2">
             <span
-              className={item.active ? "text-primary font-bold" : "text-on-surface-variant hover:text-primary cursor-pointer"}
+              className={`notes-breadcrumb__item ${item.active ? "text-primary font-bold" : "text-on-surface-variant"} ${!item.active && item.onClick ? "cursor-pointer" : ""}`}
               onClick={item.onClick}
             >
               {item.label}

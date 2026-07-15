@@ -51,6 +51,11 @@ const dateMatches = (notification, dateFilter) => {
   return true;
 };
 
+const percentageOf = (value, total) => {
+  if (!total) return "0%";
+  return `${Math.round((value / total) * 100)}%`;
+};
+
 function NotificationsPage() {
   const navigate = useNavigate();
   const { addToast } = useNotificationToasts();
@@ -93,6 +98,19 @@ function NotificationsPage() {
   const currentPage = Math.min(page, totalPages);
   const pagedNotifications = filteredNotifications.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const notificationStats = useMemo(() => {
+    const total = notifications.length;
+    const read = notifications.filter((notification) => notification.isRead).length;
+    const reminders = notifications.filter((notification) => notification.category === "reminder").length;
+    const system = notifications.filter((notification) => notification.category === "system").length;
+
+    return [
+      { label: "Unread", value: unreadCount, icon: "mark_email_unread", detail: `${percentageOf(unreadCount, total)} of inbox` },
+      { label: "Read", value: read, icon: "drafts", detail: `${percentageOf(read, total)} completed` },
+      { label: "Reminders", value: reminders, icon: "event_available", detail: `${percentageOf(reminders, total)} scheduled` },
+      { label: "System", value: system, icon: "settings_suggest", detail: `${percentageOf(system, total)} updates` },
+    ];
+  }, [notifications, unreadCount]);
 
   const selectNotification = (id, selected) => {
     setSelectedIds((current) => selected ? [...new Set([...current, id])] : current.filter((item) => item !== id));
@@ -153,9 +171,13 @@ function NotificationsPage() {
   return (
     <main className="notifications-page">
       <section className="notifications-page__hero">
-        <div>
+        <div className="notifications-page__hero-copy">
+          <span className="notifications-page__kicker">
+            <span className="material-symbols-outlined" aria-hidden="true">notifications_active</span>
+            Activity inbox
+          </span>
           <h1>Notifications</h1>
-          <p>Search, filter, review, and manage your Academent activity updates and scheduled reminders.</p>
+          <p>Review study updates, scheduled reminders, and system alerts without losing your place.</p>
         </div>
         <aside className="notifications-page__summary">
           <span className="material-symbols-outlined">notifications_active</span>
@@ -166,6 +188,19 @@ function NotificationsPage() {
         </aside>
       </section>
 
+      <section className="notifications-page__stats" aria-label="Notification summary">
+        {notificationStats.map((stat) => (
+          <article className="notifications-stat-card" key={stat.label}>
+            <span className="material-symbols-outlined" aria-hidden="true">{stat.icon}</span>
+            <div>
+              <strong>{stat.value}</strong>
+              <p>{stat.label}</p>
+              <small>{stat.detail}</small>
+            </div>
+          </article>
+        ))}
+      </section>
+
       {isOffline && (
         <div className="notifications-page__offline">
           <span className="material-symbols-outlined">wifi_off</span>
@@ -174,36 +209,45 @@ function NotificationsPage() {
       )}
 
       <section className="notifications-page__toolbar">
-        <label className="notifications-search">
-          <span className="material-symbols-outlined">search</span>
-          <input value={search} type="search" placeholder="Search notifications" onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
-        </label>
-        <div className="notifications-filter-grid">
-          <label>
-            Category
-            <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>
-              {categoryOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-            </select>
+        <div className="notifications-toolbar-header">
+          <div>
+            <span className="notifications-page__section-kicker">Find and refine</span>
+            <h2>Notification history</h2>
+          </div>
+          <span>{filteredNotifications.length} result{filteredNotifications.length === 1 ? "" : "s"}</span>
+        </div>
+        <div className="notifications-toolbar-body">
+          <label className="notifications-search">
+            <span className="material-symbols-outlined">search</span>
+            <input value={search} type="search" placeholder="Search notifications" onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
           </label>
-          <label>
-            Status
-            <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}>
-              {statusOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-            </select>
-          </label>
-          <label>
-            Date
-            <select value={dateFilter} onChange={(event) => { setDateFilter(event.target.value); setPage(1); }}>
-              {dateOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-            </select>
-          </label>
-          <label>
-            Sort
-            <select value={sort} onChange={(event) => setSort(event.target.value)}>
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-            </select>
-          </label>
+          <div className="notifications-filter-grid">
+            <label>
+              Category
+              <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>
+                {categoryOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+            <label>
+              Status
+              <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}>
+                {statusOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+            <label>
+              Date
+              <select value={dateFilter} onChange={(event) => { setDateFilter(event.target.value); setPage(1); }}>
+                {dateOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+            <label>
+              Sort
+              <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+              </select>
+            </label>
+          </div>
         </div>
       </section>
 
@@ -238,6 +282,13 @@ function NotificationsPage() {
       </section>
 
       <section className="notifications-page__panel">
+        <header className="notifications-page__panel-header">
+          <div>
+            <span className="notifications-page__section-kicker">Inbox</span>
+            <h2>Latest updates</h2>
+          </div>
+          <span>{selectedIds.length ? `${selectedIds.length} selected` : `${pagedNotifications.length} shown`}</span>
+        </header>
         <div className="notifications-page__list">
           {error ? (
             <NotificationEmptyState title="Could not load notifications" message={error.message || "Check Firestore permissions and try again."} icon="error" />

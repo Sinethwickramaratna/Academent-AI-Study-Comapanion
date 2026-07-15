@@ -62,7 +62,11 @@ export const reminderLabel = (reminder = {}) => {
 export const makeReminderId = (reminder = {}) => {
   if (reminder.id) return reminder.id;
   if (reminder.isCustom || reminder.unit === "custom") return `custom-${toDate(reminder.remindAt)?.getTime() || Date.now()}`;
-  return `${Number(reminder.value || 0)}-${reminder.unit || "minutes"}`;
+  const value = Number(reminder.value || 0);
+  const unit = String(reminder.unit || "minutes");
+  if (value === 0 && unit === "minutes") return "at_time";
+  const normalizedUnit = value === 1 ? unit.replace(/s$/, "") : unit;
+  return `${value}_${normalizedUnit}`;
 };
 
 export const normalizeReminderInput = (reminder = {}, eventData = {}) => {
@@ -81,13 +85,18 @@ export const normalizeReminderInput = (reminder = {}, eventData = {}) => {
     throw new Error("Choose a valid reminder date and time.");
   }
 
+  const previousRemindAt = toDate(reminder.remindAt);
+  const notificationSent = Boolean(reminder.notificationSent)
+    && previousRemindAt
+    && Math.abs(previousRemindAt.getTime() - remindAt.getTime()) < 1000;
+
   return {
     id: makeReminderId({ ...reminder, remindAt }),
     value: Number(reminder.value || 0),
     unit: reminder.isCustom ? "custom" : reminder.unit || "minutes",
     remindAt,
-    notificationSent: Boolean(reminder.notificationSent),
-    sentAt: reminder.sentAt || null,
+    notificationSent,
+    sentAt: notificationSent ? reminder.sentAt || null : null,
     isCustom: Boolean(reminder.isCustom || reminder.unit === "custom"),
     label: reminderLabel({ ...reminder, remindAt }),
   };
@@ -132,6 +141,3 @@ export const actionLabelForEventType = (eventType) => {
   if (eventType === "task") return "View Task";
   return "Start Studying";
 };
-
-
-

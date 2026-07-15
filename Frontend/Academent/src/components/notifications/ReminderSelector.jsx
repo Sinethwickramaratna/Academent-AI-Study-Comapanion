@@ -1,17 +1,47 @@
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   REMINDER_OPTIONS,
   describeReminders,
+  makeReminderId,
   normalizeReminderInput,
   reminderLabel,
 } from "../../Services/reminderService";
 import CustomReminderModal from "./CustomReminderModal";
 import "./notification-ui.css";
 
+const reminderIdentityKeys = (reminder = {}) => [
+  reminder.id,
+  makeReminderId({ value: reminder.value, unit: reminder.unit, isCustom: reminder.isCustom, remindAt: reminder.remindAt }),
+  `${Number(reminder.value || 0)}-${reminder.unit || "minutes"}`,
+].filter(Boolean);
+
 function ReminderSelector({ eventData, reminders = [], onChange, multiple = true }) {
   const [customOpen, setCustomOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState("");
-  const selectedIds = useMemo(() => new Set(reminders.map((reminder) => reminder.id)), [reminders]);
+  const dropdownRef = useRef(null);
+  const dropdownId = useId();
+  const triggerId = `${dropdownId}-trigger`;
+  const menuId = `${dropdownId}-menu`;
+  const selectedIds = useMemo(() => new Set(reminders.flatMap(reminderIdentityKeys)), [reminders]);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!dropdownRef.current?.contains(event.target)) setMenuOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
 
   const commit = (nextReminders) => {
     setError("");
@@ -22,13 +52,20 @@ function ReminderSelector({ eventData, reminders = [], onChange, multiple = true
     try {
       const normalized = normalizeReminderInput(option, eventData);
       if (selectedIds.has(normalized.id)) {
-        commit(reminders.filter((reminder) => reminder.id !== normalized.id));
-        return;
+        commit(reminders.filter((reminder) => !reminderIdentityKeys(reminder).includes(normalized.id)));
+        return true;
       }
       commit(multiple ? [...reminders, normalized] : [normalized]);
+      return true;
     } catch (validationError) {
       setError(validationError.message || "Choose a valid event time before adding reminders.");
+      return false;
     }
+  };
+
+  const selectReminder = (option) => {
+    const didSelect = toggleReminder(option);
+    if (didSelect && !multiple) setMenuOpen(false);
   };
 
   const addCustomReminder = (reminder) => {
@@ -42,22 +79,55 @@ function ReminderSelector({ eventData, reminders = [], onChange, multiple = true
         <strong>Reminder times</strong>
         <p>{describeReminders(reminders)}</p>
       </div>
-      <div className="reminder-options-grid">
-        {REMINDER_OPTIONS.map((option) => (
-            <button
-              className={`reminder-option ${selectedIds.has(option.id) ? "is-selected" : ""}`}
-              type="button"
-              key={option.id}
-              onClick={() => toggleReminder(option)}
-            >
-              <span className="material-symbols-outlined">{option.icon}</span>
-              {option.label}
-            </button>
-          ))}
-        <button className="reminder-option" type="button" onClick={() => setCustomOpen(true)}>
-          <span className="material-symbols-outlined">edit_calendar</span>
-          Custom date and time
+      <div className={`reminder-dropdown ${menuOpen ? "is-open" : ""}`} ref={dropdownRef}>
+        <button
+          id={triggerId}
+          className="reminder-dropdown-trigger"
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-controls={menuId}
+          onClick={() => setMenuOpen((isOpen) => !isOpen)}
+        >
+          <span className="reminder-dropdown-trigger-copy">
+            <span>Choose reminder time</span>
+            <strong>{reminders.length ? describeReminders(reminders) : "Select an option"}</strong>
+          </span>
+          <span className="material-symbols-outlined" aria-hidden="true">expand_more</span>
         </button>
+        {menuOpen && (
+          <div className="reminder-dropdown-menu" id={menuId} role="menu" aria-labelledby={triggerId}>
+            {REMINDER_OPTIONS.map((option) => {
+              const selected = selectedIds.has(option.id);
+              return (
+                <button
+                  className={`reminder-option ${selected ? "is-selected" : ""}`}
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={selected}
+                  key={option.id}
+                  onClick={() => selectReminder(option)}
+                >
+                  <span className="material-symbols-outlined">{option.icon}</span>
+                  <span className="reminder-option-label">{option.label}</span>
+                  {selected && <span className="material-symbols-outlined reminder-option-check" aria-hidden="true">check</span>}
+                </button>
+              );
+            })}
+            <button
+              className="reminder-option"
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                setCustomOpen(true);
+              }}
+            >
+              <span className="material-symbols-outlined">edit_calendar</span>
+              <span className="reminder-option-label">Custom date and time</span>
+            </button>
+          </div>
+        )}
       </div>
       {reminders.length > 0 && (
         <div className="reminder-selected-list">
@@ -78,4 +148,3 @@ function ReminderSelector({ eventData, reminders = [], onChange, multiple = true
 }
 
 export default ReminderSelector;
-

@@ -136,7 +136,6 @@
 }
 
 .notification-text-button:hover,
-.notification-action-button:hover,
 .notification-page-button:hover,
 .notification-danger-button:hover {
   transform: translateY(-1px);
@@ -194,6 +193,7 @@
 
 .notification-item {
   position: relative;
+  z-index: 0;
   width: 100%;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
@@ -204,12 +204,21 @@
   background: transparent;
   color: rgb(var(--color-on-surface));
   text-align: left;
+  transform: translateY(0);
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.notification-item:focus-within,
+.notification-item.has-open-menu {
+  z-index: 10;
 }
 
 .notification-item:hover,
 .notification-item:focus-within {
-  border-color: rgb(var(--color-primary) / 0.16);
   background: rgb(var(--color-surface-container-low));
+  border-color: rgb(var(--color-primary) / 0.22);
+  box-shadow: 0 12px 28px rgb(35 22 65 / 0.08);
+  transform: translateY(-1px);
 }
 
 .notification-item.is-unread {
@@ -217,11 +226,166 @@
   border-color: rgb(var(--color-primary) / 0.14);
 }
 
+.notification-item.is-unread:hover,
+.notification-item.is-unread:focus-within {
+  background: rgb(var(--color-primary) / 0.11);
+  border-color: rgb(var(--color-primary) / 0.26);
+}
+
 .notification-item-main {
   min-width: 0;
   display: grid;
   gap: 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.notification-item-main:hover {
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+:root.dark .notification-item-main,
+.dark .notification-item-main,
+:root.dark .notification-item-main:hover,
+.dark .notification-item-main:hover {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  transform: none;
+}
+
+.dark .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread {
+  background: rgb(var(--color-primary) / 0.07) !important;
+  border-color: rgb(var(--color-primary) / 0.14) !important;
+}
+
+.dark .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:hover,
+.dark .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:focus-within {
+  background: rgb(var(--color-surface-container-high)) !important;
+  border-color: rgb(var(--color-primary) / 0.28) !important;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.24) !important;
+  transform: translateY(-1px);
+}
+
+.dark .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:hover,
+.dark .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:focus-within {
+  background: rgb(var(--color-primary) / 0.13) !important;
+  border-color: rgb(var(--color-primary) / 0.3) !important;
+}
+
+.app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:hover,
+:root.dark .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:hover,
+.dark .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:hover {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+.app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:hover,
+:root.dark .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:hover,
+.dark .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:hover {
+  background: rgb(var(--color-primary) / 0.07) !important;
+  border-color: rgb(var(--color-primary) / 0.14) !important;
+}
+
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item {
+  background: rgb(var(--color-surface-container-low)) !important;
+  border-color: rgb(var(--color-outline-variant) / 0.42) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease !important;
+}
+
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:hover,
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:focus-within {
+  background: rgb(var(--color-surface-container-high)) !important;
+  border-color: rgb(var(--color-primary) / 0.22) !important;
+  box-shadow: 0 12px 28px rgb(35 22 65 / 0.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread {
+  background: rgb(var(--color-primary) / 0.07) !important;
+  border-color: rgb(var(--color-primary) / 0.14) !important;
+}
+
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:hover,
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:focus-within {
+  background: rgb(var(--color-primary) / 0.11) !important;
+  border-color: rgb(var(--color-primary) / 0.26) !important;
+  box-shadow: 0 12px 28px rgb(35 22 65 / 0.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main,
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main:hover,
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main:focus,
+:where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main:focus-visible {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item {
+  background: rgb(var(--color-surface-container-low)) !important;
+  border-color: rgb(var(--color-outline-variant) / 0.42) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease !important;
+}
+
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:hover,
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:focus-within,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:hover,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item:focus-within {
+  background: rgb(var(--color-surface-container-high)) !important;
+  border-color: rgb(var(--color-primary) / 0.28) !important;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.24) !important;
+  transform: translateY(-1px) !important;
+}
+
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread {
+  background: rgb(var(--color-primary) / 0.07) !important;
+  border-color: rgb(var(--color-primary) / 0.14) !important;
+}
+
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:hover,
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:focus-within,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:hover,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item.notification-item.is-unread:focus-within {
+  background: rgb(var(--color-primary) / 0.13) !important;
+  border-color: rgb(var(--color-primary) / 0.3) !important;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.24) !important;
+  transform: translateY(-1px) !important;
+}
+
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main,
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main:hover,
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main:focus,
+:root.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main:focus-visible,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main:hover,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main:focus,
+.dark :where(.dashboard-home-window, .notes-page, .quiz-page, .flash-page) .app-topbar .notification-shell .notification-dropdown .notification-item-main:focus-visible {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  transform: none !important;
+  transition: none !important;
 }
 
 .notification-item-title-row {
@@ -249,6 +413,52 @@
   color: rgb(var(--color-on-surface-variant));
   font-size: 10px;
   font-weight: 900;
+  line-height: 1;
+}
+
+.notification-permission-actions {
+  align-items: center;
+}
+
+.notification-permission-card .notification-status-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 8px 11px;
+  border: 1px solid rgb(var(--color-primary) / 0.18);
+  background: linear-gradient(135deg, rgb(var(--color-primary) / 0.1), rgb(var(--color-secondary) / 0.08));
+  color: rgb(var(--color-primary));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.68), 0 10px 24px rgb(35 22 65 / 0.08);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.notification-permission-card .notification-status-text::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.notification-permission-card .notification-status-text--granted {
+  border-color: rgba(16, 185, 129, 0.28);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(5, 150, 105, 0.08));
+  color: #047857;
+}
+
+.notification-permission-card .notification-status-text--denied {
+  border-color: rgba(244, 63, 94, 0.3);
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.14), rgba(190, 18, 60, 0.07));
+  color: #be123c;
+}
+
+.notification-permission-card .notification-status-text--unsupported {
+  border-color: rgba(242, 181, 68, 0.34);
+  background: linear-gradient(135deg, rgba(242, 181, 68, 0.2), rgba(155, 97, 0, 0.08));
+  color: #9b6100;
 }
 
 .notification-item p {
@@ -298,7 +508,7 @@
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  z-index: 4;
+  z-index: 30;
   min-width: 220px;
   display: grid;
   gap: 4px;
@@ -698,5 +908,35 @@
   border-color: #4A4568;
   color: #F7F5FF;
 }
+:root.dark .notification-permission-card .notification-status-text,
+.dark .notification-permission-card .notification-status-text,
+.profile-settings-page--dark .notification-permission-card .notification-status-text {
+  border-color: rgba(161, 120, 255, 0.34);
+  background: linear-gradient(135deg, rgba(123, 92, 255, 0.18), rgba(161, 120, 255, 0.09));
+  color: #c4b5fd;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 28px rgba(0, 0, 0, 0.22);
+}
 
+:root.dark .notification-permission-card .notification-status-text--granted,
+.dark .notification-permission-card .notification-status-text--granted,
+.profile-settings-page--dark .notification-permission-card .notification-status-text--granted {
+  border-color: rgba(110, 231, 183, 0.32);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(6, 95, 70, 0.18));
+  color: #6ee7b7;
+}
 
+:root.dark .notification-permission-card .notification-status-text--denied,
+.dark .notification-permission-card .notification-status-text--denied,
+.profile-settings-page--dark .notification-permission-card .notification-status-text--denied {
+  border-color: rgba(253, 164, 175, 0.34);
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.18), rgba(136, 19, 55, 0.18));
+  color: #fda4af;
+}
+
+:root.dark .notification-permission-card .notification-status-text--unsupported,
+.dark .notification-permission-card .notification-status-text--unsupported,
+.profile-settings-page--dark .notification-permission-card .notification-status-text--unsupported {
+  border-color: rgba(253, 230, 138, 0.34);
+  background: linear-gradient(135deg, rgba(242, 181, 68, 0.2), rgba(113, 63, 18, 0.18));
+  color: #fde68a;
+}
