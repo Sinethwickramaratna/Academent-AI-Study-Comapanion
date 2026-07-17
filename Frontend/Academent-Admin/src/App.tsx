@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AdminShell } from './components/layout/AdminShell'
+import { clearAdminFirebaseSession } from './services/auth'
 import { AdminProvider } from './context/AdminContext'
 import { useAdmin } from './hooks/useAdmin'
 import { DashboardPage } from './pages/Dashboard/DashboardPage'
@@ -39,6 +40,11 @@ function Portal() {
     setSelectedUserId(null)
   }
 
+  const expireAdminSession = () => {
+    void clearAdminFirebaseSession()
+    expireSession()
+  }
+
   const renderView = () => {
     if (selectedUserId) {
       return <UserDetailsPage userId={selectedUserId} onBack={() => setSelectedUserId(null)} />
@@ -76,7 +82,7 @@ function Portal() {
   }
 
   return (
-    <AdminShell activeView={activeView} session={session} onExpireSession={expireSession} onNavigate={navigate}>
+    <AdminShell activeView={activeView} session={session} onExpireSession={expireAdminSession} onNavigate={navigate}>
       {renderView()}
     </AdminShell>
   )
@@ -91,4 +97,3 @@ function App() {
 }
 
 export default App
-

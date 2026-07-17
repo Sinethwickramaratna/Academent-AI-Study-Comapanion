@@ -1,17 +1,17 @@
 :root {
-  --primary: #4d2b8c;
-  --secondary: #85409d;
-  --amber: #eea727;
-  --yellow: #ffef5f;
-  --ink: #f7f3ff;
-  --muted: #cfc5dc;
-  --subtle: #9d91ad;
-  --surface: #241d31;
-  --surface-2: #2d243b;
-  --surface-3: #352a48;
-  --border: rgba(255, 255, 255, 0.12);
-  --bg: #171220;
-  --bg-soft: #1d1628;
+  --primary: #7B5CFF;
+  --secondary: #A178FF;
+  --amber: #F2B544;
+  --yellow: #FFE873;
+  --ink: #F7F5FF;
+  --muted: #D8D3EE;
+  --subtle: #B7AECF;
+  --surface: #302B4D;
+  --surface-2: #211D38;
+  --surface-3: #3A345A;
+  --border: rgba(216, 211, 238, 0.18);
+  --bg: #1B1830;
+  --bg-soft: #211D38;
   --success: #23a36b;
   --warning: #eea727;
   --danger: #dc4c64;
@@ -38,8 +38,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(238, 167, 39, 0.14), transparent 34rem),
-    linear-gradient(145deg, #1b1425 0%, #171220 55%, #20182b 100%);
+    radial-gradient(circle at 12% 8%, rgba(123, 92, 255, 0.15), transparent 28rem),
+    radial-gradient(circle at 82% 14%, rgba(242, 181, 68, 0.1), transparent 24rem),
+    linear-gradient(145deg, #211D38 0%, #1B1830 54%, #302B4D 100%);
 }
 
 button,
@@ -1296,6 +1297,22 @@ tbody tr.selected {
   font-size: 0.8rem;
 }
 
+
+.metadata-block {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 0.7rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 @keyframes pulse {
   0%,
   100% {

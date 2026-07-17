@@ -82,6 +82,7 @@ export interface UserSummary {
 export interface SystemLog {
   id: string
   timestamp: string
+  timestampMs?: number
   level: LogLevel
   service: string
   message: string

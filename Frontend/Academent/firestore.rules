@@ -1,4 +1,4 @@
-﻿rules_version = '2';
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -35,6 +35,84 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
         'isRead', 'readAt', 'isDeleted', 'deletedAt'
       ]);
+    }
+    function validSystemLogLevel(level) {
+      return level in ['Information', 'Warning', 'Error', 'Critical'];
+    }
+
+    function hasAdminEmail() {
+      return request.auth.token.email is string
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('^[^@]+@academent\\.ai$');
+    }
+
+    function hasAdminRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in [
+          'admin', 'Admin',
+          'support-admin', 'support_admin', 'Support Admin',
+          'content-admin', 'content_admin', 'Content Admin',
+          'system-admin', 'system_admin', 'System Admin',
+          'super-admin', 'super_admin', 'Super Admin'
+        ];
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (hasAdminEmail() || hasAdminRole());
+    }
+
+    function validSystemLogCreate() {
+      return isSignedIn()
+        && request.resource.data.keys().hasOnly([
+          'action', 'assignedTo', 'browser', 'createdAt', 'endpoint',
+          'firstOccurrence', 'latestOccurrence', 'level', 'message', 'metadata',
+          'notes', 'occurrenceCount', 'relatedLogs', 'requestId', 'resolved',
+          'service', 'sessionId', 'source', 'stackTrace', 'statusCode',
+          'timestamp', 'updatedAt', 'url', 'user', 'userEmail', 'userId'
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.user == request.auth.uid
+        && request.resource.data.resolved == false
+        && validSystemLogLevel(request.resource.data.level)
+        && request.resource.data.action is string
+        && request.resource.data.action.size() <= 120
+        && request.resource.data.service is string
+        && request.resource.data.service.size() > 0
+        && request.resource.data.service.size() <= 80
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 900
+        && request.resource.data.endpoint is string
+        && request.resource.data.endpoint.size() <= 240
+        && request.resource.data.requestId is string
+        && request.resource.data.requestId.size() <= 80
+        && request.resource.data.statusCode is int
+        && request.resource.data.occurrenceCount is int
+        && request.resource.data.relatedLogs is list
+        && request.resource.data.metadata is map
+        && request.resource.data.stackTrace is string
+        && request.resource.data.stackTrace.size() <= 4000
+        && request.resource.data.browser is string
+        && request.resource.data.browser.size() <= 360
+        && request.resource.data.userEmail is string
+        && request.resource.data.userEmail.size() <= 180
+        && request.resource.data.sessionId is string
+        && request.resource.data.source == 'academent-web'
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.timestamp is timestamp
+        && request.resource.data.firstOccurrence is timestamp
+        && request.resource.data.latestOccurrence is timestamp;
+    }
+
+    function validSystemLogAdminUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'assignedTo', 'notes', 'resolved', 'updatedAt'
+        ])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['resolved']) || request.resource.data.resolved is bool)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['assignedTo']) || request.resource.data.assignedTo is string)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['notes']) || request.resource.data.notes is string)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['updatedAt']) || request.resource.data.updatedAt is timestamp);
     }
 
     match /users/{userId} {
@@ -92,9 +170,14 @@ service cloud.firestore {
       }
     }
 
+    match /systemLogs/{logId} {
+      allow create: if validSystemLogCreate();
+      allow read: if isAdmin();
+      allow update: if isAdmin() && validSystemLogAdminUpdate();
+      allow delete: if false;
+    }
     match /scheduledNotifications/{scheduledNotificationId} {
       allow read, write: if false;
     }
   }
 }
-

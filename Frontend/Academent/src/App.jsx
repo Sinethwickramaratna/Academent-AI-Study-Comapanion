@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 // Lazy-load route pages so the initial app shell stays small.
 const LoginPage = lazy(() => import('./pages/loginpage.jsx'))
 const SignupPage = lazy(() => import('./pages/signuppage.jsx'))
@@ -21,6 +21,17 @@ import LoadingEffect from './components/LoadingEffect'
 import { dashboardWindowItems } from './routes/windowRoutes'
 import { applyThemeMode, getStoredThemeMode, normalizeThemeMode, storeThemeMode } from './utils/theme'
 import useStudyPlannerReminderProcessor from './hooks/useStudyPlannerReminderProcessor'
+import { installConsoleErrorLogging, logErrorEvent, logUserActivity } from './Services/loggingService'
+
+const getInteractionTarget = (target) => {
+  if (!(target instanceof Element)) return null
+  return target.closest('button, a, [role="button"], [role="menuitem"], [role="tab"], input[type="submit"]')
+}
+
+const getInteractionLabel = (element) => {
+  const label = element.getAttribute('aria-label') || element.getAttribute('title') || element.textContent || element.getAttribute('href') || element.tagName
+  return String(label).replace(/\s+/g, ' ').trim().slice(0, 140) || element.tagName.toLowerCase()
+}
 
 
 /**
@@ -32,8 +43,79 @@ function App() {
   const [academicProfileData, setAcademicProfileData] = useState(null)
   const [learningPreferencesData, setLearningPreferencesData] = useState(null)
   const navigate = useNavigate()
+  const location = useLocation()
   const { currentUser, userProfile } = useAuth()
+  const lastLoggedRoute = useRef('')
   useStudyPlannerReminderProcessor()
+
+  useEffect(() => {
+    installConsoleErrorLogging()
+
+    const handleRuntimeError = (event) => {
+      logErrorEvent(event.error || event.message, {
+        action: 'window_error',
+        filename: event.filename,
+        line: event.lineno,
+        column: event.colno,
+        level: 'Critical',
+        service: 'Runtime Error',
+      })
+    }
+
+    const handleUnhandledRejection = (event) => {
+      logErrorEvent(event.reason || 'Unhandled promise rejection', {
+        action: 'unhandled_rejection',
+        level: 'Critical',
+        service: 'Promise Rejection',
+      })
+    }
+
+    window.addEventListener('error', handleRuntimeError)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('error', handleRuntimeError)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!currentUser) return
+
+    const routeKey = `${currentUser.uid}:${location.pathname}${location.search}`
+    if (lastLoggedRoute.current === routeKey) return
+    lastLoggedRoute.current = routeKey
+
+    logUserActivity('Page viewed', {
+      message: `Viewed ${location.pathname || '/'}`,
+      pathname: location.pathname,
+      search: location.search,
+      service: 'Navigation',
+    })
+  }, [currentUser, location.pathname, location.search])
+
+  useEffect(() => {
+    if (!currentUser) return undefined
+
+    const handleDocumentClick = (event) => {
+      const element = getInteractionTarget(event.target)
+      if (!element) return
+
+      const label = getInteractionLabel(element)
+      logUserActivity('Interface interaction', {
+        element: element.tagName.toLowerCase(),
+        href: element.getAttribute('href') || '',
+        label,
+        message: `Interacted with ${label}`,
+        pathname: location.pathname,
+        role: element.getAttribute('role') || '',
+        service: 'User Interaction',
+      })
+    }
+
+    document.addEventListener('click', handleDocumentClick, true)
+    return () => document.removeEventListener('click', handleDocumentClick, true)
+  }, [currentUser, location.pathname])
 
   useEffect(() => {
     const themeMode = normalizeThemeMode(userProfile?.appPreferences?.themeMode || getStoredThemeMode());
@@ -282,5 +364,3 @@ function App() {
 }
 
 export default App
-
-

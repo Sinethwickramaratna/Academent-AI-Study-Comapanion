@@ -20,16 +20,23 @@ export function LoginPage({ sessionExpired, onAuthenticated }: LoginPageProps) {
   const [message, setMessage] = useState('')
   const [pendingSession, setPendingSession] = useState<AdminSession | null>(null)
 
-  const submitCredentials = (event: FormEvent<HTMLFormElement>) => {
+  const submitCredentials = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setLoginState('loading')
-    const result = validateAdminLogin(email, password)
 
-    window.setTimeout(() => {
-      setLoginState(result.state)
-      setMessage(result.message)
-      setPendingSession(result.session ?? null)
-    }, 350)
+    try {
+      const result = await validateAdminLogin(email, password)
+
+      window.setTimeout(() => {
+        setLoginState(result.state)
+        setMessage(result.message)
+        setPendingSession(result.session ?? null)
+      }, 350)
+    } catch {
+      setLoginState('invalid')
+      setMessage('The admin portal could not complete sign-in. Please try again.')
+      setPendingSession(null)
+    }
   }
 
   const submitMfa = (event: FormEvent<HTMLFormElement>) => {
@@ -164,4 +171,3 @@ export function LoginPage({ sessionExpired, onAuthenticated }: LoginPageProps) {
     </main>
   )
 }
-

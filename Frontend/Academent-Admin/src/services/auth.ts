@@ -1,4 +1,7 @@
-import type { AdminSession } from '../types/admin'
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
+import type { AdminSession, UserRole } from '../types/admin'
+import { auth, db, firebaseConfigStatus } from './firebase'
 
 export type LoginState = 'idle' | 'loading' | 'mfa' | 'invalid' | 'locked' | 'unauthorized' | 'success'
 
@@ -17,7 +20,27 @@ const demoAdmin: AdminSession = {
   mfaVerified: false,
 }
 
-export function validateAdminLogin(email: string, password: string): LoginResult {
+const adminRoleLabels: UserRole[] = ['Support Admin', 'Content Admin', 'System Admin', 'Super Admin']
+
+const normalizeRoleText = (role: unknown): string => String(role || '').replace(/[-_]+/g, ' ').trim().toLowerCase()
+
+const toAdminRole = (role: unknown, fallback: UserRole = 'System Admin'): UserRole => {
+  const normalized = normalizeRoleText(role)
+  const match = adminRoleLabels.find((label) => label.toLowerCase() === normalized)
+  return match ?? fallback
+}
+
+const hasAdminRole = (role: unknown): boolean => adminRoleLabels.some((label) => label.toLowerCase() === normalizeRoleText(role))
+
+const getInitials = (name: string): string => name
+  .split(/\s+/)
+  .filter(Boolean)
+  .map((part) => part[0])
+  .join('')
+  .slice(0, 2)
+  .toUpperCase() || 'AD'
+
+const validateDemoAdminLogin = (email: string, password: string): LoginResult => {
   const normalizedEmail = email.trim().toLowerCase()
 
   if (normalizedEmail.includes('locked')) {
@@ -48,6 +71,62 @@ export function validateAdminLogin(email: string, password: string): LoginResult
   }
 }
 
+export async function validateAdminLogin(email: string, password: string): Promise<LoginResult> {
+  const normalizedEmail = email.trim().toLowerCase()
+
+  if (!firebaseConfigStatus.isConfigured || !auth || !db) {
+    return validateDemoAdminLogin(normalizedEmail, password)
+  }
+
+  try {
+    const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password)
+    const { user } = credential
+    const profileSnapshot = await getDoc(doc(db, 'users', user.uid))
+    const profile = profileSnapshot.exists() ? profileSnapshot.data() : null
+    const isAcadementAdminEmail = normalizedEmail.endsWith('@academent.ai')
+    const isVerifiedAcadementAdminEmail = isAcadementAdminEmail && user.emailVerified
+    const isAuthorizedAdmin = isVerifiedAcadementAdminEmail || hasAdminRole(profile?.role)
+
+    if (!isAuthorizedAdmin) {
+      await signOut(auth).catch(() => undefined)
+      return {
+        state: 'unauthorized',
+        message: 'This account does not have permission to access the admin portal.',
+      }
+    }
+
+    const displayName = String(profile?.fullName || user.displayName || normalizedEmail.split('@')[0] || 'Academent Admin')
+    const role = toAdminRole(profile?.role, isAcadementAdminEmail ? 'System Admin' : 'Support Admin')
+
+    return {
+      state: 'mfa',
+      message: 'Multi-factor verification is required to continue.',
+      session: {
+        id: user.uid,
+        name: displayName,
+        email: normalizedEmail,
+        role,
+        avatar: getInitials(displayName),
+        mfaVerified: false,
+      },
+    }
+  } catch (error) {
+    const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : ''
+
+    if (code === 'auth/too-many-requests') {
+      return {
+        state: 'locked',
+        message: 'This administrator account is temporarily locked after too many failed attempts.',
+      }
+    }
+
+    return {
+      state: 'invalid',
+      message: 'The email or password is incorrect.',
+    }
+  }
+}
+
 export function verifyMfaCode(session: AdminSession, code: string): LoginResult {
   if (!/^\d{6}$/.test(code) || code === '000000') {
     return {
@@ -61,4 +140,9 @@ export function verifyMfaCode(session: AdminSession, code: string): LoginResult 
     message: 'Administrator verified.',
     session: { ...session, mfaVerified: true },
   }
+}
+
+export async function clearAdminFirebaseSession(): Promise<void> {
+  if (!auth) return
+  await signOut(auth)
 }
