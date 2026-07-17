@@ -91,6 +91,118 @@ interface CollectionDoc {
   collectionName?: string
 }
 
+interface DefaultSystemSetting {
+  id: string
+  label: string
+  description: string
+  value: string | boolean | number
+  important: boolean
+  sectionTitle: string
+  sectionDescription: string
+}
+
+const defaultSystemSettings: DefaultSystemSetting[] = [
+  {
+    id: 'maintenance-mode',
+    label: 'Maintenance mode',
+    description: 'Temporarily block student access with a scheduled notice.',
+    value: false,
+    important: true,
+    sectionTitle: 'Platform Controls',
+    sectionDescription: 'Operational controls that affect student access and availability.',
+  },
+  {
+    id: 'registration-enabled',
+    label: 'User registration',
+    description: 'Allow new student accounts to be created.',
+    value: true,
+    important: true,
+    sectionTitle: 'Platform Controls',
+    sectionDescription: 'Operational controls that affect student access and availability.',
+  },
+  {
+    id: 'announcement-banner',
+    label: 'Announcement banner',
+    description: 'Show a platform-wide message above student dashboards.',
+    value: '',
+    important: false,
+    sectionTitle: 'Platform Controls',
+    sectionDescription: 'Operational controls that affect student access and availability.',
+  },
+  {
+    id: 'ai-features-enabled',
+    label: 'AI feature availability',
+    description: 'Enable AI Tutor, quiz generation, and flashcard assistance.',
+    value: true,
+    important: true,
+    sectionTitle: 'AI Configuration',
+    sectionDescription: 'Availability, models, and per-user limits for AI-powered workflows.',
+  },
+  {
+    id: 'ai-model',
+    label: 'AI model configuration',
+    description: 'Primary model used by tutoring and generation services.',
+    value: 'gemini-2.5-pro',
+    important: true,
+    sectionTitle: 'AI Configuration',
+    sectionDescription: 'Availability, models, and per-user limits for AI-powered workflows.',
+  },
+  {
+    id: 'daily-ai-request-limit',
+    label: 'Per-user usage limit',
+    description: 'Daily AI request allowance for standard student accounts.',
+    value: 120,
+    important: true,
+    sectionTitle: 'AI Configuration',
+    sectionDescription: 'Availability, models, and per-user limits for AI-powered workflows.',
+  },
+  {
+    id: 'quiz-generation-limit',
+    label: 'Quiz generation limit',
+    description: 'Maximum quiz generations per student per day.',
+    value: 45,
+    important: true,
+    sectionTitle: 'AI Configuration',
+    sectionDescription: 'Availability, models, and per-user limits for AI-powered workflows.',
+  },
+  {
+    id: 'flashcard-generation-limit',
+    label: 'Flashcard generation limit',
+    description: 'Maximum generated flashcards per student per day.',
+    value: 250,
+    important: true,
+    sectionTitle: 'AI Configuration',
+    sectionDescription: 'Availability, models, and per-user limits for AI-powered workflows.',
+  },
+  {
+    id: 'upload-limit-mb',
+    label: 'File-upload limit',
+    description: 'Maximum upload size per note file, in megabytes.',
+    value: 75,
+    important: true,
+    sectionTitle: 'Files and Notifications',
+    sectionDescription: 'Upload policy, supported formats, and notification delivery settings.',
+  },
+  {
+    id: 'supported-file-formats',
+    label: 'Supported file formats',
+    description: 'Accepted formats for note parsing and AI extraction.',
+    value: 'PDF, DOCX, TXT, PNG, JPG',
+    important: false,
+    sectionTitle: 'Files and Notifications',
+    sectionDescription: 'Upload policy, supported formats, and notification delivery settings.',
+  },
+  {
+    id: 'notifications-enabled',
+    label: 'Notification configuration',
+    description: 'Enable push, email, and in-app study reminders.',
+    value: true,
+    important: true,
+    sectionTitle: 'Files and Notifications',
+    sectionDescription: 'Upload policy, supported formats, and notification delivery settings.',
+  },
+]
+
 const adminRoles: UserRole[] = ['Support Admin', 'Content Admin', 'System Admin', 'Super Admin']
 const adminRoleAliases: Record<string, UserRole> = {
   admin: 'System Admin',
@@ -104,6 +216,16 @@ const adminRoleAliases: Record<string, UserRole> = {
   'super admin': 'Super Admin',
 }
 const featureColors = ['#7B5CFF', '#A178FF', '#F2B544', '#1f9d8a', '#2563eb']
+const monitoredIssueLevels: SystemLog['level'][] = ['Error', 'Critical', 'Warning']
+const closedIssueStatuses: Issue['status'][] = ['Resolved', 'Ignored']
+
+const isClosedIssueStatus = (status?: Issue['status']): boolean => (
+  Boolean(status && closedIssueStatuses.includes(status))
+)
+
+const isMonitoredOpenIssueLog = (log: SystemLog): boolean => (
+  monitoredIssueLevels.includes(log.level) && !log.resolved && !isClosedIssueStatus(log.issueStatus)
+)
 
 const requireDb = () => {
   if (!db) throw new Error(`Firebase is missing admin config keys: ${firebaseConfigStatus.missingKeys.join(', ')}`)
@@ -519,6 +641,31 @@ export async function loadSettings(): Promise<SettingSection[]> {
   }))
 }
 
+export async function initializeDefaultSystemSettings(): Promise<number> {
+  const database = requireDb()
+  const existingDocs = await safeLoadTopLevelDocs('systemSettings')
+  const existingIds = new Set(existingDocs.map((item) => item.id))
+  const missingSettings = defaultSystemSettings.filter((item) => !existingIds.has(item.id))
+
+  if (!missingSettings.length) return 0
+
+  const batch = writeBatch(database)
+  missingSettings.forEach((item) => {
+    batch.set(doc(database, 'systemSettings', item.id), {
+      label: item.label,
+      description: item.description,
+      value: item.value,
+      important: item.important,
+      sectionTitle: item.sectionTitle,
+      sectionDescription: item.sectionDescription,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }, { merge: true })
+  })
+  await batch.commit()
+  return missingSettings.length
+}
+
 export async function saveSystemSetting(item: SettingSection['items'][number], value: string | boolean | number): Promise<void> {
   const database = requireDb()
   await setDoc(doc(database, 'systemSettings', item.id), {
@@ -541,7 +688,7 @@ export async function updateUserAdminFields(userId: string, patch: Partial<{ rol
 const groupLogsIntoIssues = (logs: SystemLog[]): Issue[] => {
   const grouped = new Map<string, SystemLog[]>()
   logs
-    .filter((log) => log.level === 'Error' || log.level === 'Critical' || log.level === 'Warning')
+    .filter(isMonitoredOpenIssueLog)
     .forEach((log) => {
       const key = `${log.service}|${log.stackTrace || log.message}`
       grouped.set(key, [...(grouped.get(key) || []), log])
@@ -682,7 +829,7 @@ export async function loadDashboardSnapshot(): Promise<DashboardSnapshot> {
     loadAuditLogs(),
   ])
 
-  const openIssues = groupLogsIntoIssues(logs).filter((issue) => issue.status !== 'Resolved')
+  const openIssues = groupLogsIntoIssues(logs)
   const totalNotes = users.reduce((sum, user) => sum + user.uploadedNotes, 0)
   const totalQuizzes = users.reduce((sum, user) => sum + user.quizzes, 0)
   const totalFlashcards = users.reduce((sum, user) => sum + user.flashcards, 0)

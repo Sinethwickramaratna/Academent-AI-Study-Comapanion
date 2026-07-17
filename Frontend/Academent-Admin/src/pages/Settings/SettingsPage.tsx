@@ -3,13 +3,15 @@ import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
 import { StateBlock } from '../../components/ui/StateBlock'
+import { useAdmin } from '../../hooks/useAdmin'
 import { useAsyncData } from '../../hooks/useAsyncData'
-import { loadSettings, recordAuditLog, saveSystemSetting } from '../../services/adminData'
+import { initializeDefaultSystemSettings, loadSettings, recordAuditLog, saveSystemSetting } from '../../services/adminData'
 import type { SettingItem, SettingSection } from '../../types/admin'
 
 type SettingValue = string | boolean | number
 
 export function SettingsPage() {
+  const { session } = useAdmin()
   const { data: sections, error, loading, reload } = useAsyncData<SettingSection[]>(loadSettings, [])
   const initialValues = useMemo(() => {
     const values: Record<string, SettingValue> = {}
@@ -25,6 +27,7 @@ export function SettingsPage() {
   const [reason, setReason] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
   const [saveError, setSaveError] = useState('')
+  const [initializing, setInitializing] = useState(false)
 
   useEffect(() => {
     setValues(initialValues)
@@ -49,7 +52,7 @@ export function SettingsPage() {
     try {
       await saveSystemSetting(item, values[item.id])
       await recordAuditLog({
-        administrator: 'Current admin',
+        administrator: session?.email || 'Current admin',
         action: 'Updated system setting',
         target: item.id,
         previousValue: String(item.value),
@@ -62,6 +65,31 @@ export function SettingsPage() {
       reload()
     } catch (nextError) {
       setSaveError(nextError instanceof Error ? nextError.message : 'Could not save this setting.')
+    }
+  }
+
+  const initializeSettings = async () => {
+    setInitializing(true)
+    setSaveError('')
+    setSavedMessage('')
+
+    try {
+      const createdCount = await initializeDefaultSystemSettings()
+      await recordAuditLog({
+        administrator: session?.email || 'Current admin',
+        action: 'Initialized system settings',
+        target: 'systemSettings',
+        previousValue: 'Missing defaults',
+        newValue: `${createdCount} default settings created`,
+        reason: 'Admin initialized default Firebase systemSettings documents',
+        ipAddress: 'Client side',
+      })
+      setSavedMessage(createdCount ? `${createdCount} default settings created.` : 'Default settings already exist.')
+      await reload()
+    } catch (nextError) {
+      setSaveError(nextError instanceof Error ? nextError.message : 'Could not initialize default settings.')
+    } finally {
+      setInitializing(false)
     }
   }
 
@@ -88,9 +116,20 @@ export function SettingsPage() {
             <h2>Configure availability, AI limits, uploads, notifications, and banners</h2>
             <p>Settings are loaded from the Firebase systemSettings collection.</p>
           </div>
-          <Button icon="activity" variant="secondary" onClick={reload}>Refresh settings</Button>
+          <div className="header-actions">
+            {savedMessage ? <Badge tone="good">{savedMessage}</Badge> : null}
+            <Button icon="check" variant="primary" disabled={initializing} onClick={initializeSettings}>{initializing ? 'Creating defaults' : 'Initialize defaults'}</Button>
+            <Button icon="activity" variant="secondary" onClick={reload}>Refresh settings</Button>
+          </div>
         </section>
-        <StateBlock type="empty" title="No Firebase settings found" message="Create documents in systemSettings with label, description, value, sectionTitle, and important fields." />
+        {saveError ? <StateBlock type="warning" title="Could not initialize settings" message={saveError} /> : null}
+        <StateBlock
+          type="empty"
+          title="No Firebase settings found"
+          message="Create the default systemSettings documents from this page, or add documents manually with label, description, value, sectionTitle, and important fields."
+          actionLabel={initializing ? undefined : 'Initialize defaults'}
+          onAction={initializeSettings}
+        />
       </div>
     )
   }
@@ -105,6 +144,7 @@ export function SettingsPage() {
         </div>
         <div className="header-actions">
           {savedMessage ? <Badge tone="good">{savedMessage}</Badge> : null}
+          <Button icon="check" variant="secondary" disabled={initializing} onClick={initializeSettings}>{initializing ? 'Checking defaults' : 'Initialize missing defaults'}</Button>
           <Button icon="activity" variant="secondary" onClick={reload}>Refresh settings</Button>
         </div>
       </section>
