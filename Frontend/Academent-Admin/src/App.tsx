@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AdminShell } from './components/layout/AdminShell'
 import { clearAdminFirebaseSession } from './services/auth'
+import { recordAuditLog } from './services/adminData'
 import { AdminProvider } from './context/AdminContext'
 import { useAdmin } from './hooks/useAdmin'
 import { DashboardPage } from './pages/Dashboard/DashboardPage'
@@ -30,6 +31,17 @@ function Portal() {
           setSession(adminSession)
           setActiveView('dashboard')
           setSelectedUserId(null)
+          void recordAuditLog({
+            administrator: adminSession.email,
+            action: 'Admin signed in',
+            target: adminSession.id,
+            previousValue: 'Signed out',
+            newValue: 'Signed in',
+            reason: 'Successful admin portal authentication',
+            ipAddress: 'Client side',
+          }).catch((error) => {
+            console.warn('Admin sign-in audit log could not be created:', error)
+          })
         }}
       />
     )

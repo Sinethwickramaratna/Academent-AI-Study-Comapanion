@@ -100,6 +100,7 @@ export interface SystemLog {
   occurrenceCount: number
   assignedTo: string
   notes: string
+  issueStatus?: IssueStatus
 }
 
 export interface Issue {
@@ -117,6 +118,7 @@ export interface Issue {
   graph: number[]
   stackTrace: string
   relatedRequests: string[]
+  logIds: string[]
   browsers: BarDatum[]
   discussion: ActivityItem[]
   deploymentVersion: string
@@ -140,6 +142,7 @@ export interface Report {
   attachments: string[]
   conversation: ActivityItem[]
   notes: string
+  sourceCollection?: 'userReports' | 'reports'
 }
 
 export interface AuditLog {

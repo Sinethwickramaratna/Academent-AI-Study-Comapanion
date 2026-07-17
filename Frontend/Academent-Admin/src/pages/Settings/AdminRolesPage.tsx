@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
 import { StateBlock } from '../../components/ui/StateBlock'
-import { getAdmins } from '../../services/api'
+import { useAsyncData } from '../../hooks/useAsyncData'
+import { loadAdmins, recordAuditLog, updateUserAdminFields } from '../../services/adminData'
 import type { AdminMember, UserRole } from '../../types/admin'
 
 const adminStatusTone: Record<AdminMember['status'], 'good' | 'warning' | 'danger'> = {
@@ -13,9 +14,62 @@ const adminStatusTone: Record<AdminMember['status'], 'good' | 'warning' | 'dange
 }
 
 export function AdminRolesPage() {
-  const admins = getAdmins()
+  const { data: admins, error, loading, reload } = useAsyncData<AdminMember[]>(loadAdmins, [])
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [selectedAdmin, setSelectedAdmin] = useState<AdminMember>(admins[0])
+  const [selectedAdmin, setSelectedAdmin] = useState<AdminMember | null>(null)
+  const [selectedRole, setSelectedRole] = useState<UserRole>('Support Admin')
+  const [saveError, setSaveError] = useState('')
+
+  useEffect(() => {
+    const nextSelected = selectedAdmin && admins.some((admin) => admin.id === selectedAdmin.id) ? selectedAdmin : admins[0] ?? null
+    setSelectedAdmin(nextSelected)
+    if (nextSelected) setSelectedRole(nextSelected.role)
+  }, [admins, selectedAdmin])
+
+  const saveRole = async () => {
+    if (!selectedAdmin) return
+    setSaveError('')
+
+    try {
+      await updateUserAdminFields(selectedAdmin.id, { role: selectedRole })
+      await recordAuditLog({
+        administrator: 'Current admin',
+        action: 'Changed role',
+        target: selectedAdmin.id,
+        previousValue: selectedAdmin.role,
+        newValue: selectedRole,
+        reason: 'Role changed from admin role management',
+        ipAddress: 'Client side',
+      })
+      reload()
+    } catch (nextError) {
+      setSaveError(nextError instanceof Error ? nextError.message : 'Could not save role changes.')
+    }
+  }
+
+  if (loading) {
+    return <StateBlock type="loading" title="Loading Firebase admins" message="Reading admin users from the users collection." />
+  }
+
+  if (error) {
+    return <StateBlock type="permission" title="Admin role data unavailable" message={error} actionLabel="Retry" onAction={reload} />
+  }
+
+  if (!admins.length || !selectedAdmin) {
+    return (
+      <div className="page-stack">
+        <section className="page-header">
+          <div>
+            <span>Admin and Role Management</span>
+            <h2>Super administrator controls for access, roles, permissions, and MFA</h2>
+            <p>Admin accounts are discovered from users with an admin role or Academent email.</p>
+          </div>
+          <Button icon="activity" variant="secondary" onClick={reload}>Refresh admins</Button>
+        </section>
+        <StateBlock type="empty" title="No Firebase admins found" message="Add role: Super Admin to a users/{uid} document or use a verified @academent.ai account." />
+      </div>
+    )
+  }
 
   return (
     <div className="page-stack">
@@ -23,9 +77,12 @@ export function AdminRolesPage() {
         <div>
           <span>Admin and Role Management</span>
           <h2>Super administrator controls for access, roles, permissions, and MFA</h2>
-          <p>Roles include Support Admin, Content Admin, System Admin, and Super Admin.</p>
+          <p>Roles are loaded from Firebase users documents.</p>
         </div>
-        <Button icon="plus" variant="primary" onClick={() => setInviteOpen(true)}>Invite administrator</Button>
+        <div className="header-actions">
+          <Button icon="activity" variant="secondary" onClick={reload}>Refresh admins</Button>
+          <Button icon="plus" variant="primary" onClick={() => setInviteOpen(true)}>Invite administrator</Button>
+        </div>
       </section>
 
       <div className="split-workspace">
@@ -46,7 +103,10 @@ export function AdminRolesPage() {
               </thead>
               <tbody>
                 {admins.map((admin) => (
-                  <tr className={selectedAdmin.id === admin.id ? 'selected' : ''} key={admin.id} onClick={() => setSelectedAdmin(admin)}>
+                  <tr className={selectedAdmin.id === admin.id ? 'selected' : ''} key={admin.id} onClick={() => {
+                    setSelectedAdmin(admin)
+                    setSelectedRole(admin.role)
+                  }}>
                     <td data-label="Administrator">{admin.name}</td>
                     <td data-label="Email">{admin.email}</td>
                     <td data-label="Role">{admin.role}</td>
@@ -77,7 +137,7 @@ export function AdminRolesPage() {
           </div>
           <label>
             Assign role
-            <select defaultValue={selectedAdmin.role}>
+            <select value={selectedRole} onChange={(event) => setSelectedRole(event.target.value as UserRole)}>
               {(['Support Admin', 'Content Admin', 'System Admin', 'Super Admin'] as UserRole[]).map((role) => (
                 <option key={role}>{role}</option>
               ))}
@@ -96,14 +156,15 @@ export function AdminRolesPage() {
             <input defaultChecked={selectedAdmin.mfaRequired} type="checkbox" />
             Require multi-factor authentication
           </label>
-          <Button icon="check" variant="primary">Save role changes</Button>
+          {saveError ? <span className="field-error">{saveError}</span> : null}
+          <Button icon="check" variant="primary" onClick={saveRole}>Save role changes</Button>
         </aside>
       </div>
 
       <StateBlock type="permission" title="Permission-denied state" message="Non-super administrators see this state instead of role and permission controls." />
 
       {inviteOpen ? (
-        <Modal title="Invite administrator" description="Send an administrator invitation with a required role and MFA policy." confirmLabel="Send invitation" onClose={() => setInviteOpen(false)} onConfirm={() => setInviteOpen(false)}>
+        <Modal title="Invite administrator" description="Create a Firebase Auth user first, then add the selected role to users/{uid}." confirmLabel="Close" onClose={() => setInviteOpen(false)} onConfirm={() => setInviteOpen(false)}>
           <div className="control-grid">
             <label>
               Email address

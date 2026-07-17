@@ -157,7 +157,8 @@ export const writeSystemLog = async ({
 
   try {
     return await addDoc(collection(db, SYSTEM_LOGS_COLLECTION), payload);
-  } catch {
+  } catch (error) {
+    console.warn("System log could not be saved to Firestore:", error);
     return null;
   }
 };

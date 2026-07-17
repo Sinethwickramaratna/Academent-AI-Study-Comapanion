@@ -4,8 +4,10 @@ import { BarChart } from '../../components/charts/BarChart'
 import { DonutChart } from '../../components/charts/DonutChart'
 import { LineChart } from '../../components/charts/LineChart'
 import { Badge } from '../../components/ui/Badge'
+import { Button } from '../../components/ui/Button'
 import { StateBlock } from '../../components/ui/StateBlock'
-import { getDashboardSnapshot } from '../../services/api'
+import { useAsyncData } from '../../hooks/useAsyncData'
+import { loadDashboardSnapshot, type DashboardSnapshot } from '../../services/adminData'
 import { getFirebaseEnvironmentLabel } from '../../services/firebase'
 
 const healthTone = {
@@ -15,8 +17,29 @@ const healthTone = {
   Investigating: 'warning',
 } as const
 
+const emptyDashboard: DashboardSnapshot = {
+  metrics: [],
+  userGrowth: [],
+  activeUsers: [],
+  aiRequests: [],
+  errors: [],
+  featureUsage: [],
+  incidents: [],
+  registrations: [],
+  adminActions: [],
+  health: [],
+}
+
 export function DashboardPage() {
-  const dashboard = getDashboardSnapshot()
+  const { data: dashboard, error, loading, reload } = useAsyncData(loadDashboardSnapshot, emptyDashboard)
+
+  if (loading) {
+    return <StateBlock type="loading" title="Loading Firebase dashboard" message="Reading users, logs, reports, audit events, and learning activity from Firestore." />
+  }
+
+  if (error) {
+    return <StateBlock type="permission" title="Dashboard data unavailable" message={error} actionLabel="Retry" onAction={reload} />
+  }
 
   return (
     <div className="page-stack">
@@ -24,25 +47,29 @@ export function DashboardPage() {
         <div>
           <span>{getFirebaseEnvironmentLabel()}</span>
           <h2>Production education platform monitoring</h2>
-          <p>Track students, AI workloads, system reliability, reports, and administrator actions from one operational surface.</p>
+          <p>Live Firebase view of students, AI workloads, system reliability, reports, and administrator actions.</p>
         </div>
         <div className="hero-status">
-          <strong>99.94%</strong>
-          <span>30-day platform availability</span>
+          <strong>{dashboard.health.filter((service) => service.status === 'Operational').length}/{dashboard.health.length || 1}</strong>
+          <span>services without open errors</span>
         </div>
       </section>
 
-      <section className="metric-grid">
-        {dashboard.metrics.map((metric) => (
-          <MetricCard key={metric.label} metric={metric} />
-        ))}
-      </section>
+      {dashboard.metrics.length ? (
+        <section className="metric-grid">
+          {dashboard.metrics.map((metric) => (
+            <MetricCard key={metric.label} metric={metric} />
+          ))}
+        </section>
+      ) : (
+        <StateBlock type="empty" title="No dashboard metrics" message="Firestore returned no admin dashboard data yet." />
+      )}
 
       <div className="dashboard-grid">
-        <LineChart title="User-growth line chart" subtitle="Total and active users over the last 7 periods" series={dashboard.userGrowth} />
-        <BarChart title="Daily active-user chart" subtitle="Active users by weekday" data={dashboard.activeUsers} />
-        <BarChart title="AI request-volume chart" subtitle="Requests by AI-powered feature" data={dashboard.aiRequests} />
-        <LineChart title="Error-frequency chart" subtitle="Warnings and errors after latest deploy" series={dashboard.errors} />
+        <LineChart title="User-growth line chart" subtitle="New user documents over recent periods" series={dashboard.userGrowth} />
+        <BarChart title="Daily active-user chart" subtitle="Users grouped by last-active weekday" data={dashboard.activeUsers} />
+        <BarChart title="AI request-volume chart" subtitle="Counts from tutor, quiz, flashcard, and note collections" data={dashboard.aiRequests} />
+        <LineChart title="Error-frequency chart" subtitle="Warnings and errors from systemLogs" series={dashboard.errors} />
         <DonutChart title="Feature-usage chart" subtitle="Share of high-volume product workflows" data={dashboard.featureUsage} />
         <section className="panel">
           <div className="panel-heading">
@@ -78,10 +105,8 @@ export function DashboardPage() {
         <ActivityList title="Recent admin actions" items={dashboard.adminActions} />
       </div>
 
-      <div className="state-grid">
-        <StateBlock type="loading" title="Loading skeletons" message="Tables and dashboard cards reserve space while admin data loads." />
-        <StateBlock type="offline" title="Backend offline" message="API data is unavailable. Cached metrics remain visible for triage." />
-        <StateBlock type="outage" title="Partial service outage" message="Notifications are degraded while Auth, Firestore, and Gemini remain operational." />
+      <div className="header-actions">
+        <Button icon="activity" variant="secondary" onClick={reload}>Refresh Firebase data</Button>
       </div>
     </div>
   )

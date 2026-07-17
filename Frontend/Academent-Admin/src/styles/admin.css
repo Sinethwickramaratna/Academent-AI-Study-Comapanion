@@ -405,6 +405,23 @@ label {
 .topbar-actions select {
   min-width: 150px;
 }
+.action-row {
+  flex-wrap: nowrap;
+  min-width: 238px;
+}
+
+.action-row .button {
+  min-width: 74px;
+}
+
+.action-row select {
+  flex: 1 1 150px;
+  min-width: 150px;
+}
+
+td[data-label="Actions"] {
+  min-width: 250px;
+}
 
 .popover-wrap {
   position: relative;
@@ -813,6 +830,10 @@ label {
   display: grid;
   gap: 0.8rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.control-grid.single-column {
+  grid-template-columns: 1fr;
 }
 
 .health-card,
@@ -1295,6 +1316,26 @@ tbody tr.selected {
 .field-error {
   color: #ffc5cf;
   font-size: 0.8rem;
+}
+
+.field-success {
+  color: #9de8c2;
+  font-size: 0.8rem;
+}
+
+.form-help {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin: 0;
+}
+
+.form-footer {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: flex-end;
+  margin-top: 0.85rem;
 }
 
 

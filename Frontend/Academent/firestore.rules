@@ -36,8 +36,23 @@ service cloud.firestore {
         'isRead', 'readAt', 'isDeleted', 'deletedAt'
       ]);
     }
+
     function validSystemLogLevel(level) {
       return level in ['Information', 'Warning', 'Error', 'Critical'];
+    }
+
+    function validIssueStatus(status) {
+      return status in ['New', 'Investigating', 'In progress', 'Resolved', 'Ignored', 'Reopened'];
+    }
+
+    function validAdminRole(role) {
+      return role is string && role in [
+        'admin', 'Admin',
+        'support-admin', 'support_admin', 'support admin', 'supportAdmin', 'Support Admin',
+        'content-admin', 'content_admin', 'content admin', 'contentAdmin', 'Content Admin',
+        'system-admin', 'system_admin', 'system admin', 'systemAdmin', 'System Admin',
+        'super-admin', 'super_admin', 'super admin', 'superAdmin', 'Super Admin'
+      ];
     }
 
     function hasAdminEmail() {
@@ -46,19 +61,27 @@ service cloud.firestore {
         && request.auth.token.email.matches('^[^@]+@academent\\.ai$');
     }
 
+    function hasAdminClaim() {
+      return ('admin' in request.auth.token && request.auth.token.admin == true)
+        || ('isAdmin' in request.auth.token && request.auth.token.isAdmin == true)
+        || ('role' in request.auth.token && validAdminRole(request.auth.token.role))
+        || ('adminRole' in request.auth.token && validAdminRole(request.auth.token.adminRole));
+    }
+
     function hasAdminRole() {
       return exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in [
-          'admin', 'Admin',
-          'support-admin', 'support_admin', 'Support Admin',
-          'content-admin', 'content_admin', 'Content Admin',
-          'system-admin', 'system_admin', 'System Admin',
-          'super-admin', 'super_admin', 'Super Admin'
-        ];
+        && (
+          ('role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+            && validAdminRole(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role))
+          || ('adminRole' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+            && validAdminRole(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.adminRole))
+          || ('isAdmin' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
+        );
     }
 
     function isAdmin() {
-      return isSignedIn() && (hasAdminEmail() || hasAdminRole());
+      return isSignedIn() && (hasAdminEmail() || hasAdminClaim() || hasAdminRole());
     }
 
     function validSystemLogCreate() {
@@ -76,9 +99,9 @@ service cloud.firestore {
         && validSystemLogLevel(request.resource.data.level)
         && request.resource.data.action is string
         && request.resource.data.action.size() <= 120
-        && request.resource.data.service is string
-        && request.resource.data.service.size() > 0
-        && request.resource.data.service.size() <= 80
+        && request.resource.data['service'] is string
+        && (request.resource.data['service']).size() > 0
+        && (request.resource.data['service']).size() <= 80
         && request.resource.data.message is string
         && request.resource.data.message.size() > 0
         && request.resource.data.message.size() <= 900
@@ -100,23 +123,26 @@ service cloud.firestore {
         && request.resource.data.source == 'academent-web'
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp
-        && request.resource.data.timestamp is timestamp
+        && request.resource.data['timestamp'] is timestamp
         && request.resource.data.firstOccurrence is timestamp
         && request.resource.data.latestOccurrence is timestamp;
     }
 
     function validSystemLogAdminUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'assignedTo', 'notes', 'resolved', 'updatedAt'
+          'assignedTo', 'issueStatus', 'notes', 'resolved', 'updatedAt'
         ])
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['resolved']) || request.resource.data.resolved is bool)
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['assignedTo']) || request.resource.data.assignedTo is string)
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['notes']) || request.resource.data.notes is string)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['issueStatus']) || validIssueStatus(request.resource.data.issueStatus))
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['updatedAt']) || request.resource.data.updatedAt is timestamp);
     }
 
     match /users/{userId} {
-      allow read, create, update, delete: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, delete: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
 
       match /notifications/{notificationId} {
         allow read: if isOwner(userId);
@@ -168,6 +194,31 @@ service cloud.firestore {
           allow read, write: if isOwner(userId);
         }
       }
+
+      match /{userDocument=**} {
+        allow read: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    match /adminAuditLogs/{auditId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /systemSettings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /userReports/{reportId} {
+      allow create: if isSignedIn();
+      allow read, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /reports/{reportId} {
+      allow create: if isSignedIn();
+      allow read, update: if isAdmin();
+      allow delete: if false;
     }
 
     match /systemLogs/{logId} {
@@ -176,6 +227,7 @@ service cloud.firestore {
       allow update: if isAdmin() && validSystemLogAdminUpdate();
       allow delete: if false;
     }
+
     match /scheduledNotifications/{scheduledNotificationId} {
       allow read, write: if false;
     }

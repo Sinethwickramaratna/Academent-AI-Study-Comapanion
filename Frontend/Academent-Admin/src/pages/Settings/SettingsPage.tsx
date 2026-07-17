@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
 import { StateBlock } from '../../components/ui/StateBlock'
-import { getSettings } from '../../services/api'
-import type { SettingItem } from '../../types/admin'
+import { useAsyncData } from '../../hooks/useAsyncData'
+import { loadSettings, recordAuditLog, saveSystemSetting } from '../../services/adminData'
+import type { SettingItem, SettingSection } from '../../types/admin'
 
 type SettingValue = string | boolean | number
 
 export function SettingsPage() {
-  const sections = getSettings()
+  const { data: sections, error, loading, reload } = useAsyncData<SettingSection[]>(loadSettings, [])
   const initialValues = useMemo(() => {
     const values: Record<string, SettingValue> = {}
     sections.forEach((section) => {
@@ -19,30 +20,79 @@ export function SettingsPage() {
     })
     return values
   }, [sections])
-  const [values, setValues] = useState<Record<string, SettingValue>>(initialValues)
+  const [values, setValues] = useState<Record<string, SettingValue>>({})
   const [pendingItem, setPendingItem] = useState<SettingItem | null>(null)
   const [reason, setReason] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
+  const [saveError, setSaveError] = useState('')
+
+  useEffect(() => {
+    setValues(initialValues)
+  }, [initialValues])
 
   const setValue = (id: string, value: SettingValue) => {
     setValues((current) => ({ ...current, [id]: value }))
   }
 
   const saveItem = (item: SettingItem) => {
+    setSaveError('')
     if (item.important) {
       setReason('')
       setPendingItem(item)
       return
     }
 
-    setSavedMessage(`${item.label} saved.`)
+    void persistItem(item, 'Routine setting update')
+  }
+
+  const persistItem = async (item: SettingItem, auditReason: string) => {
+    try {
+      await saveSystemSetting(item, values[item.id])
+      await recordAuditLog({
+        administrator: 'Current admin',
+        action: 'Updated system setting',
+        target: item.id,
+        previousValue: String(item.value),
+        newValue: String(values[item.id]),
+        reason: auditReason,
+        ipAddress: 'Client side',
+      })
+      setSavedMessage(`${item.label} saved.`)
+      setPendingItem(null)
+      reload()
+    } catch (nextError) {
+      setSaveError(nextError instanceof Error ? nextError.message : 'Could not save this setting.')
+    }
   }
 
   const confirmSave = () => {
     if (pendingItem && reason.trim().length >= 10) {
-      setSavedMessage(`${pendingItem.label} saved with audit reason.`)
-      setPendingItem(null)
+      void persistItem(pendingItem, reason.trim())
     }
+  }
+
+  if (loading) {
+    return <StateBlock type="loading" title="Loading Firebase settings" message="Reading systemSettings documents from Firestore." />
+  }
+
+  if (error) {
+    return <StateBlock type="permission" title="Settings unavailable" message={error} actionLabel="Retry" onAction={reload} />
+  }
+
+  if (!sections.length) {
+    return (
+      <div className="page-stack">
+        <section className="page-header">
+          <div>
+            <span>System Settings</span>
+            <h2>Configure availability, AI limits, uploads, notifications, and banners</h2>
+            <p>Settings are loaded from the Firebase systemSettings collection.</p>
+          </div>
+          <Button icon="activity" variant="secondary" onClick={reload}>Refresh settings</Button>
+        </section>
+        <StateBlock type="empty" title="No Firebase settings found" message="Create documents in systemSettings with label, description, value, sectionTitle, and important fields." />
+      </div>
+    )
   }
 
   return (
@@ -53,7 +103,10 @@ export function SettingsPage() {
           <h2>Configure availability, AI limits, uploads, notifications, and banners</h2>
           <p>Important system changes require confirmation and an administrator reason.</p>
         </div>
-        {savedMessage ? <Badge tone="good">{savedMessage}</Badge> : null}
+        <div className="header-actions">
+          {savedMessage ? <Badge tone="good">{savedMessage}</Badge> : null}
+          <Button icon="activity" variant="secondary" onClick={reload}>Refresh settings</Button>
+        </div>
       </section>
 
       {sections.map((section) => (
@@ -84,7 +137,7 @@ export function SettingsPage() {
                     ) : typeof item.value === 'number' ? (
                       <input type="number" value={Number(value)} onChange={(event) => setValue(item.id, Number(event.target.value))} />
                     ) : (
-                      <input value={String(value)} onChange={(event) => setValue(item.id, event.target.value)} />
+                      <input value={String(value ?? '')} onChange={(event) => setValue(item.id, event.target.value)} />
                     )}
                     <Button size="sm" variant="secondary" onClick={() => saveItem(item)}>Save</Button>
                   </div>
@@ -95,11 +148,7 @@ export function SettingsPage() {
         </section>
       ))}
 
-      <div className="state-grid">
-        <StateBlock type="warning" title="Warning dialog state" message="Important settings open a confirmation dialog before saving." />
-        <StateBlock type="success" title="Success notification state" message="Saved settings display confirmation feedback in the page header." />
-        <StateBlock type="permission" title="Restricted setting state" message="Admins without System Admin rights see read-only controls." />
-      </div>
+      {saveError ? <StateBlock type="warning" title="Setting save failed" message={saveError} /> : null}
 
       {pendingItem ? (
         <Modal

@@ -1,4 +1,4 @@
-﻿import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import {
   DEFAULT_NOTE_MANAGEMENT,
@@ -16,6 +16,7 @@ import {
 } from "./noteManagementUtils";
 import { extractAndSaveKnowledge } from "./quizService";
 import { createPdfUploadSuccessNotification } from "./notificationService";
+import { logUserActivity } from "./loggingService";
 
 const noteManagementRef = (uid) => doc(db, "users", uid, "noteManagement", "structure");
 
@@ -200,6 +201,23 @@ export const addPdf = async (uid, semesterId, moduleId, folderId, pdfData) => {
     moduleTitle: module?.title || "Module",
   }).catch((error) => {
     console.warn("PDF upload success notification could not be created:", error);
+  });
+
+  logUserActivity("PDF uploaded", {
+    fileName: pdf.title,
+    fileSize: pdf.size || 0,
+    folderId: folderId || "",
+    message: `Uploaded PDF: ${pdf.title}`,
+    moduleId,
+    moduleTitle: module?.title || "Module",
+    pdfId: pdf.pdfId,
+    publicId: pdf.publicId || "",
+    semesterId,
+    semesterTitle: semester?.title || "Semester",
+    service: "Notes",
+    storageProvider: pdf.storageProvider || "cloudinary",
+  }).catch((error) => {
+    console.warn("PDF upload log could not be created:", error);
   });
 
   return savedData;

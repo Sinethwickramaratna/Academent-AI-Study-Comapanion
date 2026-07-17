@@ -11,13 +11,14 @@ import {
   type DocumentData,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore'
-import type { LogLevel, SystemLog } from '../types/admin'
+import type { IssueStatus, LogLevel, SystemLog } from '../types/admin'
 import { db, firebaseConfigStatus } from './firebase'
 
 const SYSTEM_LOGS_COLLECTION = 'systemLogs'
 const SYSTEM_LOG_LIMIT = 250
 
 const logLevels: LogLevel[] = ['Information', 'Warning', 'Error', 'Critical']
+const issueStatuses: IssueStatus[] = ['New', 'Investigating', 'In progress', 'Resolved', 'Ignored', 'Reopened']
 
 const asText = (value: unknown, fallback = ''): string => {
   if (typeof value === 'string' && value.trim()) return value.trim()
@@ -31,6 +32,10 @@ const asNumber = (value: unknown, fallback = 0): number => (
 
 const asLogLevel = (value: unknown): LogLevel => (
   logLevels.includes(value as LogLevel) ? value as LogLevel : 'Information'
+)
+
+const asIssueStatus = (value: unknown): IssueStatus | undefined => (
+  issueStatuses.includes(value as IssueStatus) ? value as IssueStatus : undefined
 )
 
 const hasToDate = (value: unknown): value is { toDate: () => Date } => (
@@ -89,6 +94,7 @@ const mapSystemLogDocument = (snapshot: QueryDocumentSnapshot<DocumentData>): Sy
     message: asText(data.message, 'No message captured.'),
     metadata: stringifyMetadata(data.metadata),
     notes: asText(data.notes, 'No notes recorded.'),
+    issueStatus: asIssueStatus(data.issueStatus),
     occurrenceCount: asNumber(data.occurrenceCount, 1),
     relatedLogs: toStringList(data.relatedLogs),
     requestId: asText(data.requestId, snapshot.id),

@@ -12,6 +12,7 @@ import TopBar from '../components/TopBar';
 import { findFolderById } from '../Services/noteManagementUtils';
 import { uploadPdfToCloudinary } from '../Services/pdfUploadService';
 import { createPdfUploadFailureNotification } from '../Services/notificationService';
+import { logErrorEvent } from '../Services/loggingService';
 import { useNotificationToasts } from '../components/notifications/NotificationToastProvider';
 import useNoteManagement from '../Services/useNoteManagement';
 import './notepage.css';
@@ -414,6 +415,15 @@ function NotePage({ profile, currentUser }) {
       addToast({ type: 'success', message: files.length === 1 ? 'PDF uploaded successfully.' : `${files.length} PDFs uploaded successfully.` });
     } catch (error) {
       console.error('Unable to upload PDF:', error);
+      logErrorEvent(error, {
+        action: 'PDF upload failed',
+        failedFileName,
+        fileCount: files.length,
+        message: error.message || 'PDF upload failed.',
+        moduleId: activeModuleId,
+        semesterId: activeSemester,
+        service: 'Notes',
+      });
       setUploadError(error.message || 'PDF upload failed');
       addToast({ type: 'error', message: error.message || 'PDF upload failed.' });
       if (currentUser?.uid) {

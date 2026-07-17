@@ -1,4 +1,4 @@
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import { getIdTokenResult, signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import type { AdminSession, UserRole } from '../types/admin'
 import { auth, db, firebaseConfigStatus } from './firebase'
@@ -22,15 +22,38 @@ const demoAdmin: AdminSession = {
 
 const adminRoleLabels: UserRole[] = ['Support Admin', 'Content Admin', 'System Admin', 'Super Admin']
 
+const adminRoleAliases: Record<string, UserRole> = {
+  admin: 'System Admin',
+  supportadmin: 'Support Admin',
+  'support admin': 'Support Admin',
+  contentadmin: 'Content Admin',
+  'content admin': 'Content Admin',
+  systemadmin: 'System Admin',
+  'system admin': 'System Admin',
+  superadmin: 'Super Admin',
+  'super admin': 'Super Admin',
+}
+
 const normalizeRoleText = (role: unknown): string => String(role || '').replace(/[-_]+/g, ' ').trim().toLowerCase()
 
 const toAdminRole = (role: unknown, fallback: UserRole = 'System Admin'): UserRole => {
   const normalized = normalizeRoleText(role)
+  const compact = normalized.replace(/\s+/g, '')
   const match = adminRoleLabels.find((label) => label.toLowerCase() === normalized)
-  return match ?? fallback
+  return match ?? adminRoleAliases[normalized] ?? adminRoleAliases[compact] ?? fallback
 }
 
-const hasAdminRole = (role: unknown): boolean => adminRoleLabels.some((label) => label.toLowerCase() === normalizeRoleText(role))
+const hasAdminRoleValue = (role: unknown): boolean => {
+  const normalized = normalizeRoleText(role)
+  const compact = normalized.replace(/\s+/g, '')
+  return Boolean(adminRoleLabels.some((label) => label.toLowerCase() === normalized) || adminRoleAliases[normalized] || adminRoleAliases[compact])
+}
+
+const hasAdminAccessFlag = (value: unknown): boolean => {
+  if (typeof value !== 'object' || value === null) return false
+  const record = value as Record<string, unknown>
+  return record.admin === true || record.isAdmin === true
+}
 
 const getInitials = (name: string): string => name
   .split(/\s+/)
@@ -83,9 +106,17 @@ export async function validateAdminLogin(email: string, password: string): Promi
     const { user } = credential
     const profileSnapshot = await getDoc(doc(db, 'users', user.uid))
     const profile = profileSnapshot.exists() ? profileSnapshot.data() : null
+    const tokenResult = await getIdTokenResult(user, true).catch(() => null)
+    const claims = tokenResult?.claims ?? {}
+    const profileRole = profile?.role ?? profile?.adminRole
+    const claimRole = claims.role ?? claims.adminRole
     const isAcadementAdminEmail = normalizedEmail.endsWith('@academent.ai')
     const isVerifiedAcadementAdminEmail = isAcadementAdminEmail && user.emailVerified
-    const isAuthorizedAdmin = isVerifiedAcadementAdminEmail || hasAdminRole(profile?.role)
+    const isAuthorizedAdmin = isVerifiedAcadementAdminEmail
+      || hasAdminRoleValue(profileRole)
+      || hasAdminAccessFlag(profile)
+      || hasAdminRoleValue(claimRole)
+      || hasAdminAccessFlag(claims)
 
     if (!isAuthorizedAdmin) {
       await signOut(auth).catch(() => undefined)
@@ -96,7 +127,7 @@ export async function validateAdminLogin(email: string, password: string): Promi
     }
 
     const displayName = String(profile?.fullName || user.displayName || normalizedEmail.split('@')[0] || 'Academent Admin')
-    const role = toAdminRole(profile?.role, isAcadementAdminEmail ? 'System Admin' : 'Support Admin')
+    const role = toAdminRole(profileRole ?? claimRole, isAcadementAdminEmail || hasAdminAccessFlag(claims) ? 'System Admin' : 'Support Admin')
 
     return {
       state: 'mfa',

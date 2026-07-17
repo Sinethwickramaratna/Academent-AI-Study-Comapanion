@@ -4,7 +4,9 @@ import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
 import { StateBlock } from '../../components/ui/StateBlock'
-import { getUsers } from '../../services/api'
+import { useAdmin } from '../../hooks/useAdmin'
+import { useAsyncData } from '../../hooks/useAsyncData'
+import { loadUsers, recordAuditLog, updateUserAdminFields, type AdminUserDetails } from '../../services/adminData'
 import type { AccountStatus, UsageLevel, UserRole, UserSummary } from '../../types/admin'
 
 interface UsersPageProps {
@@ -53,6 +55,7 @@ const requiresReason = (action: UserAction) => action === 'Suspend account' || a
 const isDangerous = (action: UserAction) => action === 'Suspend account' || action === 'Revoke sessions' || action === 'Schedule account deletion'
 
 export function UsersPage({ onOpenUser }: UsersPageProps) {
+  const { session } = useAdmin()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'All' | AccountStatus>('All')
   const [role, setRole] = useState<'All' | UserRole>('All')
@@ -62,10 +65,12 @@ export function UsersPage({ onOpenUser }: UsersPageProps) {
   const [page, setPage] = useState(1)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [reason, setReason] = useState('')
-  const users = getUsers()
+  const [actionError, setActionError] = useState('')
+  const { data: users, error, loading, reload } = useAsyncData<AdminUserDetails[]>(loadUsers, [])
 
   const filteredUsers = useMemo(() => {
     const normalized = search.trim().toLowerCase()
+    const now = Date.now()
 
     return users.filter((user) => {
       const matchesSearch =
@@ -76,10 +81,20 @@ export function UsersPage({ onOpenUser }: UsersPageProps) {
       const matchesStatus = status === 'All' || user.status === status
       const matchesRole = role === 'All' || user.role === role
       const matchesUsage = usage === 'All usage' || user.usageLevel === usage
+      const matchesRegistration = registrationPeriod === 'Any registration' || (
+        user.createdAtMs ? now - user.createdAtMs <= (registrationPeriod === 'Last 7 days' ? 7 : registrationPeriod === 'Last 30 days' ? 30 : 92) * 24 * 60 * 60 * 1000 : false
+      )
+      const matchesLastActive = lastActive === 'Any last-active' || (
+        lastActive === 'Active today'
+          ? Boolean(user.lastActiveMs && now - user.lastActiveMs <= 24 * 60 * 60 * 1000)
+          : lastActive === 'Inactive 7 days'
+            ? Boolean(!user.lastActiveMs || now - user.lastActiveMs > 7 * 24 * 60 * 60 * 1000)
+            : Boolean(!user.lastActiveMs || now - user.lastActiveMs > 30 * 24 * 60 * 60 * 1000)
+      )
 
-      return matchesSearch && matchesStatus && matchesRole && matchesUsage
+      return matchesSearch && matchesStatus && matchesRole && matchesUsage && matchesRegistration && matchesLastActive
     })
-  }, [role, search, status, usage, users])
+  }, [lastActive, registrationPeriod, role, search, status, usage, users])
 
   const pageSize = 4
   const pageCount = Math.max(Math.ceil(filteredUsers.length / pageSize), 1)
@@ -92,15 +107,46 @@ export function UsersPage({ onOpenUser }: UsersPageProps) {
     }
 
     setReason('')
+    setActionError('')
     setPendingAction({ action, user })
   }
 
-  const confirmAction = () => {
-    if (pendingAction && requiresReason(pendingAction.action) && reason.trim().length < 8) {
-      return
-    }
+  const confirmAction = async () => {
+    if (!pendingAction) return
+    if (requiresReason(pendingAction.action) && reason.trim().length < 8) return
 
-    setPendingAction(null)
+    try {
+      if (pendingAction.action === 'Suspend account') {
+        await updateUserAdminFields(pendingAction.user.id, { status: 'Suspended' })
+      }
+      if (pendingAction.action === 'Reactivate account') {
+        await updateUserAdminFields(pendingAction.user.id, { status: 'Active', disabled: false })
+      }
+      if (pendingAction.action === 'Schedule account deletion') {
+        await updateUserAdminFields(pendingAction.user.id, { status: 'Deletion pending' })
+      }
+      await recordAuditLog({
+        administrator: session?.email || 'Current admin',
+        action: pendingAction.action,
+        target: pendingAction.user.id,
+        previousValue: pendingAction.user.status,
+        newValue: pendingAction.action,
+        reason: reason || 'Admin action from user management',
+        ipAddress: 'Client side',
+      })
+      setPendingAction(null)
+      reload()
+    } catch (nextError) {
+      setActionError(nextError instanceof Error ? nextError.message : 'Could not apply this admin action.')
+    }
+  }
+
+  if (loading) {
+    return <StateBlock type="loading" title="Loading Firebase users" message="Reading users and their study subcollections from Firestore." />
+  }
+
+  if (error) {
+    return <StateBlock type="permission" title="User data unavailable" message={error} actionLabel="Retry" onAction={reload} />
   }
 
   return (
@@ -109,9 +155,9 @@ export function UsersPage({ onOpenUser }: UsersPageProps) {
         <div>
           <span>User Management</span>
           <h2>Search, filter, and manage Academent accounts</h2>
-          <p>Includes account status, roles, registration timing, study activity, AI usage, and security actions.</p>
+          <p>Includes account status, roles, registration timing, study activity, AI usage, and security actions from Firebase.</p>
         </div>
-        <Button icon="download" variant="secondary">Export users</Button>
+        <Button icon="activity" variant="secondary" onClick={reload}>Refresh users</Button>
       </section>
 
       <FilterBar>
@@ -217,7 +263,7 @@ export function UsersPage({ onOpenUser }: UsersPageProps) {
             </div>
           </>
         ) : (
-          <StateBlock type="no-results" title="No users found" message="Adjust the search text or filters to broaden the account list." />
+          <StateBlock type="no-results" title="No users found" message="Firestore returned no matching user documents for the current filters." />
         )}
       </section>
 
@@ -244,6 +290,7 @@ export function UsersPage({ onOpenUser }: UsersPageProps) {
           ) : (
             <p>This action will be recorded in the secure audit log.</p>
           )}
+          {actionError ? <span className="field-error">{actionError}</span> : null}
         </Modal>
       ) : null}
     </div>
